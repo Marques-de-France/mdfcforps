@@ -46,6 +46,7 @@ class HubClient
     public function selfRegister(): array
     {
         return $this->post('/api/ps/self-register', [
+            'siteUrl'    => $this->shopUrl,
             'shopUrl'    => $this->shopUrl,
             'platform'   => 'prestashop',
             'moduleVersion' => \Mdfcforps::VERSION,
@@ -147,11 +148,11 @@ class HubClient
         $headers = [
             'Content-Type: application/json',
             'Accept: application/json',
-            'X-Shop-Url: ' . $this->shopUrl,
+            'X-MDF-Shop: ' . $this->shopUrl,
         ];
 
         if ($requireToken && $this->secureToken !== '') {
-            $headers[] = 'Authorization: Bearer ' . $this->secureToken;
+            $headers[] = 'X-MDF-Token: ' . $this->secureToken;
         }
 
         $context = stream_context_create([
@@ -186,11 +187,11 @@ class HubClient
     {
         $headers = [
             'Accept: application/json',
-            'X-Shop-Url: ' . $this->shopUrl,
+            'X-MDF-Shop: ' . $this->shopUrl,
         ];
 
         if ($this->secureToken !== '') {
-            $headers[] = 'Authorization: Bearer ' . $this->secureToken;
+            $headers[] = 'X-MDF-Token: ' . $this->secureToken;
         }
 
         $context = stream_context_create([

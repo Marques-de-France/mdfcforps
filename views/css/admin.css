@@ -1,0 +1,217 @@
+/* ============================================================
+	 Marques de France — BO Admin CSS
+	 ============================================================ */
+
+.mdf-admin-wrap {
+	padding: 16px;
+}
+
+.mdf-tabs {
+	display: flex;
+	gap: 4px;
+	margin-bottom: 24px;
+	border-bottom: 2px solid #051440;
+}
+
+.mdf-tab {
+	padding: 10px 20px;
+	border-radius: 4px 4px 0 0;
+	color: #051440;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 14px;
+	background: #f4f5f7;
+	border: 1px solid #d0d3da;
+	border-bottom: none;
+	transition: background 0.15s;
+}
+
+.mdf-tab:hover {
+	background: #e6e8ee;
+}
+
+.mdf-tab.active {
+	background: #051440;
+	color: #fff;
+	border-color: #051440;
+}
+
+.mdf-status-banner {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 16px;
+	border-radius: 6px;
+	margin-bottom: 24px;
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.mdf-status-ok {
+	background: #e6f4ea;
+	color: #1a7340;
+	border: 1px solid #b2dfcc;
+}
+
+.mdf-status-warning {
+	background: #fff8e1;
+	color: #7a5c00;
+	border: 1px solid #ffe082;
+}
+
+.mdf-status-error {
+	background: #fce8e8;
+	color: #b91c1c;
+	border: 1px solid #f5c2c2;
+}
+
+.mdf-status-icon {
+	font-size: 16px;
+}
+
+.mdf-kpi-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	gap: 16px;
+	margin-bottom: 32px;
+}
+
+.mdf-kpi-card {
+	background: #fff;
+	border: 1px solid #e0e2e8;
+	border-radius: 8px;
+	padding: 20px 24px;
+	text-align: center;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.mdf-kpi-value {
+	font-size: 28px;
+	font-weight: 700;
+	color: #051440;
+	line-height: 1.2;
+}
+
+.mdf-kpi-label {
+	font-size: 12px;
+	color: #6b7280;
+	margin-top: 4px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.mdf-chart-wrap {
+	background: #fff;
+	border: 1px solid #e0e2e8;
+	border-radius: 8px;
+	padding: 24px;
+	margin-bottom: 32px;
+}
+
+.mdf-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+	margin-top: 16px;
+}
+
+.mdf-table th,
+.mdf-table td {
+	text-align: left;
+	padding: 10px 12px;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.mdf-table th {
+	background: #f9fafb;
+	font-weight: 600;
+	color: #374151;
+}
+
+.mdf-table tr:last-child td {
+	border-bottom: none;
+}
+
+.mdf-table tr:hover td {
+	background: #f3f4f6;
+}
+
+.mdf-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 12px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.mdf-badge--confirmed  { background: #e6f4ea; color: #1a7340; }
+.mdf-badge--cancelled  { background: #fce8e8; color: #b91c1c; }
+.mdf-badge--refunded   { background: #fff8e1; color: #7a5c00; }
+.mdf-badge--synced     { background: #e6f4ea; color: #1a7340; }
+.mdf-badge--pending    { background: #eff6ff; color: #1e40af; }
+.mdf-badge--error      { background: #fce8e8; color: #b91c1c; }
+.mdf-badge--source     { background: #f3e8ff; color: #7c3aed; }
+
+.mdf-pagination {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-top: 16px;
+	font-size: 13px;
+}
+
+.mdf-pagination a {
+	color: #051440;
+	text-decoration: none;
+	font-weight: 500;
+}
+
+.mdf-pagination a:hover {
+	text-decoration: underline;
+}
+
+.mdf-empty-state {
+	color: #6b7280;
+	font-style: italic;
+	padding: 16px 0;
+}
+
+.mdf-feed-mode-form {
+	margin-bottom: 24px;
+}
+
+.mdf-feed-mode-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+.mdf-feed-mode-row label {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.mdf-add-product-row {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	margin-bottom: 16px;
+}
+
+.mdf-add-product-row input[type="number"] {
+	width: 140px;
+	padding: 6px 10px;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	font-size: 13px;
+}
+
+.mdf-serverlist-panel {
+	margin-top: 24px;
+}

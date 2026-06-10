@@ -161,7 +161,7 @@ class Mdfcforps extends Module
     {
         // Inject front tracker assets on all non-admin pages
         if (!$this->context->controller instanceof AdminController) {
-            $this->context->controller->addJS($this->_path . 'views/js/front/mdf-tracker-ps.js');
+            $this->context->controller->addJS($this->_path . 'views/js/front/mdf-attribution-context-ps.js');
         }
 
         // Lazy-cron: only fire in BO when an employee is logged in
