@@ -94,8 +94,7 @@ class SaleRepository
         $query = new \DbQuery();
         $query->select('*')
               ->from('mdfcforps_sales')
-              ->where('order_id = ' . (int) $orderId)
-              ->limit(1);
+              ->where('order_id = ' . (int) $orderId);
 
         $row = \Db::getInstance()->getRow($query);
 
@@ -110,8 +109,7 @@ class SaleRepository
         $query = new \DbQuery();
         $query->select('*')
               ->from('mdfcforps_sales')
-              ->where('id = ' . (int) $id)
-              ->limit(1);
+              ->where('id = ' . (int) $id);
 
         $row = \Db::getInstance()->getRow($query);
 

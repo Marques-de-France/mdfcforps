@@ -110,7 +110,60 @@ class Mdfcforps extends Module
         $attributionData = $attributionService->collectFromCookies();
 
         $saleRepo = new \Mdfcforps\Repository\SaleRepository();
-        $saleRepo->recordSale($order, $attributionData);
+        $inserted = $saleRepo->recordSale($order, $attributionData);
+
+        // Immediate sync for freshly created rows.
+        // If Hub is unavailable, keep local row pending for lazy-cron retries.
+        if (!$inserted) {
+            return;
+        }
+
+        $sale = null;
+        $insertedId = (int) \Db::getInstance()->Insert_ID();
+        if ($insertedId > 0) {
+            $sale = $saleRepo->findById($insertedId);
+        }
+
+        if (!$sale) {
+            $sale = $saleRepo->findByOrderId((int) $order->id);
+        }
+
+        if (!$sale) {
+            \PrestaShopLogger::addLog(
+                '[MDF] Immediate sync skipped: unable to resolve inserted sale row for order #' . (int) $order->id,
+                2,
+                null,
+                'Mdfcforps'
+            );
+            return;
+        }
+
+        try {
+            $hubClient = new \Mdfcforps\Service\HubClient();
+            $result = $hubClient->syncSale($sale);
+            if ($result) {
+                $marked = $saleRepo->markSynced((int) $sale['id']);
+                if (!$marked) {
+                    $saleRepo->incrementSyncAttempts((int) $sale['id']);
+                    \PrestaShopLogger::addLog(
+                        '[MDF] Immediate sync reached Hub but local markSynced failed for sale #' . (int) $sale['id'],
+                        2,
+                        null,
+                        'Mdfcforps'
+                    );
+                }
+            } else {
+                $saleRepo->incrementSyncAttempts((int) $sale['id']);
+            }
+        } catch (\Throwable $e) {
+            $saleRepo->incrementSyncAttempts((int) $sale['id']);
+            \PrestaShopLogger::addLog(
+                '[MDF] Immediate sync error for sale #' . (int) $sale['id'] . ': ' . $e->getMessage(),
+                3,
+                null,
+                'Mdfcforps'
+            );
+        }
     }
 
     // -----------------------------------------------------------------------
