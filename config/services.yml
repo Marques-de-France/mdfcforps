@@ -1,0 +1,34 @@
+services:
+  # Module main class
+  mdfcforps.module:
+    class: Mdfcforps
+    public: true
+
+  # Services
+  mdfcforps.hub_client:
+    class: Mdfcforps\Service\HubClient
+    public: true
+
+  mdfcforps.attribution_service:
+    class: Mdfcforps\Service\AttributionService
+    public: true
+
+  mdfcforps.feed_service:
+    class: Mdfcforps\Service\FeedService
+    public: true
+
+  mdfcforps.feed_products_service:
+    class: Mdfcforps\Service\FeedProductsService
+    public: true
+
+  # Repository
+  mdfcforps.sale_repository:
+    class: Mdfcforps\Repository\SaleRepository
+    public: true
+
+  # Installer
+  mdfcforps.installer:
+    class: Mdfcforps\Install\Installer
+    arguments:
+      - '@mdfcforps.module'
+    public: true

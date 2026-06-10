@@ -1,0 +1,30 @@
+# Dependencies
+/vendor/
+/node_modules/
+
+# Composer
+composer.lock
+
+# Build artifacts
+/views/js/admin/chart.min.js
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# PHP errors / logs
+*.log
+error_log
+
+# Smarty compiled templates (generated at runtime inside PS)
+/views/smarty/
+
+# Environment / secrets
+.env
+.env.local
