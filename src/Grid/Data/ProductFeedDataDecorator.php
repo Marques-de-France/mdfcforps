@@ -43,29 +43,29 @@ final class ProductFeedDataDecorator implements GridDataFactoryInterface
                 ? (string) $this->link->getImageLink('product', $imageId, 'small_default')
                 : '';
 
-            // Link product name to BO edit page in a new tab.
+            // Link product name to BO edit page in a new tab using the documented PrestaShop route generation.
             $name = (string) ($record['name'] ?? '');
-            $productsUrl = (string) $this->link->getAdminLink('AdminProducts', true);
-            $urlParts = parse_url($productsUrl);
-            $basePath = rtrim((string) ($urlParts['path'] ?? ''), '/');
-            $editUrl = $basePath . '/' . $pid . '/edit';
-            if (!empty($urlParts['query'])) {
-                $editUrl .= '?' . $urlParts['query'];
-            }
+            $editUrl = (string) $this->link->getAdminLink('AdminProducts', true, [
+                'route' => 'admin_products_edit',
+                'productId' => $pid,
+            ]);
 
             $combinationCount = $this->getCombinationCount($pid);
             $nameHtml = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
-            if ($combinationCount > 0) {
-                $nameHtml .= ' <span class="badge badge-secondary">'
-                    . $combinationCount
-                    . ' combinations</span>';
-            }
 
-            $record['linked_name'] = sprintf(
+            $linkedName = sprintf(
                 '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
                 htmlspecialchars((string) $editUrl, ENT_QUOTES, 'UTF-8'),
                 $nameHtml
             );
+
+            if ($combinationCount > 0) {
+                $linkedName .= ' <span class="badge badge-secondary">'
+                    . $combinationCount
+                    . ' combinations</span>';
+            }
+
+            $record['linked_name'] = $linkedName;
 
             // Formatted price
             $record['price'] = \Tools::displayPrice((float) ($record['price_raw'] ?? 0));

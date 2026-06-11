@@ -26,12 +26,12 @@
     {# ---- Feed mode toggle ---- #}
     <div class="card mb-4">
       <div class="card-header">
-        <h3 class="d-inline-block card-header-title mb-0">{{ 'Feed mode'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
+        <h3 class="d-inline-block card-header-title mb-0">{{ 'Selection method'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
       </div>
       <div class="card-body">
         <p class="mb-3" id="mdf-feed-mode-current-value">
           {% if feedMode == 'SERVERLIST' %}
-            Via manual selection from this app
+            Via manual selection from this module
           {% else %}
             Via the product tag field
           {% endif %}
@@ -64,7 +64,7 @@
               <hr>
 
               <p class="mb-4"><strong>Via the product tag field (recommended)</strong><br>Simply add the tag <span class="badge badge-secondary">marques-de-france</span> to each of your products manufactured in France. This is the simplest and most direct method.</p>
-              <p class="mb-0"><strong>Via manual selection from this app</strong><br>Manually select products directly from this app. Choose this option if your product tag field is used to display information in your theme.</p>
+              <p class="mb-0"><strong>Via manual selection from this module</strong><br>Manually select products directly from this app. Choose this option if your product tag field is used to display information in your theme.</p>
             </div>
             <div class="modal-footer">
               <button type="submit" class="btn btn-primary">{{ 'Save'|trans({}, 'Admin.Actions') }}</button>
@@ -84,9 +84,14 @@
           <div class="card mb-4" id="mdf-manage-panel">
             <div class="card-header d-flex justify-content-between align-items-center">
               <h3 class="d-inline-block card-header-title mb-0">{{ 'Select products to include in feed'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
-              <a href="{{ path('mdfcforps_feed_index') }}" class="btn btn-primary">
-                {{ 'Save'|trans({}, 'Admin.Actions') }}
-              </a>
+              <div class="d-flex align-items-center gap-2">
+                <a href="{{ path('mdfcforps_feed_index') }}" class="btn btn-outline-secondary mr-2">
+                  {{ 'Back'|trans({}, 'Admin.Actions') }}
+                </a>
+                <a href="{{ path('mdfcforps_feed_index') }}" class="btn btn-primary">
+                  {{ 'Save'|trans({}, 'Admin.Actions') }}
+                </a>
+              </div>
             </div>
             <div class="card-body">
               <div class="alert alert-warning" role="alert">
