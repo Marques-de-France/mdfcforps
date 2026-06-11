@@ -15,7 +15,7 @@
     </a>
   </nav>
 
-  <div class="mdf-tab-content">
+  <div class="tab-content">
     <h2>{l s='Product Feed' mod='mdfcforps'}</h2>
 
     {* Feed mode toggle *}

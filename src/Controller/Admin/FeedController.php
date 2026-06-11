@@ -27,6 +27,54 @@ class FeedController extends FrameworkBundleAdminController
     /** @var GridFactory */
     private $productCatalogGridFactory;
 
+    public function dashboardAction(): Response
+    {
+        $hubClient = new \Mdfcforps\Service\HubClient();
+
+        $analytics = [];
+        $status = [];
+        $error = null;
+
+        try {
+            $analytics = $hubClient->getAnalytics();
+            $status = $hubClient->getStatus();
+        } catch (\Throwable $e) {
+            $error = $this->trans('Unable to reach the Marques de France platform.', [], 'Modules.Mdfcforps.Admin');
+        }
+
+        return $this->render(
+            '@Modules/mdfcforps/views/templates/admin/mdfcforps/dashboard.html.twig',
+            [
+                'analytics' => $analytics,
+                'status' => $status,
+                'error' => $error,
+                'currentTab' => 'dashboard',
+                'enableSidebar' => true,
+                'layoutTitle' => 'Marques de France',
+            ]
+        );
+    }
+
+    public function salesAction(Request $request): Response
+    {
+        $page = max(1, (int) $request->query->get('sales_page', 1));
+        $saleRepo = new \Mdfcforps\Repository\SaleRepository();
+        $result = $saleRepo->paginate($page, 25);
+
+        return $this->render(
+            '@Modules/mdfcforps/views/templates/admin/mdfcforps/sales.html.twig',
+            [
+                'sales' => $result['sales'],
+                'total' => (int) $result['total'],
+                'page' => $page,
+                'perPage' => 25,
+                'currentTab' => 'sales',
+                'enableSidebar' => true,
+                'layoutTitle' => 'Marques de France',
+            ]
+        );
+    }
+
     public function __construct(
         GridFactory $productFeedGridFactory,
         GridFactory $productCatalogGridFactory
@@ -106,6 +154,7 @@ class FeedController extends FrameworkBundleAdminController
             'feedMode'            => $feedMode,
             'feedUrl'             => $feedUrl,
             'manage'              => $manage,
+            'currentTab'          => 'feed',
             'enableSidebar'       => true,
             'layoutTitle'         => 'Marques de France',
         ];

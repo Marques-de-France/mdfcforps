@@ -16,7 +16,7 @@ if (!defined('_PS_VERSION_')) {
 class AdminMdfcforpsController extends ModuleAdminController
 {
     /** @var string[] */
-    private const TABS = ['dashboard', 'sales'];
+    private const TABS = ['dashboard', 'feed', 'sales'];
 
     public function __construct()
     {
@@ -41,37 +41,24 @@ class AdminMdfcforpsController extends ModuleAdminController
             $tab = 'dashboard';
         }
 
-        $this->addCSS($this->module->getPathUri() . 'views/css/admin.css');
-        $this->addJS($this->module->getPathUri() . 'views/js/admin/chart.min.js');
-        $this->addJS($this->module->getPathUri() . 'views/js/admin/dashboard.js');
-        $this->addJS($this->module->getPathUri() . 'views/js/admin/feed.js');
-
-        // Assign module template dir so partials can be included from any tab
-        $this->context->smarty->assign(
-            'mdf_tpl_dir',
-            _PS_MODULE_DIR_ . 'mdfcforps/views/templates/admin/'
-        );
-        $this->context->smarty->assign(
-            'mdf_banner_tpl',
-            _PS_MODULE_DIR_ . 'mdfcforps/views/templates/admin/_status_banner.tpl'
-        );
-
-        // Feed tab is now a Symfony route — redirect immediately
+        // Legacy controller now acts as an entrypoint shim to explicit Symfony tab routes.
+        $router = \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()->get('router');
         if ($tab === 'feed') {
-            $router  = \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()->get('router');
-            $feedUrl = $router->generate('mdfcforps_feed_index');
-            Tools::redirectAdmin($feedUrl);
+            Tools::redirectAdmin($router->generate('mdfcforps_feed_index'));
 
             return;
         }
 
-        switch ($tab) {
-            case 'sales':
-                $this->renderSalesTab();
-                break;
-            default:
-                $this->renderDashboardTab();
+        if ($tab === 'sales') {
+            $page = max(1, (int) Tools::getValue('sales_page', 1));
+            Tools::redirectAdmin($router->generate('mdfcforps_sales_index', ['sales_page' => $page]));
+
+            return;
         }
+
+        Tools::redirectAdmin($router->generate('mdfcforps_dashboard_index'));
+
+        return;
     }
 
     // -----------------------------------------------------------------------

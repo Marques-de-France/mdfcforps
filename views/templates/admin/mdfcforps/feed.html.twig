@@ -8,21 +8,9 @@
 <div class="mdf-admin-wrap">
 
   {# ---- Tab navigation ---- #}
-  <nav class="mdf-tabs">
-    <a href="{{ getAdminLink('AdminMdfcforps', true, {'tab': 'dashboard'}) }}" class="mdf-tab">
-      {{ 'Dashboard'|trans({}, 'Modules.Mdfcforps.Admin') }}
-    </a>
-    <a href="{{ path('mdfcforps_feed_index') }}" class="mdf-tab active">
-      {{ 'Product Feed'|trans({}, 'Modules.Mdfcforps.Admin') }}
-    </a>
-    <a href="{{ getAdminLink('AdminMdfcforps', true, {'tab': 'sales'}) }}" class="mdf-tab">
-      {{ 'Sales'|trans({}, 'Modules.Mdfcforps.Admin') }}
-    </a>
-  </nav>
+  {{ include('@Modules/mdfcforps/views/templates/admin/mdfcforps/_navigation_tabs.html.twig', { currentTab: currentTab|default('feed') }) }}
 
-  <div class="mdf-tab-content">
-    <h2>{{ 'Product Feed'|trans({}, 'Modules.Mdfcforps.Admin') }}</h2>
-
+  <div class="tab-content">
     {# ---- Feed mode toggle ---- #}
     <div class="card mb-4">
       <div class="card-header">
@@ -85,7 +73,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
               <h3 class="d-inline-block card-header-title mb-0">{{ 'Select products to include in feed'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
               <div class="d-flex align-items-center gap-2">
-                <a href="{{ path('mdfcforps_feed_index') }}" class="btn btn-outline-secondary mr-2">
+                <a href="{{ path('mdfcforps_feed_index') }}" class="btn btn-outline-secondary">
                   {{ 'Back'|trans({}, 'Admin.Actions') }}
                 </a>
                 <a href="{{ path('mdfcforps_feed_index') }}" class="btn btn-primary">
@@ -218,7 +206,7 @@
       </div>
     {% endif %}
 
-  </div>{# /.mdf-tab-content #}
+  </div>{# /.tab-content #}
 </div>{# /.mdf-admin-wrap #}
 
 {# ---- AJAX config for feed.js ---- #}

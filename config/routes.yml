@@ -1,10 +1,30 @@
+mdfcforps_dashboard_index:
+    path: /mdfcforps/dashboard
+    methods: [GET]
+    defaults:
+        _controller: 'Mdfcforps\Controller\Admin\FeedController::dashboardAction'
+        _legacy_controller: AdminMdfcforps
+        _legacy_link:
+            - AdminMdfcforps
+            - AdminMdfcforps:dashboard
+
+mdfcforps_sales_index:
+    path: /mdfcforps/sales
+    methods: [GET]
+    defaults:
+        _controller: 'Mdfcforps\Controller\Admin\FeedController::salesAction'
+        _legacy_controller: AdminMdfcforps
+        _legacy_link:
+            - AdminMdfcforps:sales
+
 mdfcforps_feed_index:
     path: /mdfcforps/feed
     methods: [GET, POST]
     defaults:
         _controller: 'Mdfcforps\Controller\Admin\FeedController::indexAction'
         _legacy_controller: AdminMdfcforps
-        _legacy_link: AdminMdfcforps
+        _legacy_link:
+            - AdminMdfcforps:feed
 
 mdfcforps_feed_toggle:
     path: /mdfcforps/feed/toggle

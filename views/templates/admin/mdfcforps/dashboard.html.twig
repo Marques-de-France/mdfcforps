@@ -1,0 +1,64 @@
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+{% trans_default_domain 'Modules.Mdfcforps.Admin' %}
+
+{% block content %}
+<div class="mdf-admin-wrap">
+  {{ include('@Modules/mdfcforps/views/templates/admin/mdfcforps/_navigation_tabs.html.twig', { currentTab: currentTab|default('dashboard') }) }}
+
+  <div class="tab-content">
+    {% if error %}
+      <div class="alert alert-danger" role="alert">
+        {{ error }}
+      </div>
+    {% else %}
+      <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+          <div class="card h-100">
+            <div class="card-body">
+              <h4 class="h2 mb-1">{{ analytics.totalSales|default('0') }}</h4>
+              <p class="mb-0 text-muted">{{ 'Total Sales'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="card h-100">
+            <div class="card-body">
+              <h4 class="h2 mb-1">{{ analytics.totalRevenue is defined ? analytics.totalRevenue|number_format(2, '.', ' ') ~ ' €' : '0.00 €' }}</h4>
+              <p class="mb-0 text-muted">{{ 'Total Revenue'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="card h-100">
+            <div class="card-body">
+              <h4 class="h2 mb-1">{{ analytics.totalClicks|default('0') }}</h4>
+              <p class="mb-0 text-muted">{{ 'Clicks'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="card h-100">
+            <div class="card-body">
+              <h4 class="h2 mb-1">{{ analytics.conversionRate is defined ? analytics.conversionRate|number_format(1, '.', ' ') ~ '%' : '0.0%' }}</h4>
+              <p class="mb-0 text-muted">{{ 'Conversion Rate'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-header-title mb-0">{{ 'Connection status'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
+        </div>
+        <div class="card-body">
+          {% if status is empty %}
+            <p class="text-muted mb-0">{{ 'No status details available.'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
+          {% else %}
+            <pre class="mb-0" style="white-space: pre-wrap;">{{ status|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
