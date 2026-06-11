@@ -6,6 +6,7 @@ namespace Mdfcforps\Grid\Query;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Mdfcforps\Service\FeedEligibilityService;
 use PrestaShop\PrestaShop\Core\Grid\Query\AbstractDoctrineQueryBuilder;
 use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteriaInterface;
 
@@ -21,8 +22,8 @@ final class ProductCatalogQueryBuilder extends AbstractDoctrineQueryBuilder
     /** @var int */
     private $contextShopId;
 
-    /** @var bool */
-    private $allowOrderOutOfStockByDefault;
+    /** @var FeedEligibilityService */
+    private $eligibilityService;
 
     private const ORDER_MAP = [
         'name'         => 'pl.name',
@@ -38,13 +39,13 @@ final class ProductCatalogQueryBuilder extends AbstractDoctrineQueryBuilder
         string $dbPrefix,
         int $contextLangId,
         int $contextShopId,
-        $globalOutOfStockDefault
+        FeedEligibilityService $eligibilityService
     )
     {
         parent::__construct($connection, $dbPrefix);
         $this->contextLangId = $contextLangId;
         $this->contextShopId = $contextShopId;
-        $this->allowOrderOutOfStockByDefault = (int) $globalOutOfStockDefault === 1;
+        $this->eligibilityService = $eligibilityService;
     }
 
     public function getSearchQueryBuilder(SearchCriteriaInterface $searchCriteria): QueryBuilder
@@ -59,12 +60,7 @@ final class ProductCatalogQueryBuilder extends AbstractDoctrineQueryBuilder
                 'COALESCE(ps.active, p.active, 0) AS active',
                 'COALESCE(sa.quantity, 0) AS quantity',
                 'COALESCE(ci.id_image, 0) AS id_image',
-                'CASE
-                    WHEN COALESCE(sa.out_of_stock, 2) = 1 THEN 1
-                    WHEN COALESCE(sa.out_of_stock, 2) = 0 THEN 0
-                    WHEN :allow_order_out_of_stock_by_default = 1 THEN 1
-                    ELSE 0
-                END AS allow_orders',
+                $this->eligibilityService->buildOutOfStockOrderableExpression('COALESCE(sa.out_of_stock, 2)') . ' AS allow_orders',
                 'EXISTS(SELECT 1 FROM ' . $this->dbPrefix . 'mdfcforps_feed_products fp2
                     WHERE fp2.product_id = p.id_product) AS in_feed'
             );
@@ -112,8 +108,7 @@ final class ProductCatalogQueryBuilder extends AbstractDoctrineQueryBuilder
             ->leftJoin('p', $this->dbPrefix . 'image', 'ci',
                 'ci.id_product = p.id_product AND ci.cover = 1')
             ->setParameter('ctx_lang', $this->contextLangId)
-            ->setParameter('ctx_shop', $this->contextShopId)
-            ->setParameter('allow_order_out_of_stock_by_default', $this->allowOrderOutOfStockByDefault ? 1 : 0);
+            ->setParameter('ctx_shop', $this->contextShopId);
     }
 
     /** @param array<string, mixed> $filters */
@@ -163,22 +158,10 @@ final class ProductCatalogQueryBuilder extends AbstractDoctrineQueryBuilder
                         $qb->andWhere('COALESCE(sa.quantity, 0) > 0');
                     } elseif ($value === 'out_of_stock_allow_orders') {
                         $qb->andWhere('COALESCE(sa.quantity, 0) <= 0')
-                           ->andWhere('(
-                               COALESCE(sa.out_of_stock, 2) = 1
-                               OR (
-                                   COALESCE(sa.out_of_stock, 2) = 2
-                                   AND :allow_order_out_of_stock_by_default = 1
-                               )
-                           )');
+                           ->andWhere($this->eligibilityService->buildOutOfStockOrderableExpression('COALESCE(sa.out_of_stock, 2)'));
                     } elseif ($value === 'out_of_stock') {
                         $qb->andWhere('COALESCE(sa.quantity, 0) <= 0')
-                           ->andWhere('(
-                               COALESCE(sa.out_of_stock, 2) = 0
-                               OR (
-                                   COALESCE(sa.out_of_stock, 2) = 2
-                                   AND :allow_order_out_of_stock_by_default = 0
-                               )
-                           )');
+                           ->andWhere('NOT ' . $this->eligibilityService->buildOutOfStockOrderableExpression('COALESCE(sa.out_of_stock, 2)'));
                     }
                     break;
                 case 'price':

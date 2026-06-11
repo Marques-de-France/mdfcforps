@@ -25,14 +25,17 @@ class FeedService
     private \Context $context;
     private string $shopName;
     private string $currency;
+    private FeedEligibilityService $eligibilityService;
 
-    public function __construct()
+    public function __construct(?FeedEligibilityService $eligibilityService = null)
     {
         $this->context  = \Context::getContext();
         $this->shopName = (string) \Configuration::get('PS_SHOP_NAME');
 
         $defaultCurrency = \Currency::getDefaultCurrency();
         $this->currency  = $defaultCurrency ? $defaultCurrency->iso_code : 'EUR';
+        $this->eligibilityService = $eligibilityService
+            ?: new FeedEligibilityService((int) \Configuration::get('PS_ORDER_OUT_OF_STOCK'));
     }
 
     // -----------------------------------------------------------------------
@@ -97,7 +100,11 @@ class FeedService
                     $items[]    = $this->normaliseCombination($combo, $product, $idLang, $isCheapest);
                 }
             } else {
-                if (!$product->checkQty(1) && !\Configuration::get('PS_ORDER_OUT_OF_STOCK')) {
+                $stockContext = $this->eligibilityService->getProductStockContext($productId, $idShop);
+                if (!$this->eligibilityService->isEligibleByQuantityAndPolicy(
+                    (int) $stockContext['quantity'],
+                    (int) $stockContext['out_of_stock']
+                )) {
                     continue;
                 }
                 $items[] = $this->normaliseProduct($product, $idLang);
@@ -225,7 +232,9 @@ class FeedService
             'sale_price'              => $comboSale,
             'currency'                => $this->currency,
             'sku'                     => $mpn,
-            'availability'            => $combo['in_stock'] ? 'in stock' : 'out of stock',
+            'availability'            => $combo['in_stock']
+                ? 'in stock'
+                : (($combo['allows_out_of_stock_orders'] ?? false) ? 'preorder' : 'out of stock'),
             'availability_date'       => '',
             'condition'               => 'new',
             'category'                => $category,
@@ -433,8 +442,15 @@ class FeedService
         $query->select('p.id_product')
               ->from('product', 'p')
               ->innerJoin('product_shop', 'ps', 'ps.id_product = p.id_product AND ps.id_shop = ' . $idShop)
+              ->leftJoin(
+                  'stock_available',
+                  'sa',
+                  'sa.id_product = p.id_product AND sa.id_product_attribute = 0 AND sa.id_shop = ' . $idShop
+              )
               ->where('p.id_product IN (' . $safeIds . ')')
-              ->where('ps.active = 1')
+              ->where('COALESCE(ps.active, p.active, 0) = 1')
+              ->where('COALESCE(ps.price, p.price, 0) > 0')
+              ->where($this->eligibilityService->buildStockEligibilityExpression('COALESCE(sa.quantity, 0)', 'COALESCE(sa.out_of_stock, 2)'))
               ->orderBy('FIELD(p.id_product, ' . $safeIds . ')')
               ->limit($perPage, $offset);
 
@@ -486,10 +502,16 @@ class FeedService
         unset($combo);
 
         // Filter out-of-stock (unless order-out-of-stock allowed)
-        $allowOOS = (bool) \Configuration::get('PS_ORDER_OUT_OF_STOCK');
-        if (!$allowOOS) {
+        $stockContext = $this->eligibilityService->getProductStockContext((int) $product->id, (int) $this->context->shop->id);
+        $allowsOutOfStockOrders = $this->eligibilityService->isOutOfStockPolicyOrderable((int) $stockContext['out_of_stock']);
+        if (!$allowsOutOfStockOrders) {
             $grouped = array_filter($grouped, fn ($c) => $c['in_stock']);
         }
+
+        foreach ($grouped as &$combo) {
+            $combo['allows_out_of_stock_orders'] = $allowsOutOfStockOrders;
+        }
+        unset($combo);
 
         return array_values($grouped);
     }
@@ -627,9 +649,12 @@ class FeedService
         if ($product->checkQty(1)) {
             return 'in stock';
         }
-        if (\Configuration::get('PS_ORDER_OUT_OF_STOCK')) {
+
+        $stockContext = $this->eligibilityService->getProductStockContext((int) $product->id, (int) $this->context->shop->id);
+        if ($this->eligibilityService->isOutOfStockPolicyOrderable((int) $stockContext['out_of_stock'])) {
             return 'preorder';
         }
+
         return 'out of stock';
     }
 

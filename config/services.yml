@@ -13,8 +13,16 @@ services:
     class: Mdfcforps\Service\AttributionService
     public: true
 
+  mdfcforps.feed_eligibility_service:
+    class: Mdfcforps\Service\FeedEligibilityService
+    arguments:
+      - "@=service('prestashop.adapter.legacy.configuration').get('PS_ORDER_OUT_OF_STOCK')"
+    public: true
+
   mdfcforps.feed_service:
     class: Mdfcforps\Service\FeedService
+    arguments:
+      - '@mdfcforps.feed_eligibility_service'
     public: true
 
   mdfcforps.feed_products_service:
@@ -55,7 +63,7 @@ services:
     arguments:
       - "@=service('prestashop.adapter.legacy.context').getContext().language.id"
       - "@=service('prestashop.adapter.legacy.context').getContext().shop.id"
-      - "@=service('prestashop.adapter.legacy.configuration').get('PS_ORDER_OUT_OF_STOCK')"
+      - '@mdfcforps.feed_eligibility_service'
     public: true
 
   mdfcforps.grid.definition.factory.product_feed:
@@ -96,7 +104,7 @@ services:
     arguments:
       - "@=service('prestashop.adapter.legacy.context').getContext().language.id"
       - "@=service('prestashop.adapter.legacy.context').getContext().shop.id"
-      - "@=service('prestashop.adapter.legacy.configuration').get('PS_ORDER_OUT_OF_STOCK')"
+      - '@mdfcforps.feed_eligibility_service'
     public: true
 
   mdfcforps.grid.definition.factory.product_catalog:
