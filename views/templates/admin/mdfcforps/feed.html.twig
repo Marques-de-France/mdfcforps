@@ -24,28 +24,56 @@
     <h2>{{ 'Product Feed'|trans({}, 'Modules.Mdfcforps.Admin') }}</h2>
 
     {# ---- Feed mode toggle ---- #}
-    <form method="post" action="{{ path('mdfcforps_feed_mode') }}" class="mdf-feed-mode-form mb-4">
-      <div class="card">
-        <div class="card-header">
-          <h3 class="d-inline-block card-header-title mb-0">{{ 'Feed mode'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
-        </div>
-        <div class="card-body">
-          <div class="mdf-feed-mode-row">
-            <label>
-              <input type="radio" name="feed_mode" value="TAG" {% if feedMode == 'TAG' %}checked{% endif %}>
-              {{ 'Tag mode — include products tagged «marques-de-france»'|trans({}, 'Modules.Mdfcforps.Admin') }}
-            </label>
-            <label>
-              <input type="radio" name="feed_mode" value="SERVERLIST" {% if feedMode == 'SERVERLIST' %}checked{% endif %}>
-              {{ 'Manual list — include only products added below'|trans({}, 'Modules.Mdfcforps.Admin') }}
-            </label>
-            <button type="submit" class="btn btn-primary">
-              {{ 'Save'|trans({}, 'Admin.Actions') }}
-            </button>
-          </div>
+    <div class="card mb-4">
+      <div class="card-header">
+        <h3 class="d-inline-block card-header-title mb-0">{{ 'Feed mode'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
+      </div>
+      <div class="card-body">
+        <p class="mb-3" id="mdf-feed-mode-current-value">
+          {% if feedMode == 'SERVERLIST' %}
+            Via manual selection from this app
+          {% else %}
+            Via the product tag field
+          {% endif %}
+        </p>
+        <button type="button" class="btn btn-primary" id="mdf-feed-mode-change-btn" data-toggle="modal" data-target="#mdf-feed-mode-modal" onclick="if (window.mdfOpenFeedModeModal) { window.mdfOpenFeedModeModal(); } return false;">
+          Change
+        </button>
+      </div>
+    </div>
+
+    <div class="modal fade" id="mdf-feed-mode-modal" tabindex="-1" role="dialog" aria-labelledby="mdf-feed-mode-modal-label" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <form method="post" action="{{ path('mdfcforps_feed_mode') }}" id="mdf-feed-mode-modal-form">
+            <div class="modal-header">
+              <h5 class="modal-title" id="mdf-feed-mode-modal-label">Change mode</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="if (window.mdfCloseFeedModeModal) { window.mdfCloseFeedModeModal(); } return false;">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="mdf-feed-mode-select">Selection method</label>
+                <select class="form-control" id="mdf-feed-mode-select" name="feed_mode">
+                  <option value="TAG" {% if feedMode == 'TAG' %}selected{% endif %}>Via the product tag field (Recommended)</option>
+                  <option value="SERVERLIST" {% if feedMode == 'SERVERLIST' %}selected{% endif %}>Via manual selection from this module</option>
+                </select>
+              </div>
+
+              <hr>
+
+              <p class="mb-4"><strong>Via the product tag field (recommended)</strong><br>Simply add the tag <span class="badge badge-secondary">marques-de-france</span> to each of your products manufactured in France. This is the simplest and most direct method.</p>
+              <p class="mb-0"><strong>Via manual selection from this app</strong><br>Manually select products directly from this app. Choose this option if your product tag field is used to display information in your theme.</p>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">{{ 'Save'|trans({}, 'Admin.Actions') }}</button>
+              <button type="button" class="btn btn-outline-secondary" data-dismiss="modal" onclick="if (window.mdfCloseFeedModeModal) { window.mdfCloseFeedModeModal(); } return false;">Cancel</button>
+            </div>
+          </form>
         </div>
       </div>
-    </form>
+    </div>
 
     {# ---- SERVERLIST product management ---- #}
     {% if feedMode == 'SERVERLIST' %}
@@ -94,8 +122,94 @@
 
       </div>
     {% else %}
-      <div class="alert alert-info">
-        {{ 'Tag mode is active. Products tagged «marques-de-france» are included automatically.'|trans({}, 'Modules.Mdfcforps.Admin') }}
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3 class="d-inline-block card-header-title mb-0">How to include products in the feed?</h3>
+        </div>
+        <div class="card-body">
+          <p class="mb-3">Add the tag <span class="badge badge-secondary">marques-de-france</span> to the products you want to list on Marques de France. Selected products must be manufactured in France.</p>
+          <div class="d-flex align-items-center flex-wrap">
+            <a href="{{ getAdminLink('AdminTags', true) }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary mr-3 mb-2">
+              Add tag in bulk
+            </a>
+            <button type="button" class="btn btn-link p-0 mb-2" id="mdf-tag-help-open-btn" data-toggle="modal" data-target="#mdf-tag-help-modal" onclick="if (window.mdfOpenTagHelpModal) { window.mdfOpenTagHelpModal(); } return false;">
+              How to do ?
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="mdf-tag-help-modal" tabindex="-1" role="dialog" aria-labelledby="mdf-tag-help-modal-label" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="mdf-tag-help-modal-label">How to add the marques-de-france tag?</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="if (window.mdfCloseTagHelpModal) { window.mdfCloseTagHelpModal(); } return false;">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-4">
+                <div class="d-flex mb-3">
+                  <div class="mr-3 text-center" style="min-width: 24px;">
+                    <span class="badge badge-primary rounded-circle" style="width: 28px; height: 28px; line-height: 22px;">1</span>
+                  </div>
+                  <div>
+                    <p class="font-weight-bold mb-1">Go to Products</p>
+                    <p class="text-muted mb-0">From your Prestasop admin, go to Catalog > Products.</p>
+                  </div>
+                </div>
+
+                <div class="d-flex mb-3">
+                  <div class="mr-3 text-center" style="min-width: 24px;">
+                    <span class="badge badge-primary rounded-circle" style="width: 28px; height: 28px; line-height: 22px;">2</span>
+                  </div>
+                  <div>
+                    <p class="font-weight-bold mb-1">Select a product</p>
+                    <p class="text-muted mb-0">Open a product made in France.</p>
+                  </div>
+                </div>
+
+                <div class="d-flex mb-3">
+                  <div class="mr-3 text-center" style="min-width: 24px;">
+                    <span class="badge badge-primary rounded-circle" style="width: 28px; height: 28px; line-height: 22px;">3</span>
+                  </div>
+                  <div>
+                    <p class="font-weight-bold mb-1">Add the tag</p>
+                    <p class="text-muted mb-0">In the product page, go to the "SEO" tab and add the tag <span class="badge badge-secondary">marques-de-france</span> in the Tags field.</p>
+                  </div>
+                </div>
+
+                <div class="d-flex">
+                  <div class="mr-3 text-center" style="min-width: 24px;">
+                    <span class="badge badge-primary rounded-circle" style="width: 28px; height: 28px; line-height: 22px;">4</span>
+                  </div>
+                  <div>
+                    <p class="font-weight-bold mb-1">Save</p>
+                    <p class="text-muted mb-0">Click Save and publish. The product will appear in the feed.</p>
+                  </div>
+                </div>
+              </div>
+
+              <hr>
+
+              <p class="font-weight-bold mb-2">How to bulk edit?</p>
+              <p class="text-muted mb-3">To add the tag to multiple products at once, go to Shop parameters > Search > Tags. Then, create or edit the <span class="badge badge-secondary">marques-de-france</span> tag by adding products to it.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-info" role="alert">
+        Out-of-stock, inactive, or products missing a price, image, or brand are automatically excluded from the feed.
+      </div>
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h3 class="d-inline-block card-header-title mb-0">{{ 'Products in feed'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
+        </div>
+        <div class="card-body">
+          {{ include('@PrestaShop/Admin/Common/Grid/grid.html.twig', {'grid': productFeedGrid}) }}
+        </div>
       </div>
     {% endif %}
 
@@ -110,6 +224,134 @@ window.mdfcforpsFeed = {
 };
 
 (function () {
+  function initFeedModeModal() {
+    var changeBtn = document.getElementById('mdf-feed-mode-change-btn');
+    var modal = document.getElementById('mdf-feed-mode-modal');
+    if (!changeBtn || !modal) {
+      return;
+    }
+
+    function openModal() {
+      if (typeof window.$ === 'function' && window.$.fn && typeof window.$.fn.modal === 'function') {
+        window.$(modal).modal('show');
+        if (modal.classList.contains('show') || modal.style.display === 'block') {
+          return;
+        }
+      }
+
+      modal.classList.add('show');
+      modal.style.display = 'block';
+      modal.removeAttribute('aria-hidden');
+      document.body.classList.add('modal-open');
+      document.body.style.paddingRight = '0px';
+
+      if (!document.querySelector('.modal-backdrop')) {
+        var backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        backdrop.setAttribute('data-mdf-fallback-backdrop', '1');
+        backdrop.addEventListener('click', closeModal);
+        document.body.appendChild(backdrop);
+      }
+    }
+
+    function closeModal() {
+      if (typeof window.$ === 'function' && window.$.fn && typeof window.$.fn.modal === 'function') {
+        window.$(modal).modal('hide');
+        if (!modal.classList.contains('show') && modal.style.display !== 'block') {
+          return;
+        }
+      }
+
+      modal.classList.remove('show');
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+      document.body.style.paddingRight = '';
+
+      var backdrop = document.querySelector('.modal-backdrop[data-mdf-fallback-backdrop="1"]');
+      if (backdrop) {
+        backdrop.remove();
+      }
+    }
+
+    changeBtn.addEventListener('click', function () {
+      openModal();
+    });
+
+    window.mdfOpenFeedModeModal = openModal;
+    window.mdfCloseFeedModeModal = closeModal;
+
+    modal.querySelectorAll('[data-dismiss="modal"]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        closeModal();
+      });
+    });
+  }
+
+  function initTagHelpModal() {
+    var openBtn = document.getElementById('mdf-tag-help-open-btn');
+    var modal = document.getElementById('mdf-tag-help-modal');
+    if (!openBtn || !modal) {
+      return;
+    }
+
+    function openModal() {
+      if (typeof window.$ === 'function' && window.$.fn && typeof window.$.fn.modal === 'function') {
+        window.$(modal).modal('show');
+        if (modal.classList.contains('show') || modal.style.display === 'block') {
+          return;
+        }
+      }
+
+      modal.classList.add('show');
+      modal.style.display = 'block';
+      modal.removeAttribute('aria-hidden');
+      document.body.classList.add('modal-open');
+      document.body.style.paddingRight = '0px';
+
+      if (!document.querySelector('.modal-backdrop')) {
+        var backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        backdrop.setAttribute('data-mdf-fallback-backdrop', '1');
+        backdrop.addEventListener('click', closeModal);
+        document.body.appendChild(backdrop);
+      }
+    }
+
+    function closeModal() {
+      if (typeof window.$ === 'function' && window.$.fn && typeof window.$.fn.modal === 'function') {
+        window.$(modal).modal('hide');
+        if (!modal.classList.contains('show') && modal.style.display !== 'block') {
+          return;
+        }
+      }
+
+      modal.classList.remove('show');
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+      document.body.style.paddingRight = '';
+
+      var backdrop = document.querySelector('.modal-backdrop[data-mdf-fallback-backdrop="1"]');
+      if (backdrop) {
+        backdrop.remove();
+      }
+    }
+
+    openBtn.addEventListener('click', function () {
+      openModal();
+    });
+
+    window.mdfOpenTagHelpModal = openModal;
+    window.mdfCloseTagHelpModal = closeModal;
+
+    modal.querySelectorAll('[data-dismiss="modal"]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        closeModal();
+      });
+    });
+  }
+
   function preserveManageMode(gridId, panel) {
     var currentUrl = new URL(window.location.href);
     var isManageMode = currentUrl.searchParams.get('manage') === '1';
@@ -350,6 +592,9 @@ window.mdfcforpsFeed = {
 
   function boot(attempt) {
     attempt = attempt || 0;
+
+    initFeedModeModal();
+    initTagHelpModal();
 
     // Parent scripts can be deferred; wait until PrestaShop components are ready.
     if (!window.prestashop || !window.prestashop.component || !window.prestashop.component.GridExtensions) {

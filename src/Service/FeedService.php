@@ -400,24 +400,24 @@ class FeedService
      */
     private function getProductsByTag(string $tag, int $idLang, int $idShop, int $perPage, int $page): array
     {
-        // Find the tag ID
-        $tagId = (int) \Db::getInstance()->getValue(
-            'SELECT `id_tag` FROM `' . _DB_PREFIX_ . 'tag` WHERE `name` = \'' . pSQL($tag) . '\' AND `id_lang` = ' . $idLang
-        );
-
-        if ($tagId === 0) {
-            return [];
-        }
-
         $offset = ($page - 1) * $perPage;
 
         $query = new \DbQuery();
         $query->select('pt.id_product')
               ->from('product_tag', 'pt')
+              ->innerJoin('tag', 't', 't.id_tag = pt.id_tag')
               ->innerJoin('product', 'p', 'p.id_product = pt.id_product')
               ->innerJoin('product_shop', 'ps', 'ps.id_product = p.id_product AND ps.id_shop = ' . $idShop)
-              ->where('pt.id_tag = ' . $tagId)
-              ->where('ps.active = 1')
+              ->leftJoin(
+                  'stock_available',
+                  'sa',
+                  'sa.id_product = p.id_product AND sa.id_product_attribute = 0 AND sa.id_shop = ' . $idShop
+              )
+              ->where('LOWER(t.name) = \'' . \pSQL(strtolower($tag)) . '\'')
+              ->where('COALESCE(ps.active, p.active, 0) = 1')
+              ->where('COALESCE(ps.price, p.price, 0) > 0')
+              ->where($this->eligibilityService->buildStockEligibilityExpression('COALESCE(sa.quantity, 0)', 'COALESCE(sa.out_of_stock, 2)'))
+              ->groupBy('pt.id_product')
               ->orderBy('pt.id_product DESC')
               ->limit($perPage, $offset);
 

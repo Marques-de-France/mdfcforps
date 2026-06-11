@@ -61,6 +61,7 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
                 'COALESCE(ps.active, p.active, 0) AS active',
                 'COALESCE(sa.quantity, 0) AS quantity',
                 'COALESCE(ci.id_image, 0) AS id_image',
+                'COALESCE(pa_stats.combination_count, 0) AS combination_count',
                 $this->eligibilityService->buildOutOfStockOrderableExpression('COALESCE(sa.out_of_stock, 2)') . ' AS allow_orders'
             );
 
@@ -93,10 +94,23 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
 
     private function getBaseQuery(): QueryBuilder
     {
-        $qb = $this->connection
-            ->createQueryBuilder()
-            ->from($this->dbPrefix . 'mdfcforps_feed_products', 'fp')
-            ->innerJoin('fp', $this->dbPrefix . 'product', 'p', 'p.id_product = fp.product_id')
+        $feedMode = (string) \Configuration::get('MDFCFORPS_FEED_FILTER_MODE');
+        $isServerListMode = $feedMode === 'SERVERLIST';
+
+        $qb = $this->connection->createQueryBuilder();
+
+        if ($isServerListMode) {
+            $qb->from($this->dbPrefix . 'mdfcforps_feed_products', 'fp')
+               ->innerJoin('fp', $this->dbPrefix . 'product', 'p', 'p.id_product = fp.product_id');
+        } else {
+            $qb->from($this->dbPrefix . 'product_tag', 'pt')
+               ->innerJoin('pt', $this->dbPrefix . 'tag', 't', 't.id_tag = pt.id_tag')
+               ->innerJoin('pt', $this->dbPrefix . 'product', 'p', 'p.id_product = pt.id_product')
+               ->andWhere('LOWER(t.name) = :feed_tag')
+               ->setParameter('feed_tag', 'marques-de-france');
+        }
+
+        $qb
             ->leftJoin('p', $this->dbPrefix . 'product_lang', 'pl',
                 'pl.id_product = p.id_product AND pl.id_lang = :ctx_lang AND pl.id_shop = :ctx_shop')
             ->leftJoin('p', $this->dbPrefix . 'product_shop', 'ps',
@@ -107,13 +121,20 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
                 'sa.id_product = p.id_product AND sa.id_product_attribute = 0 AND sa.id_shop = :ctx_shop')
             ->leftJoin('p', $this->dbPrefix . 'image', 'ci',
                 'ci.id_product = p.id_product AND ci.cover = 1')
+            ->leftJoin(
+                'p',
+                '(SELECT id_product, COUNT(*) AS combination_count FROM ' . $this->dbPrefix . 'product_attribute GROUP BY id_product)',
+                'pa_stats',
+                'pa_stats.id_product = p.id_product'
+            )
             ->setParameter('ctx_lang', $this->contextLangId)
             ->setParameter('ctx_shop', $this->contextShopId);
 
         // Keep grid output consistent with feed output eligibility.
         $qb->andWhere('COALESCE(ps.active, p.active, 0) = 1')
            ->andWhere($this->eligibilityService->buildStockEligibilityExpression('COALESCE(sa.quantity, 0)', 'COALESCE(sa.out_of_stock, 2)'))
-           ->andWhere('COALESCE(ps.price, p.price, 0) > 0');
+              ->andWhere('COALESCE(ps.price, p.price, 0) > 0')
+              ->groupBy('p.id_product');
 
         return $qb;
     }

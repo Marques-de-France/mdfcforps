@@ -20,6 +20,9 @@ final class ProductFeedDataDecorator implements GridDataFactoryInterface
     /** @var \Link */
     private $link;
 
+    /** @var array<int, int> */
+    private $combinationCountCache = [];
+
     public function __construct(GridDataFactoryInterface $inner)
     {
         $this->inner = $inner;
@@ -44,16 +47,24 @@ final class ProductFeedDataDecorator implements GridDataFactoryInterface
             $name = (string) ($record['name'] ?? '');
             $productsUrl = (string) $this->link->getAdminLink('AdminProducts', true);
             $urlParts = parse_url($productsUrl);
-            $editPath = rtrim((string) ($urlParts['path'] ?? ''), '/') . '/' . $pid . '/edit';
-            $editUrl = $editPath;
+            $basePath = rtrim((string) ($urlParts['path'] ?? ''), '/');
+            $editUrl = $basePath . '/' . $pid . '/edit';
             if (!empty($urlParts['query'])) {
                 $editUrl .= '?' . $urlParts['query'];
+            }
+
+            $combinationCount = $this->getCombinationCount($pid);
+            $nameHtml = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+            if ($combinationCount > 0) {
+                $nameHtml .= ' <span class="badge badge-secondary">'
+                    . $combinationCount
+                    . ' combinations</span>';
             }
 
             $record['linked_name'] = sprintf(
                 '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
                 htmlspecialchars((string) $editUrl, ENT_QUOTES, 'UTF-8'),
-                htmlspecialchars($name, ENT_QUOTES, 'UTF-8')
+                $nameHtml
             );
 
             // Formatted price
@@ -79,5 +90,26 @@ final class ProductFeedDataDecorator implements GridDataFactoryInterface
         }
 
         return new GridData(new RecordCollection($records), $data->getRecordsTotal(), $data->getQuery());
+    }
+
+    private function getCombinationCount(int $productId): int
+    {
+        if ($productId <= 0) {
+            return 0;
+        }
+
+        if (isset($this->combinationCountCache[$productId])) {
+            return $this->combinationCountCache[$productId];
+        }
+
+        $query = new \DbQuery();
+        $query->select('COUNT(*)')
+              ->from('product_attribute')
+              ->where('id_product = ' . (int) $productId);
+
+        $count = (int) \Db::getInstance()->getValue($query);
+        $this->combinationCountCache[$productId] = $count;
+
+        return $count;
     }
 }
