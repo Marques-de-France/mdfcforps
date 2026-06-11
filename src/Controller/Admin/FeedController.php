@@ -34,6 +34,30 @@ class FeedController extends FrameworkBundleAdminController
         $this->productFeedGridFactory    = $productFeedGridFactory;
         $this->productCatalogGridFactory = $productCatalogGridFactory;
     }
+
+    /**
+     * @param mixed $raw
+     *
+     * @return array{min_field: ?float, max_field: ?float}
+     */
+    private function normalizePriceRange($raw): array
+    {
+        if (!is_array($raw)) {
+            return ['min_field' => null, 'max_field' => null];
+        }
+
+        $minRaw = $raw['min_field'] ?? null;
+        $maxRaw = $raw['max_field'] ?? null;
+
+        $min = (is_numeric($minRaw) && $minRaw !== '') ? (float) $minRaw : null;
+        $max = (is_numeric($maxRaw) && $maxRaw !== '') ? (float) $maxRaw : null;
+
+        return [
+            'min_field' => $min,
+            'max_field' => $max,
+        ];
+    }
+
     /**
      * Main feed page: renders the Product Feed grid and (optionally) the catalog manage panel.
      */
@@ -57,8 +81,8 @@ class FeedController extends FrameworkBundleAdminController
                 'brand' => (string) ($feedParams['brand'] ?? ($feedParams['filters']['brand'] ?? '')),
                 'reference' => (string) ($feedParams['reference'] ?? ($feedParams['filters']['reference'] ?? '')),
                 'availability' => (string) ($feedParams['availability'] ?? ($feedParams['filters']['availability'] ?? '')),
-                'price' => (string) ($feedParams['price'] ?? ($feedParams['filters']['price'] ?? '')),
-                'status' => (string) ($feedParams['status'] ?? ($feedParams['filters']['status'] ?? '')),
+                'allow_orders' => (string) ($feedParams['allow_orders'] ?? ($feedParams['filters']['allow_orders'] ?? '')),
+                'price' => $this->normalizePriceRange($feedParams['price'] ?? ($feedParams['filters']['price'] ?? null)),
             ],
             'orderBy' => $feedParams['orderBy'] ?? null,
             // PrestaShop Filters expects sortOrder key.
@@ -97,8 +121,8 @@ class FeedController extends FrameworkBundleAdminController
                     'brand' => (string) ($catalogParams['brand'] ?? ($catalogParams['filters']['brand'] ?? '')),
                     'reference' => (string) ($catalogParams['reference'] ?? ($catalogParams['filters']['reference'] ?? '')),
                     'availability' => (string) ($catalogParams['availability'] ?? ($catalogParams['filters']['availability'] ?? '')),
-                    'price' => (string) ($catalogParams['price'] ?? ($catalogParams['filters']['price'] ?? '')),
-                    'status' => (string) ($catalogParams['status'] ?? ($catalogParams['filters']['status'] ?? '')),
+                    'allow_orders' => (string) ($catalogParams['allow_orders'] ?? ($catalogParams['filters']['allow_orders'] ?? '')),
+                    'price' => $this->normalizePriceRange($catalogParams['price'] ?? ($catalogParams['filters']['price'] ?? null)),
                 ],
                 'orderBy' => $catalogParams['orderBy'] ?? null,
                 'sortOrder' => $catalogParams['sortOrder'] ?? ($catalogParams['orderWay'] ?? null),

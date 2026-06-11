@@ -69,10 +69,15 @@ final class ProductCatalogDataDecorator implements GridDataFactoryInterface
                 $record['availability'] = '<span class="badge badge-danger">Out of stock</span>';
             }
 
+            $allowOrders = (bool) ($record['allow_orders'] ?? false);
+            $record['allow_orders_badge'] = $allowOrders
+                ? '<span class="badge badge-success">Allow orders</span>'
+                : '<span class="badge badge-danger">Deny orders</span>';
+
             $active = (bool) ($record['active'] ?? false);
             $record['status_badge'] = $active
                 ? '<span class="badge badge-success">Enabled</span>'
-                : '<span class="badge badge-secondary">Disabled</span>';
+                : '<span class="badge badge-danger">Disabled</span>';
 
             // Checkbox HTML — carries data attributes used by feed.js toggleProduct()
             $checked = $inFeed ? ' checked' : '';

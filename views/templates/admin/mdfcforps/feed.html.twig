@@ -284,6 +284,19 @@ window.mdfcforpsFeed = {
           filterForm.submit();
         }
       });
+
+      filterForm.addEventListener('change', function (event) {
+        var target = event.target;
+        if (!target || target.tagName !== 'SELECT') {
+          return;
+        }
+
+        if (typeof filterForm.requestSubmit === 'function') {
+          filterForm.requestSubmit();
+        } else {
+          filterForm.submit();
+        }
+      });
     }
 
     // Fallback: paginator page-size selector to query params for this grid.

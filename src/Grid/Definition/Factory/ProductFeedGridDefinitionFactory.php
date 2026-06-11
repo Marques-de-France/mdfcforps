@@ -11,6 +11,8 @@ use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\ImageColumn;
 use PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory;
 use PrestaShop\PrestaShop\Core\Grid\Filter\Filter;
 use PrestaShop\PrestaShop\Core\Grid\Filter\FilterCollection;
+use PrestaShopBundle\Form\Admin\Type\NumberMinMaxFilterType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 /**
@@ -38,7 +40,7 @@ final class ProductFeedGridDefinitionFactory extends AbstractGridDefinitionFacto
                 ])
             )
             ->add((new HtmlColumn('name'))
-                ->setName($this->trans('Product name', [], 'Admin.Catalog.Feature'))
+                ->setName($this->trans('Name', [], 'Admin.Global'))
                 ->setOptions([
                     'field' => 'linked_name',
                     'sortable' => true,
@@ -52,6 +54,13 @@ final class ProductFeedGridDefinitionFactory extends AbstractGridDefinitionFacto
                 ->setName($this->trans('Reference', [], 'Admin.Catalog.Feature'))
                 ->setOptions(['field' => 'reference'])
             )
+            ->add((new DataColumn('price'))
+                ->setName($this->trans('Price', [], 'Admin.Global'))
+                ->setOptions([
+                    'field'    => 'price',
+                    'sortable' => true,
+                ])
+            )
             ->add((new HtmlColumn('availability'))
                 ->setName($this->trans('Availability', [], 'Admin.Catalog.Feature'))
                 ->setOptions([
@@ -59,10 +68,10 @@ final class ProductFeedGridDefinitionFactory extends AbstractGridDefinitionFacto
                     'sortable' => true,
                 ])
             )
-            ->add((new DataColumn('price'))
-                ->setName($this->trans('Price', [], 'Admin.Global'))
+            ->add((new HtmlColumn('allow_orders_badge'))
+                ->setName($this->trans('Allow orders', [], 'Modules.Mdfcforps.Admin'))
                 ->setOptions([
-                    'field'    => 'price',
+                    'field'    => 'allow_orders_badge',
                     'sortable' => true,
                 ])
             )
@@ -81,44 +90,51 @@ final class ProductFeedGridDefinitionFactory extends AbstractGridDefinitionFacto
             ->add((new Filter('name', TextType::class))
                 ->setTypeOptions([
                     'required' => false,
-                    'attr'     => ['placeholder' => $this->trans('Name', [], 'Admin.Global')],
+                    'attr'     => ['placeholder' => $this->trans('Search name', [], 'Admin.Catalog.Help')],
                 ])
                 ->setAssociatedColumn('name')
             )
             ->add((new Filter('brand', TextType::class))
                 ->setTypeOptions([
                     'required' => false,
-                    'attr'     => ['placeholder' => $this->trans('Brand', [], 'Admin.Catalog.Feature')],
+                    'attr'     => ['placeholder' => $this->trans('Search brand', [], 'Modules.Mdfcforps.Admin')],
                 ])
                 ->setAssociatedColumn('brand')
             )
             ->add((new Filter('reference', TextType::class))
                 ->setTypeOptions([
                     'required' => false,
-                    'attr'     => ['placeholder' => $this->trans('Reference', [], 'Admin.Catalog.Feature')],
+                    'attr'     => ['placeholder' => $this->trans('Search reference', [], 'Admin.Catalog.Help')],
                 ])
                 ->setAssociatedColumn('reference')
             )
-            ->add((new Filter('availability', TextType::class))
+            ->add((new Filter('availability', ChoiceType::class))
                 ->setTypeOptions([
                     'required' => false,
-                    'attr'     => ['placeholder' => $this->trans('Availability', [], 'Admin.Catalog.Feature')],
+                    'placeholder' => $this->trans('All', [], 'Admin.Global'),
+                    'choices' => [
+                        $this->trans('In stock', [], 'Admin.Catalog.Feature') => 'in_stock',
+                        $this->trans('Out of stock', [], 'Admin.Catalog.Feature') => 'out_of_stock',
+                    ],
                 ])
                 ->setAssociatedColumn('availability')
             )
-            ->add((new Filter('price', TextType::class))
+            ->add((new Filter('allow_orders', ChoiceType::class))
                 ->setTypeOptions([
                     'required' => false,
-                    'attr'     => ['placeholder' => $this->trans('Price', [], 'Admin.Global')],
+                    'placeholder' => $this->trans('All', [], 'Admin.Global'),
+                    'choices' => [
+                        $this->trans('Allow orders', [], 'Modules.Mdfcforps.Admin') => 'allow',
+                        $this->trans('Deny orders', [], 'Modules.Mdfcforps.Admin') => 'deny',
+                    ],
+                ])
+                ->setAssociatedColumn('allow_orders_badge')
+            )
+            ->add((new Filter('price', NumberMinMaxFilterType::class))
+                ->setTypeOptions([
+                    'required' => false,
                 ])
                 ->setAssociatedColumn('price')
-            )
-            ->add((new Filter('status', TextType::class))
-                ->setTypeOptions([
-                    'required' => false,
-                    'attr'     => ['placeholder' => $this->trans('Status', [], 'Admin.Global')],
-                ])
-                ->setAssociatedColumn('status_badge')
             );
     }
 }

@@ -55,6 +55,7 @@ services:
     arguments:
       - "@=service('prestashop.adapter.legacy.context').getContext().language.id"
       - "@=service('prestashop.adapter.legacy.context').getContext().shop.id"
+      - "@=service('prestashop.adapter.legacy.configuration').get('PS_ORDER_OUT_OF_STOCK')"
     public: true
 
   mdfcforps.grid.definition.factory.product_feed:
@@ -95,6 +96,7 @@ services:
     arguments:
       - "@=service('prestashop.adapter.legacy.context').getContext().language.id"
       - "@=service('prestashop.adapter.legacy.context').getContext().shop.id"
+      - "@=service('prestashop.adapter.legacy.configuration').get('PS_ORDER_OUT_OF_STOCK')"
     public: true
 
   mdfcforps.grid.definition.factory.product_catalog:

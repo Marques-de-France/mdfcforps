@@ -21,20 +21,31 @@ final class ProductCatalogQueryBuilder extends AbstractDoctrineQueryBuilder
     /** @var int */
     private $contextShopId;
 
+    /** @var bool */
+    private $allowOrderOutOfStockByDefault;
+
     private const ORDER_MAP = [
         'name'         => 'pl.name',
         'brand'        => 'm.name',
         'reference'    => 'p.reference',
         'price'        => 'ps.price',
         'availability' => 'sa.quantity',
+        'allow_orders_badge' => 'allow_orders',
         'active'       => 'ps.active',
     ];
 
-    public function __construct(Connection $connection, string $dbPrefix, int $contextLangId, int $contextShopId)
+    public function __construct(
+        Connection $connection,
+        string $dbPrefix,
+        int $contextLangId,
+        int $contextShopId,
+        $globalOutOfStockDefault
+    )
     {
         parent::__construct($connection, $dbPrefix);
         $this->contextLangId = $contextLangId;
         $this->contextShopId = $contextShopId;
+        $this->allowOrderOutOfStockByDefault = (int) $globalOutOfStockDefault === 1;
     }
 
     public function getSearchQueryBuilder(SearchCriteriaInterface $searchCriteria): QueryBuilder
@@ -49,6 +60,12 @@ final class ProductCatalogQueryBuilder extends AbstractDoctrineQueryBuilder
                 'COALESCE(ps.active, p.active, 0) AS active',
                 'COALESCE(sa.quantity, 0) AS quantity',
                 'COALESCE(ci.id_image, 0) AS id_image',
+                'CASE
+                    WHEN COALESCE(sa.out_of_stock, 2) = 1 THEN 1
+                    WHEN COALESCE(sa.out_of_stock, 2) = 0 THEN 0
+                    WHEN :allow_order_out_of_stock_by_default = 1 THEN 1
+                    ELSE 0
+                END AS allow_orders',
                 'EXISTS(SELECT 1 FROM ' . $this->dbPrefix . 'mdfcforps_feed_products fp2
                     WHERE fp2.product_id = p.id_product) AS in_feed'
             );
@@ -96,46 +113,94 @@ final class ProductCatalogQueryBuilder extends AbstractDoctrineQueryBuilder
             ->leftJoin('p', $this->dbPrefix . 'image', 'ci',
                 'ci.id_product = p.id_product AND ci.cover = 1')
             ->setParameter('ctx_lang', $this->contextLangId)
-            ->setParameter('ctx_shop', $this->contextShopId);
+            ->setParameter('ctx_shop', $this->contextShopId)
+            ->setParameter('allow_order_out_of_stock_by_default', $this->allowOrderOutOfStockByDefault ? 1 : 0);
     }
 
     /** @param array<string, mixed> $filters */
     private function applyFilters(QueryBuilder $qb, array $filters): void
     {
         foreach ($filters as $name => $value) {
-            $value = trim((string) $value);
-            if ($value === '') {
-                continue;
-            }
-
             switch ($name) {
                 case 'search':
+                    $value = trim((string) $value);
+                    if ($value === '') {
+                        break;
+                    }
+
                     $qb->andWhere('(pl.name LIKE :filter_search OR p.reference LIKE :filter_search)')
                        ->setParameter('filter_search', '%' . $value . '%');
                     break;
                 case 'name':
+                    $value = trim((string) $value);
+                    if ($value === '') {
+                        break;
+                    }
+
                     $qb->andWhere('pl.name LIKE :filter_name')
                        ->setParameter('filter_name', '%' . $value . '%');
                     break;
                 case 'brand':
+                    $value = trim((string) $value);
+                    if ($value === '') {
+                        break;
+                    }
+
                     $qb->andWhere('m.name LIKE :filter_brand')
                        ->setParameter('filter_brand', '%' . $value . '%');
                     break;
                 case 'reference':
+                    $value = trim((string) $value);
+                    if ($value === '') {
+                        break;
+                    }
+
                     $qb->andWhere('p.reference LIKE :filter_reference')
                        ->setParameter('filter_reference', '%' . $value . '%');
                     break;
                 case 'availability':
-                    $qb->andWhere("(CASE WHEN COALESCE(sa.quantity, 0) > 0 THEN 'In stock' ELSE 'Out of stock' END) LIKE :filter_availability")
-                       ->setParameter('filter_availability', '%' . $value . '%');
+                    $value = trim((string) $value);
+                    if ($value === 'in_stock') {
+                        $qb->andWhere('COALESCE(sa.quantity, 0) > 0');
+                    } elseif ($value === 'out_of_stock') {
+                        $qb->andWhere('COALESCE(sa.quantity, 0) <= 0');
+                    }
+                    break;
+                case 'allow_orders':
+                    $value = trim((string) $value);
+                    if ($value === 'allow') {
+                        $qb->andWhere('(
+                            COALESCE(sa.out_of_stock, 2) = 1
+                            OR (
+                                COALESCE(sa.out_of_stock, 2) = 2
+                                AND :allow_order_out_of_stock_by_default = 1
+                            )
+                        )');
+                    } elseif ($value === 'deny') {
+                        $qb->andWhere('(
+                            COALESCE(sa.out_of_stock, 2) = 0
+                            OR (
+                                COALESCE(sa.out_of_stock, 2) = 2
+                                AND :allow_order_out_of_stock_by_default = 0
+                            )
+                        )');
+                    }
                     break;
                 case 'price':
-                    $qb->andWhere('CAST(COALESCE(ps.price, p.price, 0) AS CHAR) LIKE :filter_price')
-                       ->setParameter('filter_price', '%' . $value . '%');
-                    break;
-                case 'status':
-                    $qb->andWhere("(CASE WHEN COALESCE(ps.active, p.active, 0) = 1 THEN 'Enabled' ELSE 'Disabled' END) LIKE :filter_status")
-                       ->setParameter('filter_status', '%' . $value . '%');
+                    if (!is_array($value)) {
+                        break;
+                    }
+
+                    $min = isset($value['min_field']) && $value['min_field'] !== '' ? (float) $value['min_field'] : null;
+                    $max = isset($value['max_field']) && $value['max_field'] !== '' ? (float) $value['max_field'] : null;
+                    if (null !== $min) {
+                        $qb->andWhere('COALESCE(ps.price, p.price, 0) >= :filter_price_min')
+                           ->setParameter('filter_price_min', $min);
+                    }
+                    if (null !== $max) {
+                        $qb->andWhere('COALESCE(ps.price, p.price, 0) <= :filter_price_max')
+                           ->setParameter('filter_price_max', $max);
+                    }
                     break;
             }
         }
