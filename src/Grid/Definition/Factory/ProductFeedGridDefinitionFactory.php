@@ -107,6 +107,7 @@ final class ProductFeedGridDefinitionFactory extends AbstractGridDefinitionFacto
                     'placeholder' => $this->trans('All', [], 'Admin.Global'),
                     'choices' => [
                         $this->trans('In stock', [], 'Admin.Catalog.Feature') => 'in_stock',
+                        $this->trans('Out of stock but allow orders', [], 'Modules.Mdfcforps.Admin') => 'out_of_stock_allow_orders',
                         $this->trans('Out of stock', [], 'Admin.Catalog.Feature') => 'out_of_stock',
                     ],
                 ])
