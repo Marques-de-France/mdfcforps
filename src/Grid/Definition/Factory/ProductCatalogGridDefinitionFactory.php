@@ -76,13 +76,6 @@ final class ProductCatalogGridDefinitionFactory extends AbstractGridDefinitionFa
                     'sortable' => true,
                 ])
             )
-            ->add((new HtmlColumn('allow_orders_badge'))
-                ->setName($this->trans('Allow orders', [], 'Modules.Mdfcforps.Admin'))
-                ->setOptions([
-                    'field'    => 'allow_orders_badge',
-                    'sortable' => true,
-                ])
-            )
             ->add((new HtmlColumn('status_badge'))
                 ->setName($this->trans('Status', [], 'Admin.Global'))
                 ->setOptions([
@@ -126,17 +119,6 @@ final class ProductCatalogGridDefinitionFactory extends AbstractGridDefinitionFa
                     ],
                 ])
                 ->setAssociatedColumn('availability')
-            )
-            ->add((new Filter('allow_orders', ChoiceType::class))
-                ->setTypeOptions([
-                    'required' => false,
-                    'placeholder' => $this->trans('All', [], 'Admin.Global'),
-                    'choices' => [
-                        $this->trans('Allow orders', [], 'Modules.Mdfcforps.Admin') => 'allow',
-                        $this->trans('Deny orders', [], 'Modules.Mdfcforps.Admin') => 'deny',
-                    ],
-                ])
-                ->setAssociatedColumn('allow_orders_badge')
             )
             ->add((new Filter('price', NumberMinMaxFilterType::class))
                 ->setTypeOptions([

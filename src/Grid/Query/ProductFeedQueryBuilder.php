@@ -31,7 +31,6 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
         'reference'    => 'p.reference',
         'price'        => 'ps.price',
         'availability' => 'sa.quantity',
-        'allow_orders_badge' => 'allow_orders',
         'active'       => 'ps.active',
     ];
 
@@ -166,26 +165,6 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
                         $qb->andWhere('COALESCE(sa.quantity, 0) > 0');
                     } elseif ($value === 'out_of_stock') {
                         $qb->andWhere('COALESCE(sa.quantity, 0) <= 0');
-                    }
-                    break;
-                case 'allow_orders':
-                    $value = trim((string) $value);
-                    if ($value === 'allow') {
-                        $qb->andWhere('(
-                            COALESCE(sa.out_of_stock, 2) = 1
-                            OR (
-                                COALESCE(sa.out_of_stock, 2) = 2
-                                AND :allow_order_out_of_stock_by_default = 1
-                            )
-                        )');
-                    } elseif ($value === 'deny') {
-                        $qb->andWhere('(
-                            COALESCE(sa.out_of_stock, 2) = 0
-                            OR (
-                                COALESCE(sa.out_of_stock, 2) = 2
-                                AND :allow_order_out_of_stock_by_default = 0
-                            )
-                        )');
                     }
                     break;
                 case 'price':

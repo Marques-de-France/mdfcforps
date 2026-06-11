@@ -61,16 +61,14 @@ final class ProductFeedDataDecorator implements GridDataFactoryInterface
 
             // Availability badge HTML
             $qty = (int) ($record['quantity'] ?? 0);
+            $allowOrders = (bool) ($record['allow_orders'] ?? false);
             if ($qty > 0) {
                 $record['availability'] = '<span class="badge badge-success">In stock</span>';
+            } elseif ($allowOrders) {
+                $record['availability'] = '<span class="badge badge-success">Out of stock but allow orders</span>';
             } else {
                 $record['availability'] = '<span class="badge badge-danger">Out of stock</span>';
             }
-
-            $allowOrders = (bool) ($record['allow_orders'] ?? false);
-            $record['allow_orders_badge'] = $allowOrders
-                ? '<span class="badge badge-success">Allow orders</span>'
-                : '<span class="badge badge-danger">Deny orders</span>';
 
             $active = (bool) ($record['active'] ?? false);
             $record['status_badge'] = $active
