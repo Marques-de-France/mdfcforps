@@ -6,6 +6,11 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+// PSR-4 autoloading for Symfony-style classes (Grid, Controller, Form types, etc.)
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+}
+
 require_once __DIR__ . '/src/Install/Installer.php';
 require_once __DIR__ . '/src/Service/HubClient.php';
 require_once __DIR__ . '/src/Repository/SaleRepository.php';

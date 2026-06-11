@@ -1,0 +1,28 @@
+mdfcforps_feed_index:
+    path: /mdfcforps/feed
+    methods: [GET, POST]
+    defaults:
+        _controller: 'Mdfcforps\Controller\Admin\FeedController::indexAction'
+        _legacy_controller: AdminMdfcforps
+        _legacy_link: AdminMdfcforps
+
+mdfcforps_feed_toggle:
+    path: /mdfcforps/feed/toggle
+    methods: [POST]
+    defaults:
+        _controller: 'Mdfcforps\Controller\Admin\FeedController::toggleAction'
+        _legacy_controller: AdminMdfcforps
+
+mdfcforps_feed_bulk:
+    path: /mdfcforps/feed/bulk
+    methods: [POST]
+    defaults:
+        _controller: 'Mdfcforps\Controller\Admin\FeedController::bulkAction'
+        _legacy_controller: AdminMdfcforps
+
+mdfcforps_feed_mode:
+    path: /mdfcforps/feed/mode
+    methods: [POST]
+    defaults:
+        _controller: 'Mdfcforps\Controller\Admin\FeedController::updateModeAction'
+        _legacy_controller: AdminMdfcforps

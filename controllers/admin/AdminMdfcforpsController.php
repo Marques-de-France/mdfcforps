@@ -16,7 +16,7 @@ if (!defined('_PS_VERSION_')) {
 class AdminMdfcforpsController extends ModuleAdminController
 {
     /** @var string[] */
-    private const TABS = ['dashboard', 'sales', 'feed'];
+    private const TABS = ['dashboard', 'sales'];
 
     public function __construct()
     {
@@ -56,12 +56,18 @@ class AdminMdfcforpsController extends ModuleAdminController
             _PS_MODULE_DIR_ . 'mdfcforps/views/templates/admin/_status_banner.tpl'
         );
 
+        // Feed tab is now a Symfony route — redirect immediately
+        if ($tab === 'feed') {
+            $router  = \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()->get('router');
+            $feedUrl = $router->generate('mdfcforps_feed_index');
+            Tools::redirectAdmin($feedUrl);
+
+            return;
+        }
+
         switch ($tab) {
             case 'sales':
                 $this->renderSalesTab();
-                break;
-            case 'feed':
-                $this->renderFeedTab();
                 break;
             default:
                 $this->renderDashboardTab();
@@ -144,6 +150,21 @@ class AdminMdfcforpsController extends ModuleAdminController
             return;
         }
 
+        if (Tools::isSubmit('mdf_search_products')) {
+            $this->handleSearchProducts();
+            return;
+        }
+
+        if (Tools::isSubmit('mdf_bulk_add_products')) {
+            $this->handleBulkAddProducts();
+            return;
+        }
+
+        if (Tools::isSubmit('mdf_bulk_remove_products')) {
+            $this->handleBulkRemoveProducts();
+            return;
+        }
+
         if (Tools::isSubmit('mdf_update_feed_mode')) {
             $this->handleFeedModeUpdate();
         }
@@ -220,6 +241,68 @@ class AdminMdfcforpsController extends ModuleAdminController
         }
 
         \Mdfcforps\Service\FeedProductsService::removeProduct($productId);
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+    private function handleSearchProducts(): void
+    {
+        header('Content-Type: application/json');
+
+        $search  = (string) Tools::getValue('search', '');
+        $page    = max(1, (int) Tools::getValue('page', 1));
+        $perPage = min(50, max(1, (int) Tools::getValue('per_page', 20)));
+        $idLang  = (int) $this->context->language->id;
+
+        $result = \Mdfcforps\Service\FeedProductsService::searchProducts(
+            $search,
+            $idLang,
+            $page,
+            $perPage
+        );
+
+        echo json_encode($result);
+        exit;
+    }
+
+    private function handleBulkAddProducts(): void
+    {
+        header('Content-Type: application/json');
+
+        $ids = Tools::getValue('product_ids');
+        if (!is_array($ids)) {
+            echo json_encode(['success' => false, 'error' => 'product_ids must be an array']);
+            exit;
+        }
+
+        foreach ($ids as $id) {
+            $productId = (int) $id;
+            if ($productId > 0) {
+                \Mdfcforps\Service\FeedProductsService::addProduct($productId);
+            }
+        }
+
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+    private function handleBulkRemoveProducts(): void
+    {
+        header('Content-Type: application/json');
+
+        $ids = Tools::getValue('product_ids');
+        if (!is_array($ids)) {
+            echo json_encode(['success' => false, 'error' => 'product_ids must be an array']);
+            exit;
+        }
+
+        foreach ($ids as $id) {
+            $productId = (int) $id;
+            if ($productId > 0) {
+                \Mdfcforps\Service\FeedProductsService::removeProduct($productId);
+            }
+        }
+
         echo json_encode(['success' => true]);
         exit;
     }

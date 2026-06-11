@@ -1,0 +1,366 @@
+{#**
+ * Marques de France — BO Admin — Product Feed tab (Symfony / Grid component)
+ *#}
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+{% trans_default_domain 'Modules.Mdfcforps.Admin' %}
+
+{% block content %}
+<div class="mdf-admin-wrap">
+
+  {# ---- Tab navigation ---- #}
+  <nav class="mdf-tabs">
+    <a href="{{ getAdminLink('AdminMdfcforps', true, {'tab': 'dashboard'}) }}" class="mdf-tab">
+      {{ 'Dashboard'|trans({}, 'Modules.Mdfcforps.Admin') }}
+    </a>
+    <a href="{{ path('mdfcforps_feed_index') }}" class="mdf-tab active">
+      {{ 'Product Feed'|trans({}, 'Modules.Mdfcforps.Admin') }}
+    </a>
+    <a href="{{ getAdminLink('AdminMdfcforps', true, {'tab': 'sales'}) }}" class="mdf-tab">
+      {{ 'Sales'|trans({}, 'Modules.Mdfcforps.Admin') }}
+    </a>
+  </nav>
+
+  <div class="mdf-tab-content">
+    <h2>{{ 'Product Feed'|trans({}, 'Modules.Mdfcforps.Admin') }}</h2>
+
+    {# ---- Feed mode toggle ---- #}
+    <form method="post" action="{{ path('mdfcforps_feed_mode') }}" class="mdf-feed-mode-form mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="d-inline-block card-header-title mb-0">{{ 'Feed mode'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
+        </div>
+        <div class="card-body">
+          <div class="mdf-feed-mode-row">
+            <label>
+              <input type="radio" name="feed_mode" value="TAG" {% if feedMode == 'TAG' %}checked{% endif %}>
+              {{ 'Tag mode — include products tagged «marques-de-france»'|trans({}, 'Modules.Mdfcforps.Admin') }}
+            </label>
+            <label>
+              <input type="radio" name="feed_mode" value="SERVERLIST" {% if feedMode == 'SERVERLIST' %}checked{% endif %}>
+              {{ 'Manual list — include only products added below'|trans({}, 'Modules.Mdfcforps.Admin') }}
+            </label>
+            <button type="submit" class="btn btn-primary">
+              {{ 'Save'|trans({}, 'Admin.Actions') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    {# ---- SERVERLIST product management ---- #}
+    {% if feedMode == 'SERVERLIST' %}
+      <div class="mdf-serverlist-panel">
+
+        {# ---- Manage panel (catalog grid) ---- #}
+        {% if manage and productCatalogGrid is defined %}
+          <div class="card mb-4" id="mdf-manage-panel">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h3 class="d-inline-block card-header-title mb-0">{{ 'Select products to include in feed'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
+              <a href="{{ path('mdfcforps_feed_index') }}" class="btn btn-primary">
+                {{ 'Save'|trans({}, 'Admin.Actions') }}
+              </a>
+            </div>
+            <div class="card-body">
+              <div class="alert alert-warning" role="alert">
+                Only select products manufactured in France. These are the products that will appear in the Marques de France guide.
+              </div>
+              {{ include('@PrestaShop/Admin/Common/Grid/grid.html.twig', {'grid': productCatalogGrid}) }}
+              <div class="p-3">
+                <a href="{{ path('mdfcforps_feed_index') }}" class="btn btn-primary">
+                  {{ 'Save'|trans({}, 'Admin.Actions') }}
+                </a>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+        {# ---- Products in feed grid (hidden in manage mode) ---- #}
+        {% if not manage %}
+          <div class="alert alert-info" role="alert">
+            Out-of-stock, inactive, or products missing a price, image, or brand are automatically excluded from the feed.
+          </div>
+          <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h3 class="d-inline-block card-header-title mb-0">{{ 'Products in feed'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
+              <a href="{{ path('mdfcforps_feed_index', {manage: 1}) }}" class="btn btn-primary">
+                {{ 'Manage products'|trans({}, 'Modules.Mdfcforps.Admin') }}
+              </a>
+            </div>
+            <div class="card-body">
+              {{ include('@PrestaShop/Admin/Common/Grid/grid.html.twig', {'grid': productFeedGrid}) }}
+            </div>
+          </div>
+        {% endif %}
+
+      </div>
+    {% else %}
+      <div class="alert alert-info">
+        {{ 'Tag mode is active. Products tagged «marques-de-france» are included automatically.'|trans({}, 'Modules.Mdfcforps.Admin') }}
+      </div>
+    {% endif %}
+
+  </div>{# /.mdf-tab-content #}
+</div>{# /.mdf-admin-wrap #}
+
+{# ---- AJAX config for feed.js ---- #}
+<script>
+window.mdfcforpsFeed = {
+  toggleUrl: "{{ path('mdfcforps_feed_toggle') }}",
+  bulkUrl:   "{{ path('mdfcforps_feed_bulk') }}"
+};
+
+(function () {
+  function preserveManageMode(gridId, panel) {
+    var currentUrl = new URL(window.location.href);
+    var isManageMode = currentUrl.searchParams.get('manage') === '1';
+    if (!isManageMode || !panel) {
+      return;
+    }
+
+    var filterForm = document.getElementById(gridId + '_filter_form');
+    if (filterForm) {
+      var hiddenManage = filterForm.querySelector('input[name="manage"]');
+      if (!hiddenManage) {
+        hiddenManage = document.createElement('input');
+        hiddenManage.type = 'hidden';
+        hiddenManage.name = 'manage';
+        hiddenManage.value = '1';
+        filterForm.appendChild(hiddenManage);
+      }
+
+      if (filterForm.action) {
+        var actionUrl = new URL(filterForm.action, window.location.origin);
+        actionUrl.searchParams.set('manage', '1');
+        filterForm.action = actionUrl.toString();
+      }
+    }
+
+    panel.querySelectorAll('a[href]').forEach(function (anchor) {
+      var href = anchor.getAttribute('href');
+      if (!href || href.indexOf('javascript:') === 0 || href.indexOf('#') === 0) {
+        return;
+      }
+
+      var linkUrl = new URL(href, window.location.origin);
+      if (linkUrl.origin !== window.location.origin || linkUrl.pathname !== window.location.pathname) {
+        return;
+      }
+
+      linkUrl.searchParams.set('manage', '1');
+      anchor.setAttribute('href', linkUrl.toString());
+    });
+  }
+
+  function ensureManageSelectAll() {
+    var currentUrl = new URL(window.location.href);
+    if (currentUrl.searchParams.get('manage') !== '1') {
+      return;
+    }
+
+    var grid = document.getElementById('product_catalog_grid');
+    if (!grid) {
+      return;
+    }
+
+    var firstHeader = grid.querySelector('thead th:first-child');
+    if (!firstHeader) {
+      return;
+    }
+
+    if (firstHeader.querySelector('#mdf-manage-select-all')) {
+      return;
+    }
+
+    firstHeader.classList.add('text-center');
+    firstHeader.innerHTML = '<div class="md-checkbox md-checkbox-inline"><label><input type="checkbox" id="mdf-manage-select-all" class="form-check-input" title="Select / deselect all visible"><i class="md-checkbox-control"></i></label></div>';
+  }
+
+  function toggleSelectAll(checked) {
+    var checkboxes = document.querySelectorAll('#product_catalog_grid tbody .mdf-manage-cb');
+    var toAdd = [];
+    var toRemove = [];
+
+    checkboxes.forEach(function (checkbox) {
+      var row = checkbox.closest('tr');
+      var pid = checkbox.getAttribute('data-product-id') || (row && row.getAttribute('data-product-id'));
+      var inFeed = (checkbox.getAttribute('data-in-feed') || (row && row.getAttribute('data-in-feed'))) === '1';
+      if (!pid) {
+        return;
+      }
+
+      if (checked && !inFeed) {
+        toAdd.push(pid);
+      }
+      if (!checked && inFeed) {
+        toRemove.push(pid);
+      }
+    });
+
+    function postBulk(action, ids) {
+      if (!ids.length) {
+        return Promise.resolve();
+      }
+
+      var config = window.mdfcforpsFeed;
+      var url = config && config.bulkUrl ? config.bulkUrl : '';
+      var form = new FormData();
+      form.append('action', action);
+      ids.forEach(function (id) {
+        form.append('product_ids[]', id);
+      });
+
+      return fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: form,
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (json) {
+        if (!json.success) {
+          return;
+        }
+
+        ids.forEach(function (pid) {
+          var rowCb = document.querySelector('#product_catalog_grid tbody .mdf-manage-cb[data-product-id="' + pid + '"]');
+          if (!rowCb) {
+            return;
+          }
+
+          var row = rowCb.closest('tr');
+          var next = action === 'add';
+          if (row) {
+            row.setAttribute('data-in-feed', next ? '1' : '0');
+          }
+          rowCb.checked = next;
+          rowCb.setAttribute('data-in-feed', next ? '1' : '0');
+        });
+      });
+    }
+
+    Promise.all([
+      postBulk('add', toAdd),
+      postBulk('remove', toRemove),
+    ]);
+  }
+
+  function initGrid(gridId) {
+    if (!window.prestashop || !window.prestashop.component) {
+      return;
+    }
+
+    var components = window.prestashop.component;
+    var extensions = components.GridExtensions;
+    var panel = document.getElementById(gridId + '_grid_panel') || document.getElementById(gridId + '_grid');
+
+    if (!panel || !components.Grid || !extensions) {
+      return;
+    }
+
+    var grid = new components.Grid(gridId);
+    preserveManageMode(gridId, panel);
+    if (gridId === 'product_catalog') {
+      ensureManageSelectAll();
+    }
+
+    // Enable core Grid behavior (sorting, filter submit/reset, pagination actions).
+    grid.addExtension(new extensions.SortingExtension());
+    grid.addExtension(new extensions.SubmitGridActionExtension());
+    grid.addExtension(new extensions.FiltersResetExtension());
+    grid.addExtension(new extensions.FiltersSubmitButtonEnablerExtension());
+    grid.addExtension(new extensions.ReloadListExtension());
+
+    // Fallback: submit filter form on Enter in text inputs.
+    var filterForm = document.getElementById(gridId + '_filter_form');
+    if (filterForm) {
+      filterForm.addEventListener('keydown', function (event) {
+        var target = event.target;
+        if (event.key !== 'Enter' || !target || target.tagName !== 'INPUT') {
+          return;
+        }
+
+        event.preventDefault();
+        if (typeof filterForm.requestSubmit === 'function') {
+          filterForm.requestSubmit();
+        } else {
+          filterForm.submit();
+        }
+      });
+    }
+
+    // Fallback: paginator page-size selector to query params for this grid.
+    panel.addEventListener('change', function (event) {
+      var target = event.target;
+      if (target && target.id === 'mdf-manage-select-all') {
+        toggleSelectAll(target.checked);
+        return;
+      }
+
+      if (!target || target.name !== 'paginator_select_page_limit') {
+        return;
+      }
+
+      var url = new URL(window.location.href);
+      url.searchParams.set(gridId + '[limit]', target.value);
+      url.searchParams.set(gridId + '[offset]', '0');
+      window.location.href = url.toString();
+    });
+
+    panel.addEventListener('click', function (event) {
+      var currentUrl = new URL(window.location.href);
+      if (currentUrl.searchParams.get('manage') !== '1') {
+        return;
+      }
+
+      var anchor = event.target.closest('a[href]');
+      if (!anchor) {
+        return;
+      }
+
+      var href = anchor.getAttribute('href');
+      if (!href || href.indexOf('#') === 0 || href.indexOf('javascript:') === 0) {
+        return;
+      }
+
+      var linkUrl = new URL(href, window.location.origin);
+      if (linkUrl.origin !== window.location.origin || linkUrl.pathname !== window.location.pathname) {
+        return;
+      }
+
+      if (linkUrl.searchParams.get('manage') === '1') {
+        return;
+      }
+
+      event.preventDefault();
+      linkUrl.searchParams.set('manage', '1');
+      window.location.href = linkUrl.toString();
+    });
+  }
+
+  function boot(attempt) {
+    attempt = attempt || 0;
+
+    // Parent scripts can be deferred; wait until PrestaShop components are ready.
+    if (!window.prestashop || !window.prestashop.component || !window.prestashop.component.GridExtensions) {
+      if (attempt < 200) {
+        setTimeout(function () { boot(attempt + 1); }, 50);
+      }
+      return;
+    }
+
+    initGrid('product_feed');
+    initGrid('product_catalog');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { boot(0); });
+  } else {
+    boot(0);
+  }
+})();
+</script>
+<script src="{{ asset('../modules/mdfcforps/views/js/admin/feed.js') }}&mdf=20260611"></script>
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+{% endblock %}

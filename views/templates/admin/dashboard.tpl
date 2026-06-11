@@ -7,12 +7,12 @@
     <a href="{$mdf_admin_url|escape:'html':'UTF-8'}&tab=dashboard" class="mdf-tab {if $mdf_tab eq 'dashboard'}active{/if}">
       {l s='Dashboard' mod='mdfcforps'}
     </a>
-    <a href="{$mdf_admin_url|escape:'html':'UTF-8'}&tab=sales" class="mdf-tab {if $mdf_tab eq 'sales'}active{/if}">
-      {l s='Sales' mod='mdfcforps'}
-    </a>
     <a href="{$mdf_admin_url|escape:'html':'UTF-8'}&tab=feed" class="mdf-tab {if $mdf_tab eq 'feed'}active{/if}">
       {l s='Product Feed' mod='mdfcforps'}
     </a>
+    <a href="{$mdf_admin_url|escape:'html':'UTF-8'}&tab=sales" class="mdf-tab {if $mdf_tab eq 'sales'}active{/if}">
+      {l s='Sales' mod='mdfcforps'}
+    </a>    
   </nav>
 
   <div class="mdf-tab-content">

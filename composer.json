@@ -1,0 +1,13 @@
+{
+    "name": "marquesdefrance/mdfcforps",
+    "description": "Marques de France PrestaShop Connector",
+    "type": "prestashop-module",
+    "autoload": {
+        "psr-4": {
+            "Mdfcforps\\": "src/"
+        }
+    },
+    "config": {
+        "prepend-autoloader": false
+    }
+}
