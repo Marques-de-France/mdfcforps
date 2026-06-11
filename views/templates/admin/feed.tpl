@@ -84,7 +84,7 @@
                                title="{l s='Select / deselect all visible' mod='mdfcforps'}">
                       </th>
                       <th style="width:56px;">{l s='Photo' mod='mdfcforps'}</th>
-                      <th>{l s='Product name' mod='mdfcforps'}</th>
+                      <th>{l s='Name' mod='mdfcforps'}</th>
                       <th>{l s='Brand' mod='mdfcforps'}</th>
                       <th>{l s='Reference' mod='mdfcforps'}</th>
                       <th>{l s='Availability' mod='mdfcforps'}</th>
@@ -116,7 +116,7 @@
             <thead>
               <tr>
                 <th style="width:56px;">{l s='Photo' mod='mdfcforps'}</th>
-                <th>{l s='Product name' mod='mdfcforps'}</th>
+                <th>{l s='Name' mod='mdfcforps'}</th>
                 <th>{l s='Brand' mod='mdfcforps'}</th>
                 <th>{l s='Reference' mod='mdfcforps'}</th>
                 <th>{l s='Availability' mod='mdfcforps'}</th>
