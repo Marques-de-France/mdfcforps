@@ -27,6 +27,9 @@ class FeedController extends FrameworkBundleAdminController
     /** @var GridFactory */
     private $productCatalogGridFactory;
 
+    /** @var GridFactory */
+    private $salesGridFactory;
+
     public function dashboardAction(): Response
     {
         $hubClient = new \Mdfcforps\Service\HubClient();
@@ -57,17 +60,33 @@ class FeedController extends FrameworkBundleAdminController
 
     public function salesAction(Request $request): Response
     {
-        $page = max(1, (int) $request->query->get('sales_page', 1));
-        $saleRepo = new \Mdfcforps\Repository\SaleRepository();
-        $result = $saleRepo->paginate($page, 25);
+        $allParams = array_replace_recursive(
+            $request->query->all(),
+            $request->request->all()
+        );
+
+        $salesParams = $allParams['sales'] ?? [];
+        $salesFilters = [
+            'filters' => [
+                'order_reference' => (string) ($salesParams['order_reference'] ?? ($salesParams['filters']['order_reference'] ?? '')),
+                'source' => (string) ($salesParams['source'] ?? ($salesParams['filters']['source'] ?? '')),
+                'status' => (string) ($salesParams['status'] ?? ($salesParams['filters']['status'] ?? '')),
+                'synced' => (string) ($salesParams['synced'] ?? ($salesParams['filters']['synced'] ?? '')),
+            ],
+            'orderBy' => $salesParams['orderBy'] ?? null,
+            'sortOrder' => $salesParams['sortOrder'] ?? ($salesParams['orderWay'] ?? null),
+            'offset' => (int) ($salesParams['offset'] ?? 0),
+            'limit' => (int) ($salesParams['limit'] ?? 25),
+        ];
+
+        $salesGrid = $this->presentGrid(
+            $this->salesGridFactory->getGrid(new Filters($salesFilters, 'sales'))
+        );
 
         return $this->render(
             '@Modules/mdfcforps/views/templates/admin/mdfcforps/sales.html.twig',
             [
-                'sales' => $result['sales'],
-                'total' => (int) $result['total'],
-                'page' => $page,
-                'perPage' => 25,
+                'salesGrid' => $salesGrid,
                 'currentTab' => 'sales',
                 'enableSidebar' => true,
                 'layoutTitle' => 'Marques de France',
@@ -77,10 +96,12 @@ class FeedController extends FrameworkBundleAdminController
 
     public function __construct(
         GridFactory $productFeedGridFactory,
-        GridFactory $productCatalogGridFactory
+        GridFactory $productCatalogGridFactory,
+        GridFactory $salesGridFactory
     ) {
         $this->productFeedGridFactory    = $productFeedGridFactory;
         $this->productCatalogGridFactory = $productCatalogGridFactory;
+        $this->salesGridFactory          = $salesGridFactory;
     }
 
     /**

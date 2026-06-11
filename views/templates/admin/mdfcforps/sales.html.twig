@@ -6,69 +6,85 @@
   {{ include('@Modules/mdfcforps/views/templates/admin/mdfcforps/_navigation_tabs.html.twig', { currentTab: currentTab|default('sales') }) }}
 
   <div class="tab-content">
-    {% if sales is empty %}
-      <div class="alert alert-info" role="alert">
-        {{ 'No sales recorded yet.'|trans({}, 'Modules.Mdfcforps.Admin') }}
-      </div>
-    {% else %}
-      <div class="table-responsive">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>{{ 'Order Ref'|trans({}, 'Modules.Mdfcforps.Admin') }}</th>
-              <th>{{ 'Amount'|trans({}, 'Modules.Mdfcforps.Admin') }}</th>
-              <th>{{ 'Currency'|trans({}, 'Modules.Mdfcforps.Admin') }}</th>
-              <th>{{ 'Source'|trans({}, 'Modules.Mdfcforps.Admin') }}</th>
-              <th>{{ 'Status'|trans({}, 'Modules.Mdfcforps.Admin') }}</th>
-              <th>{{ 'Synced'|trans({}, 'Modules.Mdfcforps.Admin') }}</th>
-              <th>{{ 'Date'|trans({}, 'Modules.Mdfcforps.Admin') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for sale in sales %}
-              <tr>
-                <td>{{ sale.order_reference }}</td>
-                <td>{{ sale.amount|number_format(2, '.', ' ') }}</td>
-                <td>{{ sale.currency }}</td>
-                <td><span class="badge badge-secondary">{{ sale.attribution_source }}</span></td>
-                <td>
-                  <span class="badge {% if sale.status == 'completed' %}badge-success{% elseif sale.status == 'failed' %}badge-danger{% else %}badge-warning{% endif %}">
-                    {{ sale.status }}
-                  </span>
-                </td>
-                <td>
-                  {% if sale.hub_synced == 1 %}
-                    <span class="badge badge-success">{{ 'Yes'|trans({}, 'Modules.Mdfcforps.Admin') }}</span>
-                  {% elseif sale.hub_sync_attempts >= 5 %}
-                    <span class="badge badge-danger">{{ 'Failed'|trans({}, 'Modules.Mdfcforps.Admin') }}</span>
-                  {% else %}
-                    <span class="badge badge-warning">{{ 'Pending'|trans({}, 'Modules.Mdfcforps.Admin') }}</span>
-                  {% endif %}
-                </td>
-                <td>{{ sale.created_at }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      {% set totalPages = (total / perPage)|round(0, 'ceil') %}
-      {% if totalPages > 1 %}
-        <nav aria-label="Sales pagination">
-          <ul class="pagination">
-            <li class="page-item {% if page <= 1 %}disabled{% endif %}">
-              <a class="page-link" href="{{ path('mdfcforps_sales_index', { sales_page: page - 1 }) }}">{{ 'Prev'|trans({}, 'Modules.Mdfcforps.Admin') }}</a>
-            </li>
-            <li class="page-item disabled">
-              <span class="page-link">{{ 'Page %page% of %total%'|trans({'%page%': page, '%total%': totalPages}, 'Modules.Mdfcforps.Admin') }}</span>
-            </li>
-            <li class="page-item {% if page >= totalPages %}disabled{% endif %}">
-              <a class="page-link" href="{{ path('mdfcforps_sales_index', { sales_page: page + 1 }) }}">{{ 'Next'|trans({}, 'Modules.Mdfcforps.Admin') }}</a>
-            </li>
-          </ul>
-        </nav>
-      {% endif %}
-    {% endif %}
+    <h2>{{ 'Attributed Sales'|trans({}, 'Modules.Mdfcforps.Admin') }}</h2>
+    {{ include('@PrestaShop/Admin/Common/Grid/grid.html.twig', {'grid': salesGrid}) }}
   </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  <script>
+    (function () {
+      function initSalesGrid() {
+        if (!window.prestashop || !window.prestashop.component || !window.prestashop.component.GridExtensions) {
+          return false;
+        }
+
+        var components = window.prestashop.component;
+        var extensions = components.GridExtensions;
+        var panel = document.getElementById('sales_grid_panel') || document.getElementById('sales_grid');
+
+        if (!panel || !components.Grid) {
+          return false;
+        }
+
+        var grid = new components.Grid('sales');
+        grid.addExtension(new extensions.SortingExtension());
+        grid.addExtension(new extensions.SubmitGridActionExtension());
+        grid.addExtension(new extensions.FiltersResetExtension());
+        grid.addExtension(new extensions.FiltersSubmitButtonEnablerExtension());
+        grid.addExtension(new extensions.ReloadListExtension());
+
+        var filterForm = document.getElementById('sales_filter_form');
+        if (filterForm) {
+          filterForm.addEventListener('keydown', function (event) {
+            var target = event.target;
+            if (event.key !== 'Enter' || !target || target.tagName !== 'INPUT') {
+              return;
+            }
+
+            event.preventDefault();
+            if (typeof filterForm.requestSubmit === 'function') {
+              filterForm.requestSubmit();
+            } else {
+              filterForm.submit();
+            }
+          });
+
+          filterForm.addEventListener('change', function (event) {
+            var target = event.target;
+            if (!target || target.tagName !== 'SELECT') {
+              return;
+            }
+
+            if (typeof filterForm.requestSubmit === 'function') {
+              filterForm.requestSubmit();
+            } else {
+              filterForm.submit();
+            }
+          });
+        }
+
+        return true;
+      }
+
+      function boot(attempt) {
+        attempt = attempt || 0;
+        if (initSalesGrid()) {
+          return;
+        }
+
+        if (attempt < 200) {
+          setTimeout(function () { boot(attempt + 1); }, 50);
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { boot(0); });
+      } else {
+        boot(0);
+      }
+    })();
+  </script>
 {% endblock %}

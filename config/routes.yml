@@ -10,7 +10,7 @@ mdfcforps_dashboard_index:
 
 mdfcforps_sales_index:
     path: /mdfcforps/sales
-    methods: [GET]
+    methods: [GET, POST]
     defaults:
         _controller: 'Mdfcforps\Controller\Admin\FeedController::salesAction'
         _legacy_controller: AdminMdfcforps
