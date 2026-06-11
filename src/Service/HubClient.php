@@ -63,7 +63,7 @@ class HubClient
     public function syncSale(array $sale): bool
     {
         try {
-            $this->post('/api/ps/sales', [
+            $response = $this->post('/api/ps/sales', [
                 'orderId'          => $sale['order_id'],
                 'orderReference'   => $sale['order_reference'],
                 'amount'           => (float) $sale['amount'],
@@ -81,7 +81,17 @@ class HubClient
                 'status'           => $sale['status'],
                 'createdAt'        => $sale['created_at'],
             ]);
-            return true;
+
+            // Success means either newly recorded or already present (idempotent).
+            if (($response['recorded'] ?? null) === true) {
+                return true;
+            }
+
+            if (($response['reason'] ?? '') === 'already_exists') {
+                return true;
+            }
+
+            return false;
         } catch (\Throwable $e) {
             return false;
         }
@@ -93,10 +103,11 @@ class HubClient
     public function updateSaleStatus(int $saleId, string $status): bool
     {
         try {
-            $this->post("/api/ps/sales/{$saleId}/status", [
+            $response = $this->post("/api/ps/sales/{$saleId}/status", [
                 'status' => $status,
             ]);
-            return true;
+
+            return ($response['updated'] ?? null) === true;
         } catch (\Throwable $e) {
             return false;
         }
@@ -129,8 +140,37 @@ class HubClient
      */
     public function getHubSales(): array
     {
-        $response = $this->get('/api/ps/sales');
+        $response = $this->getHubSalesPage();
         return $response['sales'] ?? [];
+    }
+
+    /**
+     * Fetch a page of Hub sales for this store.
+     *
+     * @return array<string, mixed>
+     */
+    public function getHubSalesPage(
+        int $page = 1,
+        int $limit = 100,
+        string $dateFrom = '',
+        string $dateTo = ''
+    ): array {
+        $query = [
+            'page'  => max(1, $page),
+            'limit' => min(100, max(1, $limit)),
+        ];
+
+        if ($dateFrom !== '') {
+            $query['dateFrom'] = $dateFrom;
+        }
+
+        if ($dateTo !== '') {
+            $query['dateTo'] = $dateTo;
+        }
+
+        $response = $this->get('/api/ps/sales?' . http_build_query($query));
+
+        return is_array($response) ? $response : [];
     }
 
     // -----------------------------------------------------------------------
@@ -175,6 +215,11 @@ class HubClient
             throw new \RuntimeException("Hub POST {$path} — network error");
         }
 
+        $statusCode = $this->extractStatusCode($http_response_header ?? []);
+        if ($statusCode < 200 || $statusCode >= 300) {
+            throw new \RuntimeException("Hub POST {$path} — HTTP {$statusCode}");
+        }
+
         $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
 
         return is_array($decoded) ? $decoded : [];
@@ -213,8 +258,29 @@ class HubClient
             throw new \RuntimeException("Hub GET {$path} — network error");
         }
 
+        $statusCode = $this->extractStatusCode($http_response_header ?? []);
+        if ($statusCode < 200 || $statusCode >= 300) {
+            throw new \RuntimeException("Hub GET {$path} — HTTP {$statusCode}");
+        }
+
         $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
 
         return is_array($decoded) ? $decoded : [];
+    }
+
+    /**
+     * @param array<int, string> $headers
+     */
+    private function extractStatusCode(array $headers): int
+    {
+        if (empty($headers[0])) {
+            return 0;
+        }
+
+        if (preg_match('/\s(\d{3})\s/', $headers[0], $matches) === 1) {
+            return (int) $matches[1];
+        }
+
+        return 0;
     }
 }

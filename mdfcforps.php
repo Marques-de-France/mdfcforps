@@ -18,6 +18,12 @@ class Mdfcforps extends Module
     public const VERSION = '1.0.0';
     public const DB_VERSION = '1.0.0';
 
+    private const LAZY_INTERVAL_SEC = 3600;
+    private const RECONCILE_WINDOW_DAYS = 7;
+    private const RECONCILE_LOCAL_LIMIT = 300;
+    private const HUB_PAGE_LIMIT = 100;
+    private const HUB_MAX_PAGES = 20;
+
     public function __construct()
     {
         $this->name = 'mdfcforps';
@@ -217,11 +223,12 @@ class Mdfcforps extends Module
             $this->context->controller->addJS($this->_path . 'views/js/front/mdf-attribution-context-ps.js');
         }
 
-        // Lazy-cron: only fire in BO when an employee is logged in
-        if (
-            $this->context->employee instanceof Employee
-            && $this->context->employee->isLoggedBack()
-        ) {
+        // Lazy tasks run with strict throttle on BO and FO page loads.
+        $isBoEmployee = $this->context->employee instanceof Employee
+            && $this->context->employee->isLoggedBack();
+        $isFront = !$this->context->controller instanceof AdminController;
+
+        if ($isBoEmployee || $isFront) {
             $this->runLazyCron();
         }
 
@@ -257,7 +264,7 @@ class Mdfcforps extends Module
     private function runLazyCron(): void
     {
         $lastFlush = (int) Configuration::get('MDFCFORPS_LAST_FLUSH');
-        if ((time() - $lastFlush) < 3600) {
+        if ((time() - $lastFlush) < self::LAZY_INTERVAL_SEC) {
             return;
         }
 
@@ -265,6 +272,8 @@ class Mdfcforps extends Module
 
         $saleRepo = new \Mdfcforps\Repository\SaleRepository();
         $hubClient = new \Mdfcforps\Service\HubClient();
+
+        $this->runReconciliation($saleRepo, $hubClient);
 
         $pending = $saleRepo->getPendingSync(50);
 
@@ -292,14 +301,20 @@ class Mdfcforps extends Module
         \Mdfcforps\Service\HubClient $hubClient
     ): void {
         try {
-            $hubSales = $hubClient->getHubSales();
-            $syncedOrderRefs = array_column($hubSales, 'orderReference');
+            $hubOrderIdSet = $this->fetchHubOrderIdSet($hubClient, '', '');
 
             $localSales = $saleRepo->findAll();
 
             foreach ($localSales as $sale) {
-                if (!in_array($sale['order_reference'], $syncedOrderRefs, true)) {
-                    $hubClient->syncSale($sale);
+                $orderId = (string) ($sale['order_id'] ?? '');
+                if ($orderId === '') {
+                    continue;
+                }
+
+                if (!isset($hubOrderIdSet[$orderId])) {
+                    if ($hubClient->syncSale($sale)) {
+                        $saleRepo->markSynced((int) $sale['id']);
+                    }
                 }
             }
 
@@ -307,5 +322,105 @@ class Mdfcforps extends Module
         } catch (\Throwable $e) {
             // Silently fail — will retry next cron cycle
         }
+    }
+
+    private function runReconciliation(
+        \Mdfcforps\Repository\SaleRepository $saleRepo,
+        \Mdfcforps\Service\HubClient $hubClient
+    ): void {
+        try {
+            $localSales = $saleRepo->findRecent(self::RECONCILE_WINDOW_DAYS, self::RECONCILE_LOCAL_LIMIT);
+            if (empty($localSales)) {
+                return;
+            }
+
+            $dateFrom = date('Y-m-d', time() - (self::RECONCILE_WINDOW_DAYS * 86400));
+            $dateTo = date('Y-m-d');
+            $hubOrderIdSet = $this->fetchHubOrderIdSet($hubClient, $dateFrom, $dateTo);
+
+            $requeued = 0;
+            $fixedSynced = 0;
+
+            foreach ($localSales as $sale) {
+                $orderId = (string) ($sale['order_id'] ?? '');
+                if ($orderId === '') {
+                    continue;
+                }
+
+                $isHubPresent = isset($hubOrderIdSet[$orderId]);
+                $isLocalSynced = (int) ($sale['hub_synced'] ?? 0) === 1;
+
+                // False positive in local DB: mark pending so normal sender retries.
+                if ($isLocalSynced && !$isHubPresent) {
+                    if ($saleRepo->markPending((int) $sale['id'])) {
+                        $requeued++;
+                    }
+                    continue;
+                }
+
+                // Late local consistency: mark synced when already present remotely.
+                if (!$isLocalSynced && $isHubPresent) {
+                    if ($saleRepo->markSynced((int) $sale['id'])) {
+                        $fixedSynced++;
+                    }
+                }
+            }
+
+            if ($requeued > 0 || $fixedSynced > 0) {
+                \PrestaShopLogger::addLog(
+                    '[MDF] Reconciliation done: requeued=' . $requeued . ', fixedSynced=' . $fixedSynced,
+                    1,
+                    null,
+                    'Mdfcforps'
+                );
+            }
+        } catch (\Throwable $e) {
+            \PrestaShopLogger::addLog(
+                '[MDF] Reconciliation error: ' . $e->getMessage(),
+                2,
+                null,
+                'Mdfcforps'
+            );
+        }
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    private function fetchHubOrderIdSet(
+        \Mdfcforps\Service\HubClient $hubClient,
+        string $dateFrom,
+        string $dateTo
+    ): array {
+        $set = [];
+
+        for ($page = 1; $page <= self::HUB_MAX_PAGES; $page++) {
+            $response = $hubClient->getHubSalesPage(
+                $page,
+                self::HUB_PAGE_LIMIT,
+                $dateFrom,
+                $dateTo
+            );
+
+            $sales = $response['sales'] ?? [];
+            if (!is_array($sales) || empty($sales)) {
+                break;
+            }
+
+            foreach ($sales as $hubSale) {
+                $orderId = (string) ($hubSale['orderId'] ?? '');
+                if ($orderId !== '') {
+                    $set[$orderId] = true;
+                }
+            }
+
+            $total = (int) ($response['total'] ?? 0);
+            $limit = (int) ($response['limit'] ?? self::HUB_PAGE_LIMIT);
+            if ($total > 0 && ($page * $limit) >= $total) {
+                break;
+            }
+        }
+
+        return $set;
     }
 }

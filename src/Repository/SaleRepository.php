@@ -73,6 +73,15 @@ class SaleRepository
         );
     }
 
+    public function markPending(int $id): bool
+    {
+        return (bool) \Db::getInstance()->update(
+            'mdfcforps_sales',
+            ['hub_synced' => 0],
+            'id = ' . (int) $id
+        );
+    }
+
     public function incrementSyncAttempts(int $id): bool
     {
         return (bool) \Db::getInstance()->execute(
@@ -147,6 +156,29 @@ class SaleRepository
         $query->select('*')
               ->from('mdfcforps_sales')
               ->orderBy('created_at ASC');
+
+        $result = \Db::getInstance()->executeS($query);
+
+        return is_array($result) ? $result : [];
+    }
+
+    /**
+     * Return recent sales for reconciliation.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function findRecent(int $days = 7, int $limit = 300): array
+    {
+        $days = max(1, $days);
+        $limit = max(1, $limit);
+        $from = date('Y-m-d H:i:s', time() - ($days * 86400));
+
+        $query = new \DbQuery();
+        $query->select('*')
+              ->from('mdfcforps_sales')
+              ->where("created_at >= '" . pSQL($from) . "'")
+              ->orderBy('created_at DESC')
+              ->limit($limit);
 
         $result = \Db::getInstance()->executeS($query);
 
