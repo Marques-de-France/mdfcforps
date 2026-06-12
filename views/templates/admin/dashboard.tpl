@@ -24,7 +24,7 @@
       </div>
     {else}
       {* KPI cards *}
-      <div class="mdf-kpi-grid">
+      <div class="mdf-sales-kpis">
         <div class="mdf-kpi-card">
           <div class="mdf-kpi-value">{if isset($mdf_analytics.totalSales)}{$mdf_analytics.totalSales|intval}{else}—{/if}</div>
           <div class="mdf-kpi-label">{l s='Total Sales' mod='mdfcforps'}</div>

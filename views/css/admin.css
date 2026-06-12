@@ -69,13 +69,6 @@
 	font-size: 16px;
 }
 
-.mdf-kpi-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-	gap: 16px;
-	margin-bottom: 32px;
-}
-
 .mdf-kpi-card {
 	background: #fff;
     border: 1px solid #e0e0e0;

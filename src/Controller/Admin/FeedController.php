@@ -34,13 +34,27 @@ class FeedController extends FrameworkBundleAdminController
     {
         $hubClient = new \Mdfcforps\Service\HubClient();
 
-        $analytics = [];
+        $dashboardStats = [
+            'totalSales' => 0,
+            'totalRevenue' => 0.0,
+        ];
+        $dashboardAnalytics = [];
         $status = [];
         $error = null;
 
         try {
-            $analytics = $hubClient->getAnalytics();
             $status = $hubClient->getStatus();
+            $now = new \DateTimeImmutable('now');
+            $analyticsDateTo = $now->format('Y-m-d');
+            $analyticsDateFrom = $now->modify('-11 months')->modify('first day of this month')->format('Y-m-d');
+            $dashboardAnalytics = $hubClient->getAnalytics($analyticsDateFrom, $analyticsDateTo, 'month');
+
+            $salesSummary = $hubClient->getHubSalesList(1, 1, [
+                'status' => 'confirmed',
+            ]);
+
+            $dashboardStats['totalSales'] = (int) ($status['totalSales'] ?? 0);
+            $dashboardStats['totalRevenue'] = (float) ($salesSummary['totalRevenue'] ?? 0.0);
         } catch (\Throwable $e) {
             $error = $this->trans('Unable to reach the Marques de France platform.', [], 'Modules.Mdfcforps.Admin');
         }
@@ -48,7 +62,8 @@ class FeedController extends FrameworkBundleAdminController
         return $this->render(
             '@Modules/mdfcforps/views/templates/admin/mdfcforps/dashboard.html.twig',
             [
-                'analytics' => $analytics,
+                'dashboardStats' => $dashboardStats,
+                'dashboardAnalytics' => $dashboardAnalytics,
                 'status' => $status,
                 'error' => $error,
                 'currentTab' => 'dashboard',

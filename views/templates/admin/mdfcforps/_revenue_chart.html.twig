@@ -1,0 +1,31 @@
+<div class="mdf-chart-card mb-4">
+  <div class="mdf-chart-controls">
+    <strong class="mdf-chart-controls-title">{{ chartTitle|default('Revenue over time'|trans({}, 'Modules.Mdfcforps.Admin')) }}</strong>
+    {% if showControls|default(false) %}
+      <div class="mdf-chart-controls-fields">
+        <select class="custom-select" id="{{ rangeSelectId }}" aria-label="{{ 'Chart period'|trans({}, 'Modules.Mdfcforps.Admin') }}">
+          <option value="7d">{{ 'Last 7 days'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+          <option value="28d" selected>{{ 'Last 28 days'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+          <option value="90d">{{ 'Last 90 days'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+          <option value="12m">{{ 'Last 12 months'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+          <option value="year">{{ 'Last year'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+          <option value="this_year">{{ 'This year'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+        </select>
+        <select class="custom-select" id="{{ granularitySelectId }}" aria-label="{{ 'Chart granularity'|trans({}, 'Modules.Mdfcforps.Admin') }}">
+          <option value="day" selected>{{ 'Daily'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+          <option value="month">{{ 'Monthly'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+        </select>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if analyticsError is defined and analyticsError %}
+    <div class="alert alert-warning" role="alert">{{ analyticsError }}</div>
+  {% endif %}
+
+  <div class="mdf-chart-container">
+    <canvas id="{{ canvasId }}"></canvas>
+    <div id="{{ tooltipId }}" class="mdf-sales-chart-tooltip d-none"></div>
+  </div>
+  <p id="{{ emptyId }}" class="text-muted mt-2 d-none"></p>
+</div>
