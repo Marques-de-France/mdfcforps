@@ -88,6 +88,7 @@
         var components = window.prestashop.component;
         var extensions = components.GridExtensions;
         var panel = document.getElementById('sales_grid_panel') || document.getElementById('sales_grid');
+        var gridContainer = document.getElementById('sales_grid') || panel;
 
         if (!panel || !components.Grid) {
           return false;
@@ -99,6 +100,9 @@
         grid.addExtension(new extensions.FiltersResetExtension());
         grid.addExtension(new extensions.FiltersSubmitButtonEnablerExtension());
         grid.addExtension(new extensions.ReloadListExtension());
+        if (typeof extensions.PaginationExtension === 'function') {
+          grid.addExtension(new extensions.PaginationExtension());
+        }
 
         var filterForm = document.getElementById('sales_filter_form');
         if (filterForm) {
@@ -129,6 +133,18 @@
             }
           });
         }
+
+        gridContainer.addEventListener('change', function (event) {
+          var target = event.target;
+          if (!target || target.name !== 'paginator_select_page_limit') {
+            return;
+          }
+
+          var url = new URL(window.location.href);
+          url.searchParams.set('sales[limit]', target.value);
+          url.searchParams.set('sales[offset]', '0');
+          window.location.href = url.toString();
+        });
 
         return true;
       }

@@ -174,17 +174,47 @@ class HubClient
         string $dateFrom = '',
         string $dateTo = ''
     ): array {
+        return $this->getHubSalesList($page, $limit, [
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+        ]);
+    }
+
+    /**
+     * Fetch a page of Hub sales with optional filters/sorting.
+     *
+     * @param array<string, string|int|float> $filters
+     * @return array<string, mixed>
+     */
+    public function getHubSalesList(int $page = 1, int $limit = 25, array $filters = []): array
+    {
         $query = [
             'page'  => max(1, $page),
             'limit' => min(100, max(1, $limit)),
         ];
 
-        if ($dateFrom !== '') {
-            $query['dateFrom'] = $dateFrom;
-        }
+        $allowed = [
+            'search',
+            'status',
+            'dateFrom',
+            'dateTo',
+            'amountMin',
+            'amountMax',
+            'sortField',
+            'sortDir',
+        ];
 
-        if ($dateTo !== '') {
-            $query['dateTo'] = $dateTo;
+        foreach ($allowed as $key) {
+            if (!array_key_exists($key, $filters)) {
+                continue;
+            }
+
+            $value = $filters[$key];
+            if ($value === '' || $value === null) {
+                continue;
+            }
+
+            $query[$key] = (string) $value;
         }
 
         $response = $this->get('/api/ps/sales?' . http_build_query($query));

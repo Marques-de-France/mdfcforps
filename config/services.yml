@@ -151,12 +151,9 @@ services:
     public: true
 
   mdfcforps.grid.data_factory.sales:
-    class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
+    class: Mdfcforps\Grid\Data\HubSalesDataFactory
     arguments:
-      - '@mdfcforps.grid.query_builder.sales'
-      - '@prestashop.core.hook.dispatcher'
-      - '@prestashop.core.grid.query.doctrine_query_parser'
-      - 'sales'
+      - '@mdfcforps.hub_client'
     public: true
 
   mdfcforps.grid.data_factory.sales_decorated:

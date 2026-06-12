@@ -56,20 +56,13 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
                 ->setName($this->trans('Source', [], 'Modules.Mdfcforps.Admin'))
                 ->setOptions([
                     'field' => 'source_badge',
-                    'sortable' => true,
+                    'sortable' => false,
                 ])
             )
             ->add((new HtmlColumn('status'))
                 ->setName($this->trans('Status', [], 'Modules.Mdfcforps.Admin'))
                 ->setOptions([
                     'field' => 'status_badge',
-                    'sortable' => true,
-                ])
-            )
-            ->add((new HtmlColumn('synced'))
-                ->setName($this->trans('Synced', [], 'Modules.Mdfcforps.Admin'))
-                ->setOptions([
-                    'field' => 'synced_badge',
                     'sortable' => true,
                 ])
             )
@@ -92,36 +85,18 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
                 ])
                 ->setAssociatedColumn('order_reference')
             )
-            ->add((new Filter('source', TextType::class))
-                ->setTypeOptions([
-                    'required' => false,
-                    'attr' => ['placeholder' => $this->trans('Search source', [], 'Modules.Mdfcforps.Admin')],
-                ])
-                ->setAssociatedColumn('source')
-            )
             ->add((new Filter('status', ChoiceType::class))
                 ->setTypeOptions([
                     'required' => false,
                     'placeholder' => $this->trans('All', [], 'Admin.Global'),
                     'choices' => [
                         $this->trans('confirmed', [], 'Modules.Mdfcforps.Admin') => 'confirmed',
-                        $this->trans('failed', [], 'Modules.Mdfcforps.Admin') => 'failed',
+                        $this->trans('cancelled', [], 'Modules.Mdfcforps.Admin') => 'cancelled',
+                        $this->trans('refunded', [], 'Modules.Mdfcforps.Admin') => 'refunded',
                         $this->trans('pending', [], 'Modules.Mdfcforps.Admin') => 'pending',
                     ],
                 ])
                 ->setAssociatedColumn('status')
-            )
-            ->add((new Filter('synced', ChoiceType::class))
-                ->setTypeOptions([
-                    'required' => false,
-                    'placeholder' => $this->trans('All', [], 'Admin.Global'),
-                    'choices' => [
-                        $this->trans('Yes', [], 'Modules.Mdfcforps.Admin') => 'yes',
-                        $this->trans('Pending', [], 'Modules.Mdfcforps.Admin') => 'pending',
-                        $this->trans('Failed', [], 'Modules.Mdfcforps.Admin') => 'failed',
-                    ],
-                ])
-                ->setAssociatedColumn('synced')
             );
     }
 }
