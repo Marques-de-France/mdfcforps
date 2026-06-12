@@ -37,6 +37,11 @@
           value: dashboardStats.totalRevenue is defined ? dashboardStats.totalRevenue|number_format(2, '.', ' ') ~ ' €' : '0.00 €',
           subLabel: 'Confirmed'|trans({}, 'Modules.Mdfcforps.Admin')
         }, with_context = false) }}
+        {{ include('@Modules/mdfcforps/views/templates/admin/mdfcforps/_kpi_card.html.twig', {
+          label: 'This Month'|trans({}, 'Modules.Mdfcforps.Admin'),
+          value: dashboardStats.monthRevenue is defined ? dashboardStats.monthRevenue|number_format(2, '.', ' ') ~ ' €' : '0.00 €',
+          subLabel: (dashboardStats.monthSales|default(0)) ~ ' ' ~ ((dashboardStats.monthSales|default(0)) == 1 ? 'sale'|trans({}, 'Modules.Mdfcforps.Admin') : 'sales'|trans({}, 'Modules.Mdfcforps.Admin'))
+        }, with_context = false) }}
       </div>
 
       {{ include('@Modules/mdfcforps/views/templates/admin/mdfcforps/_revenue_chart.html.twig', {

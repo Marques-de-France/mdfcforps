@@ -287,8 +287,9 @@
     var revenues = rows.map(function (item) { return Number(item.revenue.toFixed(2)); });
     var conversions = rows.map(function (item) { return item.conversions; });
 
-    var padding = { top: 24, right: 70, bottom: 58, left: 78 };
-    var chartWidth = width - padding.left - padding.right;
+    var padding = { top: 24, right: 96, bottom: 58, left: 78 };
+    var rightGutter = 8;
+    var chartWidth = width - padding.left - padding.right - rightGutter;
     var chartHeight = height - padding.top - padding.bottom;
 
     var maxRevenue = Math.max.apply(null, revenues.concat([0]));
@@ -318,7 +319,7 @@
       var gy = padding.top + (chartHeight * g) / gridSteps;
       ctx.beginPath();
       ctx.moveTo(padding.left, gy);
-      ctx.lineTo(width - padding.right, gy);
+      ctx.lineTo(width - padding.right - rightGutter, gy);
       ctx.stroke();
     }
 
@@ -380,7 +381,7 @@
     for (var j = 0; j <= gridSteps; j += 1) {
       var convVal = (yMaxConversions * (gridSteps - j)) / gridSteps;
       var yRight = padding.top + (chartHeight * j) / gridSteps + 4;
-      ctx.fillText(Math.round(convVal).toString(), width - padding.right + 8, yRight);
+      ctx.fillText(Math.round(convVal).toString(), width - padding.right + 20, yRight);
     }
 
     var legendY = height - 30;
