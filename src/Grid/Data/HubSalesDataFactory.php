@@ -43,6 +43,9 @@ final class HubSalesDataFactory implements GridDataFactoryInterface
         $hubFilters = [
             'search' => trim((string) ($filters['order_reference'] ?? '')),
             'status' => trim((string) ($filters['status'] ?? '')),
+            'source' => trim((string) ($filters['source'] ?? '')),
+            'amountMin' => is_array($filters['amount'] ?? null) ? (string) (($filters['amount']['min_field'] ?? '') ?: '') : '',
+            'amountMax' => is_array($filters['amount'] ?? null) ? (string) (($filters['amount']['max_field'] ?? '') ?: '') : '',
             'sortField' => $sortFieldMap[$orderBy] ?? 'createdAt',
             'sortDir' => $orderWay,
         ];

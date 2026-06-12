@@ -10,6 +10,7 @@ use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\HtmlColumn;
 use PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory;
 use PrestaShop\PrestaShop\Core\Grid\Filter\Filter;
 use PrestaShop\PrestaShop\Core\Grid\Filter\FilterCollection;
+use PrestaShopBundle\Form\Admin\Type\NumberMinMaxFilterType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
@@ -45,13 +46,6 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
                     'sortable' => true,
                 ])
             )
-            ->add((new DataColumn('currency'))
-                ->setName($this->trans('Currency', [], 'Modules.Mdfcforps.Admin'))
-                ->setOptions([
-                    'field' => 'currency',
-                    'sortable' => true,
-                ])
-            )
             ->add((new HtmlColumn('source'))
                 ->setName($this->trans('Source', [], 'Modules.Mdfcforps.Admin'))
                 ->setOptions([
@@ -84,6 +78,27 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
                     'attr' => ['placeholder' => $this->trans('Search reference', [], 'Modules.Mdfcforps.Admin')],
                 ])
                 ->setAssociatedColumn('order_reference')
+            )
+            ->add((new Filter('amount', NumberMinMaxFilterType::class))
+                ->setTypeOptions([
+                    'required' => false,
+                ])
+                ->setAssociatedColumn('amount')
+            )
+            ->add((new Filter('source', ChoiceType::class))
+                ->setTypeOptions([
+                    'required' => false,
+                    'placeholder' => $this->trans('All', [], 'Admin.Global'),
+                    'choices' => [
+                        $this->trans('utm', [], 'Modules.Mdfcforps.Admin') => 'utm',
+                        $this->trans('cart_attribute', [], 'Modules.Mdfcforps.Admin') => 'cart_attribute',
+                        $this->trans('landing_site_ref', [], 'Modules.Mdfcforps.Admin') => 'landing_site_ref',
+                        $this->trans('landing_site', [], 'Modules.Mdfcforps.Admin') => 'landing_site',
+                        $this->trans('referring_site', [], 'Modules.Mdfcforps.Admin') => 'referring_site',
+                        $this->trans('unknown', [], 'Modules.Mdfcforps.Admin') => 'unknown',
+                    ],
+                ])
+                ->setAssociatedColumn('source')
             )
             ->add((new Filter('status', ChoiceType::class))
                 ->setTypeOptions([

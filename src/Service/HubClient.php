@@ -196,6 +196,7 @@ class HubClient
         $allowed = [
             'search',
             'status',
+            'source',
             'dateFrom',
             'dateTo',
             'amountMin',

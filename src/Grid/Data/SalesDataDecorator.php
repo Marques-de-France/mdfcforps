@@ -30,10 +30,15 @@ final class SalesDataDecorator implements GridDataFactoryInterface
         foreach ($data->getRecords() as $record) {
             $status = (string) ($record['status'] ?? 'pending');
             $source = (string) ($record['attribution_source'] ?? 'unknown');
+            $currency = strtoupper((string) ($record['currency'] ?? 'EUR'));
             $isSynced = (bool) ($record['hub_synced'] ?? false);
             $syncAttempts = (int) ($record['hub_sync_attempts'] ?? 0);
 
-            $record['amount_display'] = number_format((float) ($record['amount'] ?? 0), 2, '.', ' ');
+            $record['amount_display'] = sprintf(
+                '%s %s',
+                number_format((float) ($record['amount'] ?? 0), 2, '.', ' '),
+                $currency
+            );
             $record['source_badge'] = sprintf(
                 '<span class="badge badge-secondary">%s</span>',
                 htmlspecialchars($source, ENT_QUOTES, 'UTF-8')
@@ -52,6 +57,8 @@ final class SalesDataDecorator implements GridDataFactoryInterface
                 htmlspecialchars($status, ENT_QUOTES, 'UTF-8')
             );
 
+            $record['created_at'] = $this->formatDateTime((string) ($record['created_at'] ?? ''));
+
             if ($isSynced) {
                 $record['synced_badge'] = '<span class="badge badge-success">Yes</span>';
             } elseif ($syncAttempts >= 5) {
@@ -64,5 +71,20 @@ final class SalesDataDecorator implements GridDataFactoryInterface
         }
 
         return new GridData(new RecordCollection($records), $data->getRecordsTotal(), $data->getQuery());
+    }
+
+    private function formatDateTime(string $raw): string
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return '';
+        }
+
+        try {
+            $date = new \DateTimeImmutable($raw);
+            return $date->format('d/m/Y H:i');
+        } catch (\Throwable $e) {
+            return $raw;
+        }
     }
 }
