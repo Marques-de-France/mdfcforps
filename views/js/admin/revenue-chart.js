@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  var chartInstances = {};
+
   function toDateFromKey(key) {
     if (!key) {
       return null;
@@ -268,157 +270,138 @@
     });
   }
 
-  function drawChart(canvas, rows, config) {
-    var dpr = window.devicePixelRatio || 1;
-    var width = canvas.clientWidth;
-    var height = canvas.clientHeight;
-    if (!width || !height) {
-      return;
+  function drawChart(canvas, rows, config, existingChart) {
+    if (typeof window.Chart === 'undefined') {
+      return null;
     }
-
-    canvas.width = Math.floor(width * dpr);
-    canvas.height = Math.floor(height * dpr);
-
-    var ctx = canvas.getContext('2d');
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, width, height);
 
     var labels = rows.map(function (item) { return formatDateLabel(item.key); });
     var revenues = rows.map(function (item) { return Number(item.revenue.toFixed(2)); });
-    var conversions = rows.map(function (item) { return item.conversions; });
-
-    var padding = { top: 24, right: 96, bottom: 72, left: 78 };
-    var rightGutter = 8;
-    var chartWidth = width - padding.left - padding.right - rightGutter;
-    var chartHeight = height - padding.top - padding.bottom;
+    var conversions = rows.map(function (item) { return Number(item.conversions || 0); });
 
     var maxRevenue = Math.max.apply(null, revenues.concat([0]));
     var maxConversions = Math.max.apply(null, conversions.concat([0]));
-    var yMaxRevenue = Math.max(10, Math.ceil(maxRevenue * 1.15));
-    var yMaxConversions = Math.max(5, Math.ceil(maxConversions * 1.15));
 
-    function xAt(index) {
-      if (labels.length <= 1) {
-        return padding.left + chartWidth / 2;
-      }
-      return padding.left + (chartWidth * index) / (labels.length - 1);
+    var data = {
+      labels: labels,
+      datasets: [
+        {
+          type: 'line',
+          label: config.revenueLabel || 'Revenue',
+          data: revenues,
+          borderColor: '#051440',
+          backgroundColor: '#051440',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 4,
+          pointBackgroundColor: '#051440',
+          tension: 0.25,
+          yAxisID: 'y',
+        },
+        {
+          type: 'bar',
+          label: config.salesLabel || 'Sales',
+          data: conversions,
+          backgroundColor: 'rgba(255,102,84,0.65)',
+          borderColor: 'rgba(255,102,84,0.85)',
+          borderWidth: 1,
+          yAxisID: 'y1',
+          barPercentage: 0.65,
+          categoryPercentage: 0.8,
+        },
+      ],
+    };
+
+    var options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 700,
+        easing: 'easeOutQuart',
+      },
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          align: 'center',
+          labels: {
+            boxWidth: 14,
+            boxHeight: 10,
+            color: '#495057',
+          },
+        },
+        tooltip: {
+          callbacks: {
+            title: function (items) {
+              return items && items.length ? String(items[0].label || '') : '';
+            },
+            label: function (ctx) {
+              var label = ctx.dataset && ctx.dataset.label ? ctx.dataset.label + ': ' : '';
+              if (ctx.dataset && ctx.dataset.yAxisID === 'y') {
+                return label + formatCurrency(ctx.parsed.y, config.currency || 'EUR', 2, 2);
+              }
+              return label + String(Math.round(ctx.parsed.y || 0));
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            color: '#6c757d',
+            autoSkip: true,
+            maxTicksLimit: 8,
+          },
+        },
+        y: {
+          beginAtZero: true,
+          suggestedMax: Math.max(10, Math.ceil(maxRevenue * 1.15)),
+          position: 'left',
+          ticks: {
+            color: '#051440',
+            callback: function (value) {
+              return formatCurrency(value, config.currency || 'EUR', 0, 0);
+            },
+          },
+          grid: {
+            color: '#e9ecef',
+          },
+        },
+        y1: {
+          beginAtZero: true,
+          suggestedMax: Math.max(5, Math.ceil(maxConversions * 1.15)),
+          position: 'right',
+          ticks: {
+            color: '#ed2e38',
+            callback: function (value) {
+              return String(Math.round(value));
+            },
+          },
+          grid: {
+            drawOnChartArea: false,
+          },
+        },
+      },
+    };
+
+    if (existingChart) {
+      existingChart.data = data;
+      existingChart.options = options;
+      existingChart.update();
+      return existingChart;
     }
 
-    function yRevenue(value) {
-      return padding.top + chartHeight - (value / yMaxRevenue) * chartHeight;
-    }
-
-    function yConversions(value) {
-      return padding.top + chartHeight - (value / yMaxConversions) * chartHeight;
-    }
-
-    ctx.strokeStyle = '#e9ecef';
-    ctx.lineWidth = 1;
-    var gridSteps = 4;
-    for (var g = 0; g <= gridSteps; g += 1) {
-      var gy = padding.top + (chartHeight * g) / gridSteps;
-      ctx.beginPath();
-      ctx.moveTo(padding.left, gy);
-      ctx.lineTo(width - padding.right - rightGutter, gy);
-      ctx.stroke();
-    }
-
-    var barWidth = Math.max(10, Math.min(30, chartWidth / Math.max(labels.length, 1) / 2));
-    ctx.fillStyle = 'rgba(255,102,84,0.65)';
-    conversions.forEach(function (value, index) {
-      var x = xAt(index);
-      var y = yConversions(value);
-      var h = padding.top + chartHeight - y;
-      ctx.fillRect(x - barWidth / 2, y, barWidth, h);
+    return new window.Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: data,
+      options: options,
     });
-
-    ctx.strokeStyle = '#051440';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    revenues.forEach(function (value, index) {
-      var x = xAt(index);
-      var y = yRevenue(value);
-      if (index === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    });
-    ctx.stroke();
-
-    ctx.fillStyle = '#051440';
-    revenues.forEach(function (value, index) {
-      var x = xAt(index);
-      var y = yRevenue(value);
-      ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    ctx.font = '11px Arial';
-    ctx.fillStyle = '#6c757d';
-    ctx.textAlign = 'center';
-    var maxTicks = 8;
-    var labelStep = Math.max(1, Math.ceil(labels.length / maxTicks));
-    var xAxisLabelY = height - 30;
-    labels.forEach(function (label, index) {
-      if (index % labelStep !== 0 && index !== labels.length - 1) {
-        return;
-      }
-      var x = xAt(index);
-      ctx.fillText(label, x, xAxisLabelY);
-    });
-
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#051440';
-    for (var i = 0; i <= gridSteps; i += 1) {
-      var revVal = (yMaxRevenue * (gridSteps - i)) / gridSteps;
-      var yLeft = padding.top + (chartHeight * i) / gridSteps + 4;
-      ctx.fillText(formatCurrency(revVal, config.currency || 'EUR', 0, 0), padding.left - 8, yLeft);
-    }
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#ed2e38';
-    for (var j = 0; j <= gridSteps; j += 1) {
-      var convVal = (yMaxConversions * (gridSteps - j)) / gridSteps;
-      var yRight = padding.top + (chartHeight * j) / gridSteps + 4;
-      ctx.fillText(Math.round(convVal).toString(), width - padding.right + 20, yRight);
-    }
-
-    var legendY = height - 10;
-    var revenueLabel = config.revenueLabel || 'Revenue';
-    var salesLabel = config.salesLabel || 'Sales';
-    var revenueTextWidth = ctx.measureText(revenueLabel).width;
-    var salesTextWidth = ctx.measureText(salesLabel).width;
-    var legendItemGap = 24;
-    var legendMarkWidth = 12;
-    var totalLegendWidth = legendMarkWidth + 8 + revenueTextWidth + legendItemGap + legendMarkWidth + 8 + salesTextWidth;
-    var legendStartX = Math.max(padding.left, (width - totalLegendWidth) / 2);
-
-    ctx.fillStyle = '#051440';
-    ctx.fillRect(legendStartX, legendY - 4, legendMarkWidth, 3);
-    ctx.fillStyle = '#495057';
-    ctx.textAlign = 'left';
-    ctx.fillText(revenueLabel, legendStartX + legendMarkWidth + 8, legendY + 2);
-
-    ctx.fillStyle = 'rgba(255,102,84,0.65)';
-    ctx.fillRect(legendStartX + legendMarkWidth + 8 + revenueTextWidth + legendItemGap, legendY - 9, legendMarkWidth, 10);
-    ctx.fillStyle = '#495057';
-    ctx.fillText(salesLabel, legendStartX + legendMarkWidth + 8 + revenueTextWidth + legendItemGap + legendMarkWidth + 8, legendY + 2);
-
-    var points = rows.map(function (row, index) {
-      return {
-        index: index,
-        x: xAt(index),
-        yRevenue: yRevenue(revenues[index]),
-        yConversions: yConversions(conversions[index]),
-        key: row.key,
-        revenue: revenues[index],
-        conversions: conversions[index],
-      };
-    });
-
-    return { points: points };
   }
 
   function initChart(config) {
@@ -455,7 +438,7 @@
     var state = {
       range: rangeSelect ? rangeSelect.value : (config.defaultRange || '28d'),
       granularity: granularitySelect ? granularitySelect.value : (config.defaultGranularity || 'day'),
-      points: [],
+      chart: chartInstances[config.canvasId || ''] || null,
     };
 
     function render() {
@@ -479,7 +462,11 @@
           emptyEl.textContent = config.emptyLabel || 'No data for the selected period.';
           emptyEl.classList.remove('d-none');
         }
-        state.points = [];
+        if (state.chart) {
+          state.chart.destroy();
+          state.chart = null;
+          chartInstances[config.canvasId || ''] = null;
+        }
         var c = canvas.getContext('2d');
         c.clearRect(0, 0, canvas.width, canvas.height);
         return;
@@ -489,8 +476,9 @@
         emptyEl.classList.add('d-none');
       }
 
-      var drawState = drawChart(canvas, rows, config);
-      state.points = drawState ? drawState.points : [];
+      hideTooltip(tooltip);
+      state.chart = drawChart(canvas, rows, config, state.chart);
+      chartInstances[config.canvasId || ''] = state.chart;
     }
 
     if (rangeSelect) {
@@ -510,41 +498,6 @@
         render();
       });
     }
-
-    canvas.addEventListener('mousemove', function (event) {
-      if (!state.points.length) {
-        hideTooltip(tooltip);
-        return;
-      }
-
-      var rect = canvas.getBoundingClientRect();
-      var x = event.clientX - rect.left;
-
-      var nearest = state.points.reduce(function (best, point) {
-        var dist = Math.abs(point.x - x);
-        if (!best || dist < best.dist) {
-          return { point: point, dist: dist };
-        }
-        return best;
-      }, null);
-
-      if (!nearest || nearest.dist > 28) {
-        hideTooltip(tooltip);
-        return;
-      }
-
-      var p = nearest.point;
-      var html =
-        '<strong>' + formatDateLabel(p.key) + '</strong><br>' +
-        (config.revenueLabel || 'Revenue') + ': ' + formatCurrency(p.revenue, config.currency || 'EUR', 2, 2) + '<br>' +
-        (config.salesLabel || 'Sales') + ': ' + p.conversions;
-
-      showTooltip(tooltip, p.x, Math.min(p.yRevenue, p.yConversions), html);
-    });
-
-    canvas.addEventListener('mouseleave', function () {
-      hideTooltip(tooltip);
-    });
 
     window.addEventListener('resize', render);
     render();
