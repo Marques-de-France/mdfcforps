@@ -6,6 +6,24 @@
 	padding: 16px;
 }
 
+.adminmdfcforps .title-row .title {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.adminmdfcforps .title-row .title::before {
+	content: '';
+	display: inline-block;
+	width: 32px;
+	height: 32px;
+	background-image: url('../../logo.png');
+	background-repeat: no-repeat;
+	background-size: contain;
+	background-position: center;
+	flex: 0 0 32px;
+}
+
 .mdf-tabs {
 	display: flex;
 	gap: 4px;

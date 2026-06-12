@@ -287,7 +287,7 @@
     var revenues = rows.map(function (item) { return Number(item.revenue.toFixed(2)); });
     var conversions = rows.map(function (item) { return item.conversions; });
 
-    var padding = { top: 24, right: 96, bottom: 58, left: 78 };
+    var padding = { top: 24, right: 96, bottom: 72, left: 78 };
     var rightGutter = 8;
     var chartWidth = width - padding.left - padding.right - rightGutter;
     var chartHeight = height - padding.top - padding.bottom;
@@ -360,12 +360,13 @@
     ctx.textAlign = 'center';
     var maxTicks = 8;
     var labelStep = Math.max(1, Math.ceil(labels.length / maxTicks));
+    var xAxisLabelY = height - 30;
     labels.forEach(function (label, index) {
       if (index % labelStep !== 0 && index !== labels.length - 1) {
         return;
       }
       var x = xAt(index);
-      ctx.fillText(label, x, height - 12);
+      ctx.fillText(label, x, xAxisLabelY);
     });
 
     ctx.textAlign = 'right';
@@ -384,17 +385,26 @@
       ctx.fillText(Math.round(convVal).toString(), width - padding.right + 20, yRight);
     }
 
-    var legendY = height - 30;
+    var legendY = height - 10;
+    var revenueLabel = config.revenueLabel || 'Revenue';
+    var salesLabel = config.salesLabel || 'Sales';
+    var revenueTextWidth = ctx.measureText(revenueLabel).width;
+    var salesTextWidth = ctx.measureText(salesLabel).width;
+    var legendItemGap = 24;
+    var legendMarkWidth = 12;
+    var totalLegendWidth = legendMarkWidth + 8 + revenueTextWidth + legendItemGap + legendMarkWidth + 8 + salesTextWidth;
+    var legendStartX = Math.max(padding.left, (width - totalLegendWidth) / 2);
+
     ctx.fillStyle = '#051440';
-    ctx.fillRect(padding.left, legendY - 3, 12, 3);
+    ctx.fillRect(legendStartX, legendY - 4, legendMarkWidth, 3);
     ctx.fillStyle = '#495057';
     ctx.textAlign = 'left';
-    ctx.fillText(config.revenueLabel || 'Revenue', padding.left + 18, legendY + 2);
+    ctx.fillText(revenueLabel, legendStartX + legendMarkWidth + 8, legendY + 2);
 
     ctx.fillStyle = 'rgba(255,102,84,0.65)';
-    ctx.fillRect(padding.left + 130, legendY - 8, 12, 10);
+    ctx.fillRect(legendStartX + legendMarkWidth + 8 + revenueTextWidth + legendItemGap, legendY - 9, legendMarkWidth, 10);
     ctx.fillStyle = '#495057';
-    ctx.fillText(config.salesLabel || 'Sales', padding.left + 148, legendY + 2);
+    ctx.fillText(salesLabel, legendStartX + legendMarkWidth + 8 + revenueTextWidth + legendItemGap + legendMarkWidth + 8, legendY + 2);
 
     var points = rows.map(function (row, index) {
       return {
