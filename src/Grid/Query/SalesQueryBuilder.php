@@ -89,8 +89,9 @@ final class SalesQueryBuilder extends AbstractDoctrineQueryBuilder
                         break;
                     }
 
-                    $qb->andWhere('s.order_reference LIKE :filter_order_reference')
-                        ->setParameter('filter_order_reference', '%' . $value . '%');
+                    $searchValue = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value) . '%';
+                    $qb->andWhere('LOWER(s.order_reference) LIKE LOWER(:filter_order_reference)')
+                        ->setParameter('filter_order_reference', $searchValue);
                     break;
                 case 'source':
                     $value = trim((string) $value);
@@ -98,8 +99,9 @@ final class SalesQueryBuilder extends AbstractDoctrineQueryBuilder
                         break;
                     }
 
-                    $qb->andWhere('s.attribution_source LIKE :filter_source')
-                        ->setParameter('filter_source', '%' . $value . '%');
+                    $searchValue = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value) . '%';
+                    $qb->andWhere('LOWER(s.attribution_source) LIKE LOWER(:filter_source)')
+                        ->setParameter('filter_source', $searchValue);
                     break;
                 case 'status':
                     $value = trim((string) $value);

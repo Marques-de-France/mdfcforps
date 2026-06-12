@@ -78,11 +78,15 @@
 
 .mdf-kpi-card {
 	background: #fff;
-	border: 1px solid #e0e2e8;
-	border-radius: 8px;
-	padding: 20px 24px;
-	text-align: center;
-	box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 160px;
+    padding: 16px 20px;
 }
 
 .mdf-kpi-value {
@@ -214,4 +218,96 @@
 
 .mdf-serverlist-panel {
 	margin-top: 24px;
+}
+
+.mdf-chart-card {
+	background: #fff;
+	border: 1px solid #e0e0e0;
+	border-radius: 6px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+	margin-bottom: 24px;
+	padding: 16px 20px;
+}
+
+.mdf-chart-controls {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: space-between;
+	margin-bottom: 16px;
+}
+
+.mdf-chart-controls-title {
+	color: #051440;
+	font-size: 14px;
+	font-weight: 700;
+}
+
+.mdf-chart-controls-fields {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.mdf-chart-container {
+	height: 280px;
+	position: relative;
+	width: 100%;
+}
+
+.mdf-sales-kpis {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+.mdf-sales-kpi {
+	background: #fff;
+	border: 1px solid #e0e0e0;
+	border-radius: 6px;
+	padding: 12px 14px;
+	min-width: 180px;
+	flex: 1;
+}
+
+.mdf-sales-kpi-label {
+	color: #666;
+	font-size: 12px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.mdf-sales-kpi-value {
+	color: #051440;
+	font-size: 24px;
+	font-weight: 700;
+	line-height: 1.2;
+}
+
+.mdf-sales-kpi-sub {
+	color: #888;
+	font-size: 12px;
+	margin-top: 2px;
+}
+
+.mdf-sales-chart-tooltip {
+	position: absolute;
+	pointer-events: none;
+	background: rgba(5, 20, 64, 0.95);
+	color: #fff;
+	padding: 6px 8px;
+	border-radius: 4px;
+	font-size: 12px;
+	line-height: 1.35;
+	white-space: nowrap;
+	transform: translate(-50%, calc(-100% - 10px));
+	z-index: 2;
+}
+
+@media (max-width: 600px) {
+	.mdf-chart-container {
+		height: 200px;
+	}
 }

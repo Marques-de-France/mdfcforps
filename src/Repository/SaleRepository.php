@@ -12,6 +12,11 @@ class SaleRepository
 {
     private const TABLE = _DB_PREFIX_ . 'mdfcforps_sales';
 
+    /**
+     * @var array<int, string>
+     */
+    private const ALLOWED_STATUSES = ['pending', 'confirmed', 'cancelled', 'refunded', 'failed', 'completed'];
+
     // -----------------------------------------------------------------------
     // Writes
     // -----------------------------------------------------------------------
@@ -88,6 +93,66 @@ class SaleRepository
             'UPDATE `' . _DB_PREFIX_ . 'mdfcforps_sales`
              SET `hub_sync_attempts` = `hub_sync_attempts` + 1
              WHERE `id` = ' . (int) $id
+        );
+    }
+
+    /**
+     * Restore or update a local sale row from Hub payload.
+     *
+     * @param array<string, mixed> $hubSale
+     */
+    public function upsertFromHubSale(array $hubSale): bool
+    {
+        $orderId = (int) ($hubSale['orderId'] ?? 0);
+        if ($orderId <= 0) {
+            return false;
+        }
+
+        $orderReference = trim((string) ($hubSale['orderName'] ?? ''));
+        if ($orderReference === '') {
+            $orderReference = 'HUB-' . $orderId;
+        }
+
+        $status = $this->normalizeStatus((string) ($hubSale['status'] ?? 'confirmed'));
+        $createdAt = $this->normalizeCreatedAt((string) ($hubSale['createdAt'] ?? ''));
+
+        $data = [
+            'order_id'          => $orderId,
+            'order_reference'   => pSQL($orderReference),
+            'amount'            => (float) ($hubSale['amount'] ?? 0),
+            'currency'          => pSQL(strtoupper((string) ($hubSale['currency'] ?? 'EUR')) ?: 'EUR'),
+            'attribution_source'=> pSQL((string) ($hubSale['attributionSource'] ?? 'unknown')),
+            'utm_source'        => '',
+            'utm_medium'        => '',
+            'utm_campaign'      => '',
+            'utm_content'       => '',
+            'utm_term'          => '',
+            'landing_site'      => '',
+            'referring_site'    => '',
+            'landing_ref'       => '',
+            'click_id'          => pSQL((string) ($hubSale['clickId'] ?? '')),
+            'status'            => pSQL($status),
+            'hub_synced'        => 1,
+            'hub_sync_attempts' => 0,
+            'created_at'        => pSQL($createdAt),
+        ];
+
+        $existing = $this->findByOrderId($orderId);
+        if ($existing) {
+            unset($data['order_id']);
+            return (bool) \Db::getInstance()->update(
+                'mdfcforps_sales',
+                $data,
+                'id = ' . (int) $existing['id']
+            );
+        }
+
+        return (bool) \Db::getInstance()->insert(
+            'mdfcforps_sales',
+            $data,
+            false,
+            true,
+            \Db::INSERT_IGNORE
         );
     }
 
@@ -212,5 +277,28 @@ class SaleRepository
             'sales' => is_array($sales) ? $sales : [],
             'total' => $total,
         ];
+    }
+
+    private function normalizeStatus(string $status): string
+    {
+        $normalized = strtolower(trim($status));
+        if (in_array($normalized, self::ALLOWED_STATUSES, true)) {
+            return $normalized;
+        }
+
+        return 'confirmed';
+    }
+
+    private function normalizeCreatedAt(string $createdAt): string
+    {
+        if ($createdAt === '') {
+            return date('Y-m-d H:i:s');
+        }
+
+        try {
+            return (new \DateTimeImmutable($createdAt))->format('Y-m-d H:i:s');
+        } catch (\Throwable $e) {
+            return date('Y-m-d H:i:s');
+        }
     }
 }

@@ -128,9 +128,28 @@ class HubClient
     /**
      * @return array<string, mixed>
      */
-    public function getAnalytics(): array
+    public function getAnalytics(string $dateFrom = '', string $dateTo = '', string $granularity = 'day'): array
     {
-        return $this->get('/api/ps/analytics');
+        $query = [];
+
+        if ($dateFrom !== '') {
+            $query['dateFrom'] = $dateFrom;
+        }
+
+        if ($dateTo !== '') {
+            $query['dateTo'] = $dateTo;
+        }
+
+        if ($granularity !== '') {
+            $query['granularity'] = $granularity;
+        }
+
+        $path = '/api/ps/analytics';
+        if (!empty($query)) {
+            $path .= '?' . http_build_query($query);
+        }
+
+        return $this->get($path);
     }
 
     /**

@@ -1,19 +1,83 @@
 {% extends '@PrestaShop/Admin/layout.html.twig' %}
 {% trans_default_domain 'Modules.Mdfcforps.Admin' %}
 
+{% block stylesheets %}
+  {{ parent() }}
+  <link rel="stylesheet" href="{{ asset('../modules/mdfcforps/views/css/admin.css') }}&mdf=20260612">
+{% endblock %}
+
 {% block content %}
 <div class="mdf-admin-wrap">
   {{ include('@Modules/mdfcforps/views/templates/admin/mdfcforps/_navigation_tabs.html.twig', { currentTab: currentTab|default('sales') }) }}
 
   <div class="tab-content">
-    <h2>{{ 'Attributed Sales'|trans({}, 'Modules.Mdfcforps.Admin') }}</h2>
-    {{ include('@PrestaShop/Admin/Common/Grid/grid.html.twig', {'grid': salesGrid}) }}
+    <div class="mdf-chart-card mb-4">
+      <div class="mdf-chart-controls">
+        <strong class="mdf-chart-controls-title">{{ 'Revenue over time'|trans({}, 'Modules.Mdfcforps.Admin') }}</strong>
+        <div class="mdf-chart-controls-fields">
+          <select class="custom-select" id="mdf-sales-range" aria-label="{{ 'Chart period'|trans({}, 'Modules.Mdfcforps.Admin') }}">
+            <option value="7d">{{ 'Last 7 days'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+            <option value="28d" selected>{{ 'Last 28 days'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+            <option value="90d">{{ 'Last 90 days'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+            <option value="12m">{{ 'Last 12 months'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+            <option value="year">{{ 'Last year'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+            <option value="this_year">{{ 'This year'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+          </select>
+          <select class="custom-select" id="mdf-sales-granularity" aria-label="{{ 'Chart granularity'|trans({}, 'Modules.Mdfcforps.Admin') }}">
+            <option value="day" selected>{{ 'Daily'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+            <option value="month">{{ 'Monthly'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+          </select>
+        </div>
+      </div>
+
+      {% if analyticsError %}
+        <div class="alert alert-warning" role="alert">{{ analyticsError }}</div>
+      {% endif %}
+
+      <div class="mdf-chart-container">
+        <canvas id="mdf-sales-revenue-chart"></canvas>
+        <div id="mdf-sales-chart-tooltip" class="mdf-sales-chart-tooltip d-none"></div>
+      </div>
+      <p id="mdf-sales-chart-empty" class="text-muted mt-2 d-none"></p>
+    </div>
+    <div class="mdf-sales-kpis mb-4">
+        {{ include('@Modules/mdfcforps/views/templates/admin/mdfcforps/_kpi_card.html.twig', {
+          label: 'Revenue'|trans({}, 'Modules.Mdfcforps.Admin'),
+          value: '<span id="mdf-sales-kpi-revenue">-</span>',
+          subLabel: 'On selected period'|trans({}, 'Modules.Mdfcforps.Admin')
+        }, with_context = false) }}
+        {{ include('@Modules/mdfcforps/views/templates/admin/mdfcforps/_kpi_card.html.twig', {
+          label: 'Sales'|trans({}, 'Modules.Mdfcforps.Admin'),
+          value: '<span id="mdf-sales-kpi-sales">-</span>',
+          subLabel: 'On selected period'|trans({}, 'Modules.Mdfcforps.Admin')
+        }, with_context = false) }}
+      </div>
+    <div class="card mb-4">
+      <div class="card-header">
+        <h3 class="d-inline-block card-header-title mb-0">{{ 'Attributed Sales'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
+      </div>
+      <div class="card-body">
+        {{ include('@PrestaShop/Admin/Common/Grid/grid.html.twig', {'grid': salesGrid}) }}
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
 
 {% block javascripts %}
   {{ parent() }}
+  <script>
+    window.mdfcforpsSales = {
+      analytics: {{ analytics|default({})|json_encode|raw }},
+      currency: '{{ analytics.currency|default('EUR') }}',
+      revenueLabel: '{{ 'Revenue'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}',
+      salesLabel: '{{ 'Sales'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}',
+      emptyLabel: '{{ 'No data for the selected period.'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}',
+      dailyLabel: '{{ 'Daily'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}',
+      monthlyLabel: '{{ 'Monthly'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}'
+    };
+  </script>
+  <script src="{{ asset('../modules/mdfcforps/views/js/admin/sales-chart.js') }}&mdf=20260612-2"></script>
   <script>
     (function () {
       function initSalesGrid() {

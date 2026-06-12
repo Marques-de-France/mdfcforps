@@ -306,7 +306,7 @@ class Mdfcforps extends Module
         \Mdfcforps\Service\HubClient $hubClient
     ): void {
         try {
-            $hubOrderIdSet = $this->fetchHubOrderIdSet($hubClient, '', '');
+            $hubSalesByOrderId = $this->fetchHubSalesByOrderId($hubClient, '', '');
 
             $localSales = $saleRepo->findAll();
 
@@ -316,7 +316,7 @@ class Mdfcforps extends Module
                     continue;
                 }
 
-                if (!isset($hubOrderIdSet[$orderId])) {
+                if (!isset($hubSalesByOrderId[$orderId])) {
                     if ($hubClient->syncSale($sale)) {
                         $saleRepo->markSynced((int) $sale['id']);
                     }
@@ -341,10 +341,31 @@ class Mdfcforps extends Module
 
             $dateFrom = date('Y-m-d', time() - (self::RECONCILE_WINDOW_DAYS * 86400));
             $dateTo = date('Y-m-d');
-            $hubOrderIdSet = $this->fetchHubOrderIdSet($hubClient, $dateFrom, $dateTo);
+            $hubSalesByOrderId = $this->fetchHubSalesByOrderId($hubClient, $dateFrom, $dateTo);
 
             $requeued = 0;
             $fixedSynced = 0;
+            $restoredLocal = 0;
+            $statusAligned = 0;
+            $localOrderIdSet = [];
+
+            foreach ($localSales as $sale) {
+                $orderId = (string) ($sale['order_id'] ?? '');
+                if ($orderId !== '') {
+                    $localOrderIdSet[$orderId] = true;
+                }
+            }
+
+            // Hub is source of truth: restore missing local rows found remotely.
+            foreach ($hubSalesByOrderId as $orderId => $hubSale) {
+                if (isset($localOrderIdSet[$orderId])) {
+                    continue;
+                }
+
+                if ($saleRepo->upsertFromHubSale($hubSale)) {
+                    $restoredLocal++;
+                }
+            }
 
             foreach ($localSales as $sale) {
                 $orderId = (string) ($sale['order_id'] ?? '');
@@ -352,10 +373,12 @@ class Mdfcforps extends Module
                     continue;
                 }
 
-                $isHubPresent = isset($hubOrderIdSet[$orderId]);
+                $hubSale = $hubSalesByOrderId[$orderId] ?? null;
+                $isHubPresent = is_array($hubSale);
                 $isLocalSynced = (int) ($sale['hub_synced'] ?? 0) === 1;
 
-                // False positive in local DB: mark pending so normal sender retries.
+                // Missing remotely: never delete Hub rows (Hub is immutable source of truth).
+                // Requeue local row to upsert back to Hub through the normal sync path.
                 if ($isLocalSynced && !$isHubPresent) {
                     if ($saleRepo->markPending((int) $sale['id'])) {
                         $requeued++;
@@ -369,11 +392,26 @@ class Mdfcforps extends Module
                         $fixedSynced++;
                     }
                 }
+
+                // Hub-authoritative status parity.
+                if ($isHubPresent) {
+                    $remoteStatus = strtolower(trim((string) ($hubSale['status'] ?? '')));
+                    $localStatus = strtolower(trim((string) ($sale['status'] ?? '')));
+
+                    if ($remoteStatus !== '' && $remoteStatus !== $localStatus) {
+                        if ($saleRepo->updateStatus((int) $sale['id'], $remoteStatus)) {
+                            $statusAligned++;
+                        }
+                    }
+                }
             }
 
-            if ($requeued > 0 || $fixedSynced > 0) {
+            if ($requeued > 0 || $fixedSynced > 0 || $restoredLocal > 0 || $statusAligned > 0) {
                 \PrestaShopLogger::addLog(
-                    '[MDF] Reconciliation done: requeued=' . $requeued . ', fixedSynced=' . $fixedSynced,
+                    '[MDF] Reconciliation done: requeued=' . $requeued
+                    . ', fixedSynced=' . $fixedSynced
+                    . ', restoredLocal=' . $restoredLocal
+                    . ', statusAligned=' . $statusAligned,
                     1,
                     null,
                     'Mdfcforps'
@@ -390,14 +428,14 @@ class Mdfcforps extends Module
     }
 
     /**
-     * @return array<string, bool>
+     * @return array<string, array<string, mixed>>
      */
-    private function fetchHubOrderIdSet(
+    private function fetchHubSalesByOrderId(
         \Mdfcforps\Service\HubClient $hubClient,
         string $dateFrom,
         string $dateTo
     ): array {
-        $set = [];
+        $map = [];
 
         for ($page = 1; $page <= self::HUB_MAX_PAGES; $page++) {
             $response = $hubClient->getHubSalesPage(
@@ -415,7 +453,7 @@ class Mdfcforps extends Module
             foreach ($sales as $hubSale) {
                 $orderId = (string) ($hubSale['orderId'] ?? '');
                 if ($orderId !== '') {
-                    $set[$orderId] = true;
+                    $map[$orderId] = $hubSale;
                 }
             }
 
@@ -426,6 +464,6 @@ class Mdfcforps extends Module
             }
         }
 
-        return $set;
+        return $map;
     }
 }

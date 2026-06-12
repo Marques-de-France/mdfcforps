@@ -24,7 +24,7 @@
       <table class="mdf-table">
         <thead>
           <tr>
-            <th>{l s='Order Ref' mod='mdfcforps'}</th>
+            <th>{l s='Reference' mod='mdfcforps'}</th>
             <th>{l s='Amount' mod='mdfcforps'}</th>
             <th>{l s='Currency' mod='mdfcforps'}</th>
             <th>{l s='Source' mod='mdfcforps'}</th>

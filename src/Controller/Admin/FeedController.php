@@ -60,6 +60,18 @@ class FeedController extends FrameworkBundleAdminController
 
     public function salesAction(Request $request): Response
     {
+        $analytics = [];
+        $analyticsError = null;
+        try {
+            $now = new \DateTimeImmutable('now');
+            $dateTo = $now->format('Y-m-d');
+            $dateFrom = $now->modify('-730 days')->format('Y-m-d');
+
+            $analytics = (new \Mdfcforps\Service\HubClient())->getAnalytics($dateFrom, $dateTo, 'day');
+        } catch (\Throwable $e) {
+            $analyticsError = $this->trans('Unable to load analytics chart data.', [], 'Modules.Mdfcforps.Admin');
+        }
+
         $allParams = array_replace_recursive(
             $request->query->all(),
             $request->request->all()
@@ -73,8 +85,8 @@ class FeedController extends FrameworkBundleAdminController
                 'status' => (string) ($salesParams['status'] ?? ($salesParams['filters']['status'] ?? '')),
                 'synced' => (string) ($salesParams['synced'] ?? ($salesParams['filters']['synced'] ?? '')),
             ],
-            'orderBy' => $salesParams['orderBy'] ?? null,
-            'sortOrder' => $salesParams['sortOrder'] ?? ($salesParams['orderWay'] ?? null),
+            'orderBy' => $salesParams['orderBy'] ?? 'date',
+            'sortOrder' => $salesParams['sortOrder'] ?? ($salesParams['orderWay'] ?? 'DESC'),
             'offset' => (int) ($salesParams['offset'] ?? 0),
             'limit' => (int) ($salesParams['limit'] ?? 25),
         ];
@@ -87,6 +99,8 @@ class FeedController extends FrameworkBundleAdminController
             '@Modules/mdfcforps/views/templates/admin/mdfcforps/sales.html.twig',
             [
                 'salesGrid' => $salesGrid,
+                'analytics' => $analytics,
+                'analyticsError' => $analyticsError,
                 'currentTab' => 'sales',
                 'enableSidebar' => true,
                 'layoutTitle' => 'Marques de France',

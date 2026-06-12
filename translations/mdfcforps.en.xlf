@@ -29,8 +29,8 @@
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.order_ref">
-        <source>Order Ref</source>
-        <target>Order Ref</target>
+        <source>Reference</source>
+        <target>Reference</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.amount">

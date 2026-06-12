@@ -32,7 +32,7 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
     {
         return (new ColumnCollection())
             ->add((new DataColumn('order_reference'))
-                ->setName($this->trans('Order Ref', [], 'Modules.Mdfcforps.Admin'))
+                ->setName($this->trans('Reference', [], 'Modules.Mdfcforps.Admin'))
                 ->setOptions([
                     'field' => 'order_reference',
                     'sortable' => true,
@@ -88,7 +88,7 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
             ->add((new Filter('order_reference', TextType::class))
                 ->setTypeOptions([
                     'required' => false,
-                    'attr' => ['placeholder' => $this->trans('Search order reference', [], 'Modules.Mdfcforps.Admin')],
+                    'attr' => ['placeholder' => $this->trans('Search reference', [], 'Modules.Mdfcforps.Admin')],
                 ])
                 ->setAssociatedColumn('order_reference')
             )

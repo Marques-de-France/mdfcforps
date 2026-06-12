@@ -1,0 +1,7 @@
+<div class="mdf-kpi-card">
+  <div class="mdf-kpi-label">{{ label }}</div>
+  <div class="mdf-kpi-value">{{ value|raw }}</div>
+  {% if subLabel is defined and subLabel %}
+    <div class="mdf-kpi-sub">{{ subLabel }}</div>
+  {% endif %}
+</div>
