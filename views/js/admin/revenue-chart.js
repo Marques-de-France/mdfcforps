@@ -1,7 +1,22 @@
 (function () {
   'use strict';
 
-  var chartInstances = {};
+  var stateKey = '__mdfcforpsRevenueChartState';
+  var globalState = window[stateKey] || {
+    bootstrapped: false,
+    chartInstances: {},
+    initializedCanvases: {},
+  };
+
+  if (globalState.bootstrapped) {
+    return;
+  }
+
+  globalState.bootstrapped = true;
+  window[stateKey] = globalState;
+
+  var chartInstances = globalState.chartInstances;
+  var initializedCanvases = globalState.initializedCanvases;
 
   function toDateFromKey(key) {
     if (!key) {
@@ -417,6 +432,14 @@
       return;
     }
 
+    var canvasKey = String(config.canvasId || '');
+    if (canvasKey && initializedCanvases[canvasKey]) {
+      return;
+    }
+    if (canvasKey) {
+      initializedCanvases[canvasKey] = true;
+    }
+
     applyFallbackStyles(canvas, tooltip, rangeSelect, granularitySelect);
 
     var baseRows = normalizeAnalytics(config.analytics)
@@ -505,7 +528,19 @@
 
   function initAllCharts() {
     var configs = Array.isArray(window.mdfcforpsRevenueCharts) ? window.mdfcforpsRevenueCharts : [];
-    configs.forEach(initChart);
+    var uniqueByCanvas = {};
+
+    configs.forEach(function (cfg) {
+      var key = String((cfg && cfg.canvasId) || '');
+      if (!key) {
+        return;
+      }
+      uniqueByCanvas[key] = cfg;
+    });
+
+    Object.keys(uniqueByCanvas).forEach(function (canvasId) {
+      initChart(uniqueByCanvas[canvasId]);
+    });
   }
 
   if (document.readyState === 'loading') {
