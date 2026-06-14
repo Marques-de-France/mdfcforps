@@ -19,13 +19,13 @@
       <div class="card-body">
         <p class="mb-3" id="mdf-feed-mode-current-value">
           {% if feedMode == 'SERVERLIST' %}
-            Via manual selection from this module
+            {{ 'Via manual selection from this module'|trans({}, 'Modules.Mdfcforps.Admin') }}
           {% else %}
-            Via the product tag field
+            {{ 'Via the product tag field'|trans({}, 'Modules.Mdfcforps.Admin') }}
           {% endif %}
         </p>
         <button type="button" class="btn btn-primary" id="mdf-feed-mode-change-btn" data-toggle="modal" data-target="#mdf-feed-mode-modal" onclick="if (window.mdfOpenFeedModeModal) { window.mdfOpenFeedModeModal(); } return false;">
-          Change
+          {{ 'Change'|trans({}, 'Modules.Mdfcforps.Admin') }}
         </button>
       </div>
     </div>
@@ -35,28 +35,28 @@
         <div class="modal-content">
           <form method="post" action="{{ path('mdfcforps_feed_mode') }}" id="mdf-feed-mode-modal-form">
             <div class="modal-header">
-              <h5 class="modal-title" id="mdf-feed-mode-modal-label">Change mode</h5>
+              <h5 class="modal-title" id="mdf-feed-mode-modal-label">{{ 'Change mode'|trans({}, 'Modules.Mdfcforps.Admin') }}</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="if (window.mdfCloseFeedModeModal) { window.mdfCloseFeedModeModal(); } return false;">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
             <div class="modal-body">
               <div class="form-group">
-                <label for="mdf-feed-mode-select">Selection method</label>
+                <label for="mdf-feed-mode-select">{{ 'Selection method'|trans({}, 'Modules.Mdfcforps.Admin') }}</label>
                 <select class="form-control" id="mdf-feed-mode-select" name="feed_mode">
-                  <option value="TAG" {% if feedMode == 'TAG' %}selected{% endif %}>Via the product tag field (Recommended)</option>
-                  <option value="SERVERLIST" {% if feedMode == 'SERVERLIST' %}selected{% endif %}>Via manual selection from this module</option>
+                  <option value="TAG" {% if feedMode == 'TAG' %}selected{% endif %}>{{ 'Via the product tag field (Recommended)'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
+                  <option value="SERVERLIST" {% if feedMode == 'SERVERLIST' %}selected{% endif %}>{{ 'Via manual selection from this module'|trans({}, 'Modules.Mdfcforps.Admin') }}</option>
                 </select>
               </div>
 
               <hr>
 
-              <p class="mb-4"><strong>Via the product tag field (recommended)</strong><br>Simply add the tag <span class="badge badge-secondary">marques-de-france</span> to each of your products manufactured in France. This is the simplest and most direct method.</p>
-              <p class="mb-0"><strong>Via manual selection from this module</strong><br>Manually select products directly from this app. Choose this option if your product tag field is used to display information in your theme.</p>
+              <p class="mb-4"><strong>{{ 'Via the product tag field (recommended)'|trans({}, 'Modules.Mdfcforps.Admin') }}</strong><br>{{ 'Simply add the tag'|trans({}, 'Modules.Mdfcforps.Admin') }} <span class="badge badge-secondary">marques-de-france</span> {{ 'to each of your products manufactured in France (in the "SEO" tab when editing a product). This is the simplest and most direct method.'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
+              <p class="mb-0"><strong>{{ 'Via manual selection from this module'|trans({}, 'Modules.Mdfcforps.Admin') }}</strong><br>{{ 'Manually select products directly from this app. Choose this option if your product tag field is used to display information in your theme.'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
             </div>
             <div class="modal-footer">
               <button type="submit" class="btn btn-primary">{{ 'Save'|trans({}, 'Admin.Actions') }}</button>
-              <button type="button" class="btn btn-outline-secondary" data-dismiss="modal" onclick="if (window.mdfCloseFeedModeModal) { window.mdfCloseFeedModeModal(); } return false;">Cancel</button>
+              <button type="button" class="btn btn-outline-secondary" data-dismiss="modal" onclick="if (window.mdfCloseFeedModeModal) { window.mdfCloseFeedModeModal(); } return false;">{{ 'Cancel'|trans({}, 'Admin.Actions') }}</button>
             </div>
           </form>
         </div>
@@ -83,7 +83,7 @@
             </div>
             <div class="card-body">
               <div class="alert alert-warning" role="alert">
-                Only select products manufactured in France. These are the products that will appear in the Marques de France guide.
+                {{ 'Only select products manufactured in France. These are the products that will appear in the Marques de France guide.'|trans({}, 'Modules.Mdfcforps.Admin') }}
               </div>
               {{ include('@PrestaShop/Admin/Common/Grid/grid.html.twig', {'grid': productCatalogGrid}) }}
               <div class="p-3">
@@ -98,7 +98,7 @@
         {# ---- Products in feed grid (hidden in manage mode) ---- #}
         {% if not manage %}
           <div class="alert alert-info" role="alert">
-            Out-of-stock, inactive, or products missing a price, image, or brand are automatically excluded from the feed.
+            {{ 'Out-of-stock, inactive, or products missing a price, image, or brand are automatically excluded from the feed.'|trans({}, 'Modules.Mdfcforps.Admin') }}
           </div>
           <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -117,16 +117,16 @@
     {% else %}
       <div class="card mb-4">
         <div class="card-header">
-          <h3 class="d-inline-block card-header-title mb-0">How to include products in the feed?</h3>
+          <h3 class="d-inline-block card-header-title mb-0">{{ 'How to include products in the feed?'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
         </div>
         <div class="card-body">
-          <p class="mb-3">Add the tag <span class="badge badge-secondary">marques-de-france</span> to the products you want to list on Marques de France. Selected products must be manufactured in France.</p>
+          <p class="mb-3">{{ 'Add the tag'|trans({}, 'Modules.Mdfcforps.Admin') }} <span class="badge badge-secondary">marques-de-france</span> {{ 'to the products you want to list on Marques de France. Selected products must be manufactured in France.'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
           <div class="d-flex align-items-center flex-wrap">
             <a href="{{ getAdminLink('AdminTags', true) }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary mr-3 mb-2">
-              Add tag in bulk
+              {{ 'Add tag in bulk'|trans({}, 'Modules.Mdfcforps.Admin') }}
             </a>
             <button type="button" class="btn btn-link p-0 mb-2" id="mdf-tag-help-open-btn" data-toggle="modal" data-target="#mdf-tag-help-modal" onclick="if (window.mdfOpenTagHelpModal) { window.mdfOpenTagHelpModal(); } return false;">
-              How to do ?
+              {{ 'How to do?'|trans({}, 'Modules.Mdfcforps.Admin') }}
             </button>
           </div>
         </div>
@@ -136,7 +136,7 @@
         <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="mdf-tag-help-modal-label">How to add the marques-de-france tag?</h5>
+              <h5 class="modal-title" id="mdf-tag-help-modal-label">{{ 'How to add the marques-de-france tag?'|trans({}, 'Modules.Mdfcforps.Admin') }}</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="if (window.mdfCloseTagHelpModal) { window.mdfCloseTagHelpModal(); } return false;">
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -145,56 +145,56 @@
               <div class="mb-4">
                 <div class="d-flex mb-3">
                   <div class="mr-3 text-center" style="min-width: 24px;">
-                    <span class="badge badge-primary rounded-circle" style="width: 28px; height: 28px; line-height: 22px;">1</span>
+                    <span class="badge badge-primary rounded-circle" style="width: 28px; height: 28px; line-height: 20px; font-size:16px;">1</span>
                   </div>
                   <div>
-                    <p class="font-weight-bold mb-1">Go to Products</p>
-                    <p class="text-muted mb-0">From your Prestasop admin, go to Catalog > Products.</p>
+                    <p class="font-weight-bold mb-1">{{ 'Go to Products'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
+                    <p class="text-muted mb-0">{{ 'From your PrestaShop admin, go to Catalog > Products.'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
                   </div>
                 </div>
 
                 <div class="d-flex mb-3">
                   <div class="mr-3 text-center" style="min-width: 24px;">
-                    <span class="badge badge-primary rounded-circle" style="width: 28px; height: 28px; line-height: 22px;">2</span>
+                    <span class="badge badge-primary rounded-circle" style="width: 28px; height: 28px; line-height: 20px; font-size:16px;">2</span>
                   </div>
                   <div>
-                    <p class="font-weight-bold mb-1">Select a product</p>
-                    <p class="text-muted mb-0">Open a product made in France.</p>
+                    <p class="font-weight-bold mb-1">{{ 'Select a product'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
+                    <p class="text-muted mb-0">{{ 'Open a product made in France.'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
                   </div>
                 </div>
 
                 <div class="d-flex mb-3">
                   <div class="mr-3 text-center" style="min-width: 24px;">
-                    <span class="badge badge-primary rounded-circle" style="width: 28px; height: 28px; line-height: 22px;">3</span>
+                    <span class="badge badge-primary rounded-circle" style="width: 28px; height: 28px; line-height: 20px; font-size:16px;">3</span>
                   </div>
                   <div>
-                    <p class="font-weight-bold mb-1">Add the tag</p>
-                    <p class="text-muted mb-0">In the product page, go to the "SEO" tab and add the tag <span class="badge badge-secondary">marques-de-france</span> in the Tags field.</p>
+                    <p class="font-weight-bold mb-1">{{ 'Add the tag'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
+                    <p class="text-muted mb-0">{{ 'In the product page, go to the "SEO" tab and add the tag'|trans({}, 'Modules.Mdfcforps.Admin') }} <span class="badge badge-secondary">marques-de-france</span> {{ 'in the Tags field.'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
                   </div>
                 </div>
 
                 <div class="d-flex">
                   <div class="mr-3 text-center" style="min-width: 24px;">
-                    <span class="badge badge-primary rounded-circle" style="width: 28px; height: 28px; line-height: 22px;">4</span>
+                    <span class="badge badge-primary rounded-circle" style="width: 28px; height: 28px; line-height: 20px; font-size:16px;">4</span>
                   </div>
                   <div>
-                    <p class="font-weight-bold mb-1">Save</p>
-                    <p class="text-muted mb-0">Click Save and publish. The product will appear in the feed.</p>
+                    <p class="font-weight-bold mb-1">{{ 'Save'|trans({}, 'Admin.Actions') }}</p>
+                    <p class="text-muted mb-0">{{ 'Click Save and publish. The product will appear in the feed.'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
                   </div>
                 </div>
               </div>
 
               <hr>
 
-              <p class="font-weight-bold mb-2">How to bulk edit?</p>
-              <p class="text-muted mb-3">To add the tag to multiple products at once, go to Shop parameters > Search > Tags. Then, create or edit the <span class="badge badge-secondary">marques-de-france</span> tag by adding products to it.</p>
+              <p class="font-weight-bold mb-2">{{ 'How to bulk edit?'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
+              <p class="text-muted mb-3">{{ 'To add the tag to multiple products at once, go to Shop parameters > Search > Tags. Then, create or edit the'|trans({}, 'Modules.Mdfcforps.Admin') }} <span class="badge badge-secondary">marques-de-france</span> {{ 'tag by adding products to it.'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
             </div>
           </div>
         </div>
       </div>
 
       <div class="alert alert-info" role="alert">
-        Out-of-stock, inactive, or products missing a price, image, or brand are automatically excluded from the feed.
+        {{ 'Out-of-stock, inactive, or products missing a price, image, or brand are automatically excluded from the feed.'|trans({}, 'Modules.Mdfcforps.Admin') }}
       </div>
       <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -213,7 +213,18 @@
 <script>
 window.mdfcforpsFeed = {
   toggleUrl: "{{ path('mdfcforps_feed_toggle') }}",
-  bulkUrl:   "{{ path('mdfcforps_feed_bulk') }}"
+  bulkUrl:   "{{ path('mdfcforps_feed_bulk') }}",
+  i18n: {
+    selectDeselectAllVisible: "{{ 'Select / deselect all visible'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}",
+    errorLoadingProducts: "{{ 'Error loading products.'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}",
+    noProductsFound: "{{ 'No products found.'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}",
+    noProductsInCatalog: "{{ 'No products in your catalog.'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}",
+    productsCount: "{{ '{count} product(s)'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}",
+    pageSummary: "{{ 'Page {page} of {total} - {count} products'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}",
+    confirmRemoveProduct: "{{ 'Remove this product from the feed?'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}",
+    errorRemovingProduct: "{{ 'Error removing product.'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}",
+    networkErrorRetry: "{{ 'Network error. Please try again.'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}"
+  }
 };
 
 (function () {
@@ -406,7 +417,8 @@ window.mdfcforpsFeed = {
       return;
     }
 
-    firstHeader.innerHTML = '<div class="md-checkbox md-checkbox-inline"><label><input type="checkbox" id="mdf-manage-select-all" class="form-check-input" title="Select / deselect all visible"><i class="md-checkbox-control"></i></label></div>';
+    var i18n = window.mdfcforpsFeed && window.mdfcforpsFeed.i18n ? window.mdfcforpsFeed.i18n : {};
+    firstHeader.innerHTML = '<div class="md-checkbox md-checkbox-inline"><label><input type="checkbox" id="mdf-manage-select-all" class="form-check-input" title="' + (i18n.selectDeselectAllVisible || 'Select / deselect all visible') + '"><i class="md-checkbox-control"></i></label></div>';
   }
 
   function toggleSelectAll(checked) {

@@ -62,7 +62,7 @@ final class ProductFeedGridDefinitionFactory extends AbstractGridDefinitionFacto
                 ])
             )
             ->add((new HtmlColumn('availability'))
-                ->setName($this->trans('Availability', [], 'Admin.Catalog.Feature'))
+                ->setName($this->trans('Availability', [], 'Modules.Mdfcforps.Admin'))
                 ->setOptions([
                     'field'    => 'availability',
                     'sortable' => true,
@@ -106,9 +106,9 @@ final class ProductFeedGridDefinitionFactory extends AbstractGridDefinitionFacto
                     'required' => false,
                     'placeholder' => $this->trans('All', [], 'Admin.Global'),
                     'choices' => [
-                        $this->trans('In stock', [], 'Admin.Catalog.Feature') => 'in_stock',
+                        $this->trans('In stock', [], 'Modules.Mdfcforps.Admin') => 'in_stock',
                         $this->trans('Out of stock but allow orders', [], 'Modules.Mdfcforps.Admin') => 'out_of_stock_allow_orders',
-                        $this->trans('Out of stock', [], 'Admin.Catalog.Feature') => 'out_of_stock',
+                        $this->trans('Out of stock', [], 'Modules.Mdfcforps.Admin') => 'out_of_stock',
                     ],
                 ])
                 ->setAssociatedColumn('availability')

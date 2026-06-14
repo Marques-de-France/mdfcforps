@@ -1,0 +1,568 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en" target-language="en-US" datatype="plaintext" original="ModulesMdfcforpsAdmin">
+    <body>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.dashboard">
+        <source>Dashboard</source>
+        <target>Dashboard</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.sales">
+        <source>Sales</source>
+        <target>Sales</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.product_feed">
+        <source>Product Feed</source>
+        <target>Product Feed</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.attributed_sales">
+        <source>Attributed Sales</source>
+        <target>Attributed Sales</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.no_sales">
+        <source>No sales recorded yet.</source>
+        <target>No sales recorded yet.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.order_ref">
+        <source>Reference</source>
+        <target>Reference</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.amount">
+        <source>Amount</source>
+        <target>Amount</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.currency">
+        <source>Currency</source>
+        <target>Currency</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.source">
+        <source>Source</source>
+        <target>Source</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.status">
+        <source>Status</source>
+        <target>Status</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.synced">
+        <source>Synced</source>
+        <target>Synced</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.date">
+        <source>Date</source>
+        <target>Date</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.connected">
+        <source>Connected to Marques de France platform.</source>
+        <target>Connected to Marques de France platform.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.connecting">
+        <source>Connecting to Marques de France platform…</source>
+        <target>Connecting to Marques de France platform…</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.unable_to_reach">
+        <source>Unable to reach the Marques de France platform.</source>
+        <target>Unable to reach the Marques de France platform.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.feed_mode_updated">
+        <source>Feed mode updated.</source>
+        <target>Feed mode updated.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.add_product">
+        <source>Add product</source>
+        <target>Add product</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.product_id">
+        <source>Product ID</source>
+        <target>Product ID</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.no_feed_products">
+        <source>No products in the feed list yet.</source>
+        <target>No products in the feed list yet.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.selection_manual_module">
+        <source>Via manual selection from this module</source>
+        <target>Via manual selection from this module</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.selection_product_tag_field">
+        <source>Via the product tag field</source>
+        <target>Via the product tag field</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.change">
+        <source>Change</source>
+        <target>Change</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.change_mode">
+        <source>Change mode</source>
+        <target>Change mode</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.selection_tag_recommended">
+        <source>Via the product tag field (Recommended)</source>
+        <target>Via the product tag field (Recommended)</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.add_tag_prefix">
+        <source>Simply add the tag</source>
+        <target>Simply add the tag</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.add_tag_suffix">
+        <source>to each of your products manufactured in France (in the "SEO" tab when editing a product). This is the simplest and most direct method.</source>
+        <target>to each of your products manufactured in France (in the "SEO" tab when editing a product). This is the simplest and most direct method.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.manual_selection_help">
+        <source>Manually select products directly from this app. Choose this option if your product tag field is used to display information in your theme.</source>
+        <target>Manually select products directly from this app. Choose this option if your product tag field is used to display information in your theme.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.only_select_made_in_france">
+        <source>Only select products manufactured in France. These are the products that will appear in the Marques de France guide.</source>
+        <target>Only select products manufactured in France. These are the products that will appear in the Marques de France guide.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.auto_excluded_products">
+        <source>Out-of-stock, inactive, or products missing a price, image, or brand are automatically excluded from the feed.</source>
+        <target>Out-of-stock, inactive, or products missing a price, image, or brand are automatically excluded from the feed.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.how_include_products">
+        <source>How to include products in the feed?</source>
+        <target>How to include products in the feed?</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.add_tag_listing_suffix">
+        <source>to the products you want to list on Marques de France. Selected products must be manufactured in France.</source>
+        <target>to the products you want to list on Marques de France. Selected products must be manufactured in France.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.add_tag_bulk">
+        <source>Add tag in bulk</source>
+        <target>Add tag in bulk</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.how_to_do">
+        <source>How to do?</source>
+        <target>How to do?</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.how_add_tag">
+        <source>How to add the marques-de-france tag?</source>
+        <target>How to add the marques-de-france tag?</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.go_to_products">
+        <source>Go to Products</source>
+        <target>Go to Products</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.prestashop_admin_catalog_path">
+        <source>From your PrestaShop admin, go to Catalog &gt; Products.</source>
+        <target>From your PrestaShop admin, go to Catalog &gt; Products.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.select_product">
+        <source>Select a product</source>
+        <target>Select a product</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.open_product_made_france">
+        <source>Open a product made in France.</source>
+        <target>Open a product made in France.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.seo_tab_tag_prefix">
+        <source>In the product page, go to the "SEO" tab and add the tag</source>
+        <target>In the product page, go to the "SEO" tab and add the tag</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.seo_tab_tag_suffix">
+        <source>in the Tags field.</source>
+        <target>in the Tags field.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.save_publish_feed">
+        <source>Click Save and publish. The product will appear in the feed.</source>
+        <target>Click Save and publish. The product will appear in the feed.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.how_bulk_edit">
+        <source>How to bulk edit?</source>
+        <target>How to bulk edit?</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.bulk_edit_prefix">
+        <source>To add the tag to multiple products at once, go to Shop parameters &gt; Search &gt; Tags. Then, create or edit the</source>
+        <target>To add the tag to multiple products at once, go to Shop parameters &gt; Search &gt; Tags. Then, create or edit the</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.bulk_edit_suffix">
+        <source>tag by adding products to it.</source>
+        <target>tag by adding products to it.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.select_deselect_visible">
+        <source>Select / deselect all visible</source>
+        <target>Select / deselect all visible</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.error_loading_products">
+        <source>Error loading products.</source>
+        <target>Error loading products.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.no_products_found">
+        <source>No products found.</source>
+        <target>No products found.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.no_products_catalog">
+        <source>No products in your catalog.</source>
+        <target>No products in your catalog.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.products_count">
+        <source>{count} product(s)</source>
+        <target>{count} product(s)</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.page_summary">
+        <source>Page {page} of {total} - {count} products</source>
+        <target>Page {page} of {total} - {count} products</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.confirm_remove_product">
+        <source>Remove this product from the feed?</source>
+        <target>Remove this product from the feed?</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.error_removing_product">
+        <source>Error removing product.</source>
+        <target>Error removing product.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.network_error_retry">
+        <source>Network error. Please try again.</source>
+        <target>Network error. Please try again.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.product_feed_lower">
+        <source>Product feed</source>
+        <target>Product feed</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.sales_tracking">
+        <source>Sales tracking</source>
+        <target>Sales tracking</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.connected_short">
+        <source>Connected</source>
+        <target>Connected</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.total_sales">
+        <source>Total Sales</source>
+        <target>Total Sales</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.total_revenue">
+        <source>Total Revenue</source>
+        <target>Total Revenue</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.this_month">
+        <source>This Month</source>
+        <target>This Month</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.all_time">
+        <source>All time</source>
+        <target>All time</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.confirmed_label">
+        <source>Confirmed</source>
+        <target>Confirmed</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.sales_last_12_months">
+        <source>Sales over the last 12 months</source>
+        <target>Sales over the last 12 months</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.sale_lower">
+        <source>sale</source>
+        <target>sale</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.sales_lower">
+        <source>sales</source>
+        <target>sales</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.add_the_tag_simple">
+        <source>Add the tag</source>
+        <target>Add the tag</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.status_cancelled">
+        <source>cancelled</source>
+        <target>cancelled</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.source_cart_attribute">
+        <source>cart_attribute</source>
+        <target>cart_attribute</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.chart_granularity">
+        <source>Chart granularity</source>
+        <target>Chart granularity</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.chart_period">
+        <source>Chart period</source>
+        <target>Chart period</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.status_confirmed_lower">
+        <source>confirmed</source>
+        <target>confirmed</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.daily">
+        <source>Daily</source>
+        <target>Daily</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.catalog_path_gt">
+        <source>From your PrestaShop admin, go to Catalog &gt; Products.</source>
+        <target>From your PrestaShop admin, go to Catalog &gt; Products.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.source_landing_site">
+        <source>landing_site</source>
+        <target>landing_site</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.source_landing_site_ref">
+        <source>landing_site_ref</source>
+        <target>landing_site_ref</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.last_12_months">
+        <source>Last 12 months</source>
+        <target>Last 12 months</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.last_28_days">
+        <source>Last 28 days</source>
+        <target>Last 28 days</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.last_7_days">
+        <source>Last 7 days</source>
+        <target>Last 7 days</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.last_90_days">
+        <source>Last 90 days</source>
+        <target>Last 90 days</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.last_year">
+        <source>Last year</source>
+        <target>Last year</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.manage_products">
+        <source>Manage products</source>
+        <target>Manage products</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.module_title">
+        <source>Marques de France</source>
+        <target>Marques de France</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.module_description">
+        <source>Connect your PrestaShop store to the Marques de France platform.</source>
+        <target>Connect your PrestaShop store to the Marques de France platform.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.monthly">
+        <source>Monthly</source>
+        <target>Monthly</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.no_data_selected_period">
+        <source>No data for the selected period.</source>
+        <target>No data for the selected period.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.on_selected_period">
+        <source>On selected period</source>
+        <target>On selected period</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.out_of_stock_allow_orders">
+        <source>Out of stock but allow orders</source>
+        <target>Out of stock but allow orders</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.status_pending">
+        <source>pending</source>
+        <target>pending</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.products_in_feed_lower">
+        <source>Products in feed</source>
+        <target>Products in feed</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.products_in_feed_title">
+        <source>Products in Feed</source>
+        <target>Products in Feed</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.source_referring_site">
+        <source>referring_site</source>
+        <target>referring_site</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.status_refunded">
+        <source>refunded</source>
+        <target>refunded</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.revenue">
+        <source>Revenue</source>
+        <target>Revenue</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.revenue_over_time">
+        <source>Revenue over time</source>
+        <target>Revenue over time</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.search_brand">
+        <source>Search brand</source>
+        <target>Search brand</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.search_reference">
+        <source>Search reference</source>
+        <target>Search reference</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.select_products">
+        <source>Select products</source>
+        <target>Select products</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.select_products_include_feed">
+        <source>Select products to include in feed</source>
+        <target>Select products to include in feed</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.selection_method">
+        <source>Selection method</source>
+        <target>Selection method</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.this_year">
+        <source>This year</source>
+        <target>This year</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.bulk_edit_gt">
+        <source>To add the tag to multiple products at once, go to Shop parameters &gt; Search &gt; Tags. Then, create or edit the</source>
+        <target>To add the tag to multiple products at once, go to Shop parameters &gt; Search &gt; Tags. Then, create or edit the</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.unable_connect_support">
+        <source>Unable to connect to Marques de France. Please contact support at support@marques-de-france.fr.</source>
+        <target>Unable to connect to Marques de France. Please contact support at support@marques-de-france.fr.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.unable_load_analytics_data">
+        <source>Unable to load analytics chart data.</source>
+        <target>Unable to load analytics chart data.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.source_unknown">
+        <source>unknown</source>
+        <target>unknown</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.source_utm">
+        <source>utm</source>
+        <target>utm</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.selection_tag_recommended_lower">
+        <source>Via the product tag field (recommended)</source>
+        <target>Via the product tag field (recommended)</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.availability">
+        <source>Availability</source>
+        <target>Availability</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.in_stock">
+        <source>In stock</source>
+        <target>In stock</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.out_of_stock">
+        <source>Out of stock</source>
+        <target>Out of stock</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.enabled">
+        <source>Enabled</source>
+        <target>Enabled</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.disabled">
+        <source>Disabled</source>
+        <target>Disabled</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.active">
+        <source>Active</source>
+        <target>Active</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.combinations">
+        <source>combinations</source>
+        <target>combinations</target>
+      </trans-unit>
+
+    </body>
+  </file>
+</xliff>

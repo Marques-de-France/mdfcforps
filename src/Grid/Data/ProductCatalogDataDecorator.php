@@ -65,17 +65,17 @@ final class ProductCatalogDataDecorator implements GridDataFactoryInterface
             $qty = (int) ($record['quantity'] ?? 0);
             $allowOrders = (bool) ($record['allow_orders'] ?? false);
             if ($qty > 0) {
-                $record['availability'] = '<span class="badge badge-success">In stock</span>';
+                $record['availability'] = '<span class="badge badge-success">' . htmlspecialchars($this->trans('In stock'), ENT_QUOTES, 'UTF-8') . '</span>';
             } elseif ($allowOrders) {
-                $record['availability'] = '<span class="badge badge-success">Out of stock but allow orders</span>';
+                $record['availability'] = '<span class="badge badge-success">' . htmlspecialchars($this->trans('Out of stock but allow orders'), ENT_QUOTES, 'UTF-8') . '</span>';
             } else {
-                $record['availability'] = '<span class="badge badge-danger">Out of stock</span>';
+                $record['availability'] = '<span class="badge badge-danger">' . htmlspecialchars($this->trans('Out of stock'), ENT_QUOTES, 'UTF-8') . '</span>';
             }
 
             $active = (bool) ($record['active'] ?? false);
             $record['status_badge'] = $active
-                ? '<span class="badge badge-success">Enabled</span>'
-                : '<span class="badge badge-danger">Disabled</span>';
+                ? '<span class="badge badge-success">' . htmlspecialchars($this->trans('Enabled'), ENT_QUOTES, 'UTF-8') . '</span>'
+                : '<span class="badge badge-danger">' . htmlspecialchars($this->trans('Disabled'), ENT_QUOTES, 'UTF-8') . '</span>';
 
             // Checkbox HTML — carries data attributes used by feed.js toggleProduct()
             $checked = $inFeed ? ' checked' : '';
@@ -90,5 +90,10 @@ final class ProductCatalogDataDecorator implements GridDataFactoryInterface
         }
 
         return new GridData(new RecordCollection($records), $data->getRecordsTotal(), $data->getQuery());
+    }
+
+    private function trans(string $message): string
+    {
+        return \Context::getContext()->getTranslator()->trans($message, [], 'Modules.Mdfcforps.Admin');
     }
 }

@@ -25,6 +25,28 @@
 
 	var searchTimer = null;
 	var adminUrl    = '';
+	var i18n        = {};
+
+	function t( key, fallback ) {
+		if ( i18n && typeof i18n[ key ] === 'string' && i18n[ key ].length > 0 ) {
+			return i18n[ key ];
+		}
+
+		return fallback;
+	}
+
+	function tf( key, fallback, vars ) {
+		var text = t( key, fallback );
+		if ( !vars ) {
+			return text;
+		}
+
+		Object.keys( vars ).forEach( function ( varKey ) {
+			text = text.replace( new RegExp( '\\{' + varKey + '\\}', 'g' ), String( vars[ varKey ] ) );
+		} );
+
+		return text;
+	}
 
 	// -----------------------------------------------------------------------
 	// HTTP helpers
@@ -90,7 +112,7 @@
 			var tbody = document.getElementById( 'mdf-manage-tbody' );
 			if ( tbody ) {
 				tbody.innerHTML =
-					'<tr><td colspan="8" class="text-center text-danger py-3">Error loading products.</td></tr>';
+					'<tr><td colspan="8" class="text-center text-danger py-3">' + t( 'errorLoadingProducts', 'Error loading products.' ) + '</td></tr>';
 			}
 		} )
 		.then( function () {
@@ -122,7 +144,7 @@
 		if ( !state.products.length ) {
 			tbody.innerHTML =
 				'<tr><td colspan="8" class="text-center text-muted py-3">' +
-				( state.search ? 'No products found.' : 'No products in your catalog.' ) +
+				( state.search ? t( 'noProductsFound', 'No products found.' ) : t( 'noProductsInCatalog', 'No products in your catalog.' ) ) +
 				'</td></tr>';
 			updateSelectAll();
 			return;
@@ -163,7 +185,7 @@
 		var totalPages = Math.ceil( state.total / state.perPage ) || 1;
 		if ( totalPages <= 1 ) {
 			container.innerHTML =
-				'<small class="text-muted">' + state.total + ' product(s)</small>';
+				'<small class="text-muted">' + tf( 'productsCount', '{count} product(s)', { count: state.total } ) + '</small>';
 			return;
 		}
 
@@ -184,8 +206,11 @@
 
 		container.innerHTML =
 			'<ul class="pagination pagination-sm mb-0">' + items + '</ul>'
-			+ '<small class="text-muted ml-3">Page ' + state.page + ' of ' + totalPages
-			+ ' &mdash; ' + state.total + ' products</small>';
+			+ '<small class="text-muted ml-3">' + tf( 'pageSummary', 'Page {page} of {total} - {count} products', {
+				page: state.page,
+				total: totalPages,
+				count: state.total,
+			} ) + '</small>';
 	}
 
 	function updateSelectAll() {
@@ -333,6 +358,7 @@
 	function init() {
 		var config = window.mdfcforpsFeed;
 		adminUrl = ( config && config.adminUrl ) ? config.adminUrl : '';
+		i18n = ( config && config.i18n ) ? config.i18n : {};
 
 		// ---- PS Grid listeners (always active, no adminUrl needed) --------
 
@@ -352,17 +378,17 @@
 			if ( !btn ) return;
 			var productId = parseInt( btn.getAttribute( 'data-product-id' ), 10 );
 			if ( !productId ) return;
-			if ( !window.confirm( 'Remove this product from the feed?' ) ) return;
+			if ( !window.confirm( t( 'confirmRemoveProduct', 'Remove this product from the feed?' ) ) ) return;
 			postAction( { action: 'remove', product_id: String( productId ) } )
 			.then( function ( json ) {
 				if ( json.success ) {
 					var row = btn.closest( 'tr' );
 					if ( row ) row.remove();
 				} else {
-					alert( json.error || 'Error removing product.' );
+					alert( json.error || t( 'errorRemovingProduct', 'Error removing product.' ) );
 				}
 			} )
-			.catch( function () { alert( 'Network error. Please try again.' ); } );
+			.catch( function () { alert( t( 'networkErrorRetry', 'Network error. Please try again.' ) ); } );
 		} );
 
 		// ---- Legacy manage panel listeners (only when adminUrl is available) --

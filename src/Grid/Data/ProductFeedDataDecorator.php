@@ -62,7 +62,7 @@ final class ProductFeedDataDecorator implements GridDataFactoryInterface
             if ($combinationCount > 0) {
                 $linkedName .= ' <span class="badge badge-secondary">'
                     . $combinationCount
-                    . ' combinations</span>';
+                    . ' ' . htmlspecialchars($this->trans('combinations'), ENT_QUOTES, 'UTF-8') . '</span>';
             }
 
             $record['linked_name'] = $linkedName;
@@ -74,17 +74,17 @@ final class ProductFeedDataDecorator implements GridDataFactoryInterface
             $qty = (int) ($record['quantity'] ?? 0);
             $allowOrders = (bool) ($record['allow_orders'] ?? false);
             if ($qty > 0) {
-                $record['availability'] = '<span class="badge badge-success">In stock</span>';
+                $record['availability'] = '<span class="badge badge-success">' . htmlspecialchars($this->trans('In stock'), ENT_QUOTES, 'UTF-8') . '</span>';
             } elseif ($allowOrders) {
-                $record['availability'] = '<span class="badge badge-success">Out of stock but allow orders</span>';
+                $record['availability'] = '<span class="badge badge-success">' . htmlspecialchars($this->trans('Out of stock but allow orders'), ENT_QUOTES, 'UTF-8') . '</span>';
             } else {
-                $record['availability'] = '<span class="badge badge-danger">Out of stock</span>';
+                $record['availability'] = '<span class="badge badge-danger">' . htmlspecialchars($this->trans('Out of stock'), ENT_QUOTES, 'UTF-8') . '</span>';
             }
 
             $active = (bool) ($record['active'] ?? false);
             $record['status_badge'] = $active
-                ? '<span class="badge badge-success">Enabled</span>'
-                : '<span class="badge badge-danger">Disabled</span>';
+                ? '<span class="badge badge-success">' . htmlspecialchars($this->trans('Enabled'), ENT_QUOTES, 'UTF-8') . '</span>'
+                : '<span class="badge badge-danger">' . htmlspecialchars($this->trans('Disabled'), ENT_QUOTES, 'UTF-8') . '</span>';
 
             $records[] = $record;
         }
@@ -111,5 +111,10 @@ final class ProductFeedDataDecorator implements GridDataFactoryInterface
         $this->combinationCountCache[$productId] = $count;
 
         return $count;
+    }
+
+    private function trans(string $message): string
+    {
+        return \Context::getContext()->getTranslator()->trans($message, [], 'Modules.Mdfcforps.Admin');
     }
 }
