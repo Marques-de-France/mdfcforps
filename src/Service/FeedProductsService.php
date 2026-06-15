@@ -94,7 +94,7 @@ class FeedProductsService
                 'brand'        => (string) ($row['brand_name'] ?? ''),
                 'reference'    => (string) ($row['reference'] ?? ''),
                 'availability' => ((int) ($row['quantity'] ?? 0) > 0) ? self::trans('In stock') : self::trans('Out of stock'),
-                'price'        => \Tools::displayPrice((float) ($row['price'] ?? 0)),
+                'price'        => self::formatPrice((float) ($row['price'] ?? 0)),
                 'status'       => ((int) ($row['active'] ?? 0) === 1) ? self::trans('Active') : self::trans('Disabled'),
                 'image'        => $imageUrl,
                 'added_at'     => (string) ($row['added_at'] ?? ''),
@@ -197,7 +197,7 @@ class FeedProductsService
                 'brand'        => (string) ($row['brand_name'] ?? ''),
                 'reference'    => (string) ($row['reference'] ?? ''),
                 'availability' => ((int) ($row['quantity'] ?? 0) > 0) ? self::trans('In stock') : self::trans('Out of stock'),
-                'price'        => \Tools::displayPrice((float) ($row['price'] ?? 0)),
+                'price'        => self::formatPrice((float) ($row['price'] ?? 0)),
                 'status'       => ((int) ($row['active'] ?? 0) === 1) ? self::trans('Active') : self::trans('Disabled'),
                 'image'        => $imageUrl,
                 'in_feed'      => isset($selectedIds[$pid]),
@@ -253,5 +253,19 @@ class FeedProductsService
     private static function trans(string $message): string
     {
         return \Context::getContext()->getTranslator()->trans($message, [], 'Modules.Mdfcforps.Admin');
+    }
+
+    private static function formatPrice(float $amount): string
+    {
+        $context = \Context::getContext();
+        $isoCode = isset($context->currency) && isset($context->currency->iso_code)
+            ? (string) $context->currency->iso_code
+            : 'EUR';
+
+        if (isset($context->currentLocale) && $context->currentLocale) {
+            return (string) $context->currentLocale->formatPrice($amount, $isoCode);
+        }
+
+        return number_format($amount, 2, '.', ' ') . ' ' . $isoCode;
     }
 }

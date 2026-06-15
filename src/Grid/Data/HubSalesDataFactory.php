@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Mdfcforps\Grid\Data;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Mdfcforps\Service\HubClient;
 use PrestaShop\PrestaShop\Core\Grid\Data\Factory\GridDataFactoryInterface;
 use PrestaShop\PrestaShop\Core\Grid\Data\GridData;

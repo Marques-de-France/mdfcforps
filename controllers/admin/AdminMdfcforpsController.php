@@ -19,12 +19,16 @@ class AdminMdfcforpsController extends ModuleAdminController
 
     public function __construct()
     {
-        $this->bootstrap   = true;
-        $this->module      = Module::getInstanceByName('mdfcforps');
-        $this->display     = 'view';
-        $this->meta_title  = 'Marques de France';
+        $this->bootstrap = true;
+        $this->display = 'view';
+        $this->meta_title = 'Marques de France';
 
         parent::__construct();
+
+        $moduleInstance = Module::getInstanceByName('mdfcforps');
+        if ($moduleInstance instanceof Module) {
+            $this->module = $moduleInstance;
+        }
     }
 
     public function initContent(): void

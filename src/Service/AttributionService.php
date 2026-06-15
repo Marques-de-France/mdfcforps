@@ -126,7 +126,7 @@ class AttributionService
 
         foreach ($fields as $field) {
             if (isset($data[$field])) {
-                $cookie->$field = $this->sanitize((string) $data[$field]);
+                $cookie->__set($field, $this->sanitize((string) $data[$field]));
             }
         }
 

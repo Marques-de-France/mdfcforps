@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Mdfcforps\Tests\Unit\Service;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Mdfcforps\Service\AttributionService;
 use PHPUnit\Framework\TestCase;
 

@@ -211,16 +211,14 @@ class HubClient
             }
 
             $value = $filters[$key];
-            if ($value === '' || $value === null) {
+            if ((string) $value === '') {
                 continue;
             }
 
             $query[$key] = (string) $value;
         }
 
-        $response = $this->get('/api/ps/sales?' . http_build_query($query));
-
-        return is_array($response) ? $response : [];
+        return $this->get('/api/ps/sales?' . http_build_query($query));
     }
 
     // -----------------------------------------------------------------------
@@ -265,7 +263,10 @@ class HubClient
             throw new \RuntimeException("Hub POST {$path} — network error");
         }
 
-        $statusCode = $this->extractStatusCode($http_response_header ?? []);
+        $responseHeaders = function_exists('http_get_last_response_headers')
+            ? (http_get_last_response_headers() ?: [])
+            : (isset($http_response_header) && is_array($http_response_header) ? $http_response_header : []);
+        $statusCode = $this->extractStatusCode($responseHeaders);
         if ($statusCode < 200 || $statusCode >= 300) {
             throw new \RuntimeException("Hub POST {$path} — HTTP {$statusCode}");
         }
@@ -308,7 +309,10 @@ class HubClient
             throw new \RuntimeException("Hub GET {$path} — network error");
         }
 
-        $statusCode = $this->extractStatusCode($http_response_header ?? []);
+        $responseHeaders = function_exists('http_get_last_response_headers')
+            ? (http_get_last_response_headers() ?: [])
+            : (isset($http_response_header) && is_array($http_response_header) ? $http_response_header : []);
+        $statusCode = $this->extractStatusCode($responseHeaders);
         if ($statusCode < 200 || $statusCode >= 300) {
             throw new \RuntimeException("Hub GET {$path} — HTTP {$statusCode}");
         }

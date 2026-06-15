@@ -34,7 +34,7 @@ class Mdfcforps extends Module
     {
         $this->name = 'mdfcforps';
         $this->tab = 'market_place';
-        $this->version = self::VERSION;
+        $this->version = '1.0.0';
         $this->author = 'Marques de France';
         $this->need_instance = 0;
         $this->bootstrap = true;

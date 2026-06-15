@@ -23,7 +23,7 @@ final class ModuleConfig
 
         $fallback = \Configuration::get($key);
 
-        if ($fallback === false || $fallback === null || $fallback === '') {
+        if ($fallback === false || $fallback === '') {
             return $default;
         }
 
@@ -50,7 +50,7 @@ final class ModuleConfig
     {
         $context = \Context::getContext();
 
-        if ($context && isset($context->shop) && $context->shop) {
+        if (isset($context->shop) && $context->shop) {
             return (int) $context->shop->id;
         }
 

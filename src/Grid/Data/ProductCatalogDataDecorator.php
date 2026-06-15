@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Mdfcforps\Grid\Data;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use PrestaShop\PrestaShop\Core\Grid\Data\Factory\GridDataFactoryInterface;
 use PrestaShop\PrestaShop\Core\Grid\Data\GridData;
 use PrestaShop\PrestaShop\Core\Grid\Record\RecordCollection;
@@ -43,7 +47,7 @@ final class ProductCatalogDataDecorator implements GridDataFactoryInterface
                 : '';
 
             // Formatted price
-            $record['price'] = \Tools::displayPrice((float) ($record['price_raw'] ?? 0));
+            $record['price'] = $this->formatPrice((float) ($record['price_raw'] ?? 0));
 
             // Link product name to BO edit page in a new tab.
             $name = (string) ($record['name'] ?? '');
@@ -95,5 +99,19 @@ final class ProductCatalogDataDecorator implements GridDataFactoryInterface
     private function trans(string $message): string
     {
         return \Context::getContext()->getTranslator()->trans($message, [], 'Modules.Mdfcforps.Admin');
+    }
+
+    private function formatPrice(float $amount): string
+    {
+        $context = \Context::getContext();
+        $isoCode = isset($context->currency) && isset($context->currency->iso_code)
+            ? (string) $context->currency->iso_code
+            : 'EUR';
+
+        if (isset($context->currentLocale) && $context->currentLocale) {
+            return (string) $context->currentLocale->formatPrice($amount, $isoCode);
+        }
+
+        return number_format($amount, 2, '.', ' ') . ' ' . $isoCode;
     }
 }

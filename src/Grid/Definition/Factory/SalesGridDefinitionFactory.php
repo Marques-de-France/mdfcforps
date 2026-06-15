@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Mdfcforps\Grid\Definition\Factory;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnCollection;
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\DataColumn;
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\HtmlColumn;
@@ -71,7 +75,9 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
 
     protected function getFilters(): FilterCollection
     {
-        return (new FilterCollection())
+        $filters = new FilterCollection();
+
+        $filters
             ->add((new Filter('order_reference', TextType::class))
                 ->setTypeOptions([
                     'required' => false,
@@ -113,5 +119,7 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
                 ])
                 ->setAssociatedColumn('status')
             );
+
+            return $filters;
     }
 }

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Mdfcforps\Grid\Definition\Factory;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnCollection;
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\DataColumn;
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\HtmlColumn;
@@ -87,7 +91,9 @@ final class ProductCatalogGridDefinitionFactory extends AbstractGridDefinitionFa
 
     protected function getFilters(): FilterCollection
     {
-        return (new FilterCollection())
+        $filters = new FilterCollection();
+
+        $filters
             ->add((new Filter('name', TextType::class))
                 ->setTypeOptions([
                     'required' => false,
@@ -127,5 +133,7 @@ final class ProductCatalogGridDefinitionFactory extends AbstractGridDefinitionFa
                 ])
                 ->setAssociatedColumn('price')
             );
+
+        return $filters;
     }
 }

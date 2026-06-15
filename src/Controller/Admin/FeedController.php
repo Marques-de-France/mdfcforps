@@ -4,25 +4,37 @@ declare(strict_types=1);
 
 namespace Mdfcforps\Controller\Admin;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
+if (!class_exists('PrestaShopBundle\\Controller\\Admin\\PrestaShopAdminController')
+    && class_exists('PrestaShopBundle\\Controller\\Admin\\FrameworkBundleAdminController')
+) {
+    class_alias(
+        'PrestaShopBundle\\Controller\\Admin\\FrameworkBundleAdminController',
+        'PrestaShopBundle\\Controller\\Admin\\PrestaShopAdminController'
+    );
+}
+
 use Configuration;
 use Mdfcforps\Service\FeedProductsService;
 use Mdfcforps\Service\ModuleConfig;
 use PrestaShop\PrestaShop\Core\Grid\GridFactory;
 use PrestaShop\PrestaShop\Core\Search\Filters;
-use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
+use PrestaShopBundle\Controller\Admin\PrestaShopAdminController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
-use Tools;
 
 /**
  * Symfony controller for the Product Feed tab.
  *
  * Routes: mdfcforps_feed_index, mdfcforps_feed_toggle, mdfcforps_feed_bulk, mdfcforps_feed_mode
  */
-class FeedController extends FrameworkBundleAdminController
+class FeedController extends PrestaShopAdminController
 {
     /** @var GridFactory */
     private $productFeedGridFactory;
@@ -73,7 +85,7 @@ class FeedController extends FrameworkBundleAdminController
             $dashboardStats['monthRevenue'] = (float) ($monthSummary['totalRevenue'] ?? 0.0);
             $dashboardStats['monthSales'] = (int) ($monthSummary['total'] ?? 0);
         } catch (\Throwable $e) {
-            $error = $this->trans('Unable to reach the Marques de France platform.', [], 'Modules.Mdfcforps.Admin');
+            $error = $this->trans('Unable to reach the Marques de France platform.', 'Modules.Mdfcforps.Admin', []);
         }
 
         return $this->render(
@@ -101,7 +113,7 @@ class FeedController extends FrameworkBundleAdminController
 
             $analytics = (new \Mdfcforps\Service\HubClient())->getAnalytics($dateFrom, $dateTo, 'day');
         } catch (\Throwable $e) {
-            $analyticsError = $this->trans('Unable to load analytics chart data.', [], 'Modules.Mdfcforps.Admin');
+            $analyticsError = $this->trans('Unable to load analytics chart data.', 'Modules.Mdfcforps.Admin', []);
         }
 
         $allParams = array_replace_recursive(

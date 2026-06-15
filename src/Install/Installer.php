@@ -104,7 +104,7 @@ class Installer
         );
 
         foreach ($statements as $statement) {
-            if (!empty($statement) && !\Db::getInstance()->execute($statement)) {
+            if (!\Db::getInstance()->execute($statement)) {
                 return false;
             }
         }
@@ -126,9 +126,7 @@ class Installer
         );
 
         foreach ($statements as $statement) {
-            if (!empty($statement)) {
-                \Db::getInstance()->execute($statement);
-            }
+            \Db::getInstance()->execute($statement);
         }
     }
 
@@ -139,10 +137,10 @@ class Installer
     private function installAdminTab(): bool
     {
         $tab = new \Tab();
-        $tab->active = 1;
+        $tab->active = true;
         $tab->class_name = 'AdminMdfcforps';
         $tab->module = $this->module->name;
-        $tab->id_parent = (int) \Tab::getIdFromClassName('DEFAULT'); // hidden tab
+        $tab->id_parent = $this->getTabIdByClassName('DEFAULT'); // hidden tab
         $tab->icon = 'hexagon';
 
         foreach (\Language::getLanguages(false) as $lang) {
@@ -154,10 +152,22 @@ class Installer
 
     private function uninstallAdminTab(): void
     {
-        $tabId = (int) \Tab::getIdFromClassName('AdminMdfcforps');
+        $tabId = $this->getTabIdByClassName('AdminMdfcforps');
         if ($tabId > 0) {
             $tab = new \Tab($tabId);
             $tab->delete();
         }
+    }
+
+    private function getTabIdByClassName(string $className): int
+    {
+        $query = new \DbQuery();
+        $query->select('id_tab')
+            ->from('tab')
+            ->where("class_name = '" . pSQL($className) . "'")
+            ->orderBy('id_tab ASC')
+            ->limit(1);
+
+        return (int) \Db::getInstance()->getValue($query);
     }
 }
