@@ -12,14 +12,27 @@ declare(strict_types=1);
 namespace Mdfcforps\Controller\Admin;
 
 $mdfModuleRoot = dirname(__DIR__, 3);
-foreach ([
-    '/src/Service/HubClient.php',
-    '/src/Service/FeedProductsService.php',
-    '/src/Service/ModuleConfig.php',
-] as $mdfRequiredFile) {
-    $mdfRequiredPath = $mdfModuleRoot . $mdfRequiredFile;
-    if (is_file($mdfRequiredPath)) {
-        require_once $mdfRequiredPath;
+
+// Hosted ZIP installs may not include Composer vendor autoload.
+// Preload module classes needed by feed grid services to avoid class-not-found
+// when Symfony instantiates grid factories/query builders.
+foreach (['/src/Service', '/src/Grid'] as $mdfAutoloadDir) {
+    $mdfPath = $mdfModuleRoot . $mdfAutoloadDir;
+    if (!is_dir($mdfPath)) {
+        continue;
+    }
+
+    $iterator = new \RecursiveIteratorIterator(
+        new \RecursiveDirectoryIterator($mdfPath, \FilesystemIterator::SKIP_DOTS)
+    );
+
+    /** @var \SplFileInfo $file */
+    foreach ($iterator as $file) {
+        if ($file->getExtension() !== 'php' || $file->getFilename() === 'index.php') {
+            continue;
+        }
+
+        require_once $file->getPathname();
     }
 }
 
@@ -90,6 +103,12 @@ class FeedController extends FrameworkBundleAdminController
             $dashboardStats['monthRevenue'] = (float) ($monthSummary['totalRevenue'] ?? 0.0);
             $dashboardStats['monthSales'] = (int) ($monthSummary['total'] ?? 0);
         } catch (\Throwable $e) {
+            \PrestaShopLogger::addLog(
+                '[MDF] Dashboard Hub error: ' . (string) $e->getMessage(),
+                2,
+                null,
+                'Mdfcforps'
+            );
             $error = $this->mdfTrans('Unable to reach the Marques de France platform.');
         }
 
@@ -186,6 +205,8 @@ class FeedController extends FrameworkBundleAdminController
     public function indexAction(Request $request): Response
     {
         $manage = (bool) $request->query->get('manage', false);
+        $feedError = null;
+        $productFeedGrid = null;
 
         // Merge GET (sort/paginate links) and POST (filter form submission)
         $allParams = array_replace_recursive(
@@ -212,9 +233,19 @@ class FeedController extends FrameworkBundleAdminController
             'limit' => (int) ($feedParams['limit'] ?? 25),
         ];
 
-        $productFeedGrid = $this->mdfPresentGrid(
-            $this->getProductFeedGridFactory()->getGrid(new Filters($feedFilters, 'product_feed'))
-        );
+        try {
+            $productFeedGrid = $this->mdfPresentGrid(
+                $this->getProductFeedGridFactory()->getGrid(new Filters($feedFilters, 'product_feed'))
+            );
+        } catch (\Throwable $e) {
+            \PrestaShopLogger::addLog(
+                '[MDF] Feed grid error: ' . (string) $e->getMessage(),
+                2,
+                null,
+                'Mdfcforps'
+            );
+            $feedError = $this->mdfTrans('Product feed is temporarily unavailable. Please contact support.');
+        }
 
         // ---- Feed mode & URL -----------------------------------------
         $feedMode = ModuleConfig::get('MDFCFORPS_FEED_FILTER_MODE', 'TAG');
@@ -228,6 +259,7 @@ class FeedController extends FrameworkBundleAdminController
             'feedMode' => $feedMode,
             'feedCsrfToken' => $this->getCsrfTokenManager()->getToken('mdfcforps_feed_actions')->getValue(),
             'feedUrl' => $feedUrl,
+            'feedError' => $feedError,
             'manage' => $manage,
             'currentTab' => 'feed',
             'enableSidebar' => true,
@@ -235,7 +267,7 @@ class FeedController extends FrameworkBundleAdminController
         ];
 
         // ---- Product Catalog grid (manage panel) ----------------------
-        if ($manage) {
+        if ($manage && $feedError === null) {
             $catalogParams = $allParams['product_catalog'] ?? [];
             $catalogFilters = [
                 'filters' => [

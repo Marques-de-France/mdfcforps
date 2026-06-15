@@ -7,36 +7,43 @@ services:
   # Services
   mdfcforps.hub_client:
     class: Mdfcforps\Service\HubClient
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Service/HubClient.php'
     public: true
 
   mdfcforps.attribution_service:
     class: Mdfcforps\Service\AttributionService
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Service/AttributionService.php'
     public: true
 
   mdfcforps.feed_eligibility_service:
     class: Mdfcforps\Service\FeedEligibilityService
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Service/FeedEligibilityService.php'
     arguments:
       - "@=service('prestashop.adapter.legacy.configuration').get('PS_ORDER_OUT_OF_STOCK')"
     public: true
 
   mdfcforps.feed_service:
     class: Mdfcforps\Service\FeedService
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Service/FeedService.php'
     arguments:
       - '@mdfcforps.feed_eligibility_service'
     public: true
 
   mdfcforps.feed_products_service:
     class: Mdfcforps\Service\FeedProductsService
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Service/FeedProductsService.php'
     public: true
 
   # Repository
   mdfcforps.sale_repository:
     class: Mdfcforps\Repository\SaleRepository
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Repository/SaleRepository.php'
     public: true
 
   # Installer
   mdfcforps.installer:
     class: Mdfcforps\Install\Installer
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Install/Installer.php'
     arguments:
       - '@mdfcforps.module'
     public: true
@@ -60,6 +67,7 @@ services:
   # -------------------------------------------------------------------------
   mdfcforps.grid.query_builder.product_feed:
     class: Mdfcforps\Grid\Query\ProductFeedQueryBuilder
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Grid/Query/ProductFeedQueryBuilder.php'
     parent: prestashop.core.grid.abstract_query_builder
     arguments:
       - "@=service('prestashop.adapter.legacy.context').getContext().language.id"
@@ -69,6 +77,7 @@ services:
 
   mdfcforps.grid.definition.factory.product_feed:
     class: Mdfcforps\Grid\Definition\Factory\ProductFeedGridDefinitionFactory
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Grid/Definition/Factory/ProductFeedGridDefinitionFactory.php'
     parent: prestashop.core.grid.definition.factory.abstract_grid_definition
     public: true
 
@@ -83,6 +92,7 @@ services:
 
   mdfcforps.grid.data_factory.product_feed_decorated:
     class: Mdfcforps\Grid\Data\ProductFeedDataDecorator
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Grid/Data/ProductFeedDataDecorator.php'
     arguments:
       - '@mdfcforps.grid.data_factory.product_feed'
     public: true
@@ -101,6 +111,7 @@ services:
   # -------------------------------------------------------------------------
   mdfcforps.grid.query_builder.product_catalog:
     class: Mdfcforps\Grid\Query\ProductCatalogQueryBuilder
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Grid/Query/ProductCatalogQueryBuilder.php'
     parent: prestashop.core.grid.abstract_query_builder
     arguments:
       - "@=service('prestashop.adapter.legacy.context').getContext().language.id"
@@ -110,6 +121,7 @@ services:
 
   mdfcforps.grid.definition.factory.product_catalog:
     class: Mdfcforps\Grid\Definition\Factory\ProductCatalogGridDefinitionFactory
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Grid/Definition/Factory/ProductCatalogGridDefinitionFactory.php'
     parent: prestashop.core.grid.definition.factory.abstract_grid_definition
     public: true
 
@@ -124,6 +136,7 @@ services:
 
   mdfcforps.grid.data_factory.product_catalog_decorated:
     class: Mdfcforps\Grid\Data\ProductCatalogDataDecorator
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Grid/Data/ProductCatalogDataDecorator.php'
     arguments:
       - '@mdfcforps.grid.data_factory.product_catalog'
     public: true
@@ -142,22 +155,26 @@ services:
   # -------------------------------------------------------------------------
   mdfcforps.grid.query_builder.sales:
     class: Mdfcforps\Grid\Query\SalesQueryBuilder
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Grid/Query/SalesQueryBuilder.php'
     parent: prestashop.core.grid.abstract_query_builder
     public: true
 
   mdfcforps.grid.definition.factory.sales:
     class: Mdfcforps\Grid\Definition\Factory\SalesGridDefinitionFactory
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Grid/Definition/Factory/SalesGridDefinitionFactory.php'
     parent: prestashop.core.grid.definition.factory.abstract_grid_definition
     public: true
 
   mdfcforps.grid.data_factory.sales:
     class: Mdfcforps\Grid\Data\HubSalesDataFactory
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Grid/Data/HubSalesDataFactory.php'
     arguments:
       - '@mdfcforps.hub_client'
     public: true
 
   mdfcforps.grid.data_factory.sales_decorated:
     class: Mdfcforps\Grid\Data\SalesDataDecorator
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Grid/Data/SalesDataDecorator.php'
     arguments:
       - '@mdfcforps.grid.data_factory.sales'
     public: true

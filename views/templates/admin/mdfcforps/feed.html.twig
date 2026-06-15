@@ -11,6 +11,12 @@
   {{ include('@Modules/mdfcforps/views/templates/admin/mdfcforps/_navigation_tabs.html.twig', { currentTab: currentTab|default('feed') }) }}
 
   <div class="tab-content">
+    {% if feedError is defined and feedError %}
+      <div class="alert alert-danger" role="alert">
+        {{ feedError }}
+      </div>
+    {% endif %}
+
     {# ---- Feed mode toggle ---- #}
     <div class="card mb-4">
       <div class="card-header">
@@ -74,7 +80,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
               <h3 class="d-inline-block card-header-title mb-0">{{ 'Select products to include in feed'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
               <div class="d-flex align-items-center gap-2">
-                <a href="{{ path('mdfcforps_feed_index') }}" class="btn btn-outline-secondary">
+                <a href="{{ path('mdfcforps_feed_index') }}" class="btn btn-outline-secondary mr-2">
                   {{ 'Back'|trans({}, 'Admin.Actions') }}
                 </a>
                 <a href="{{ path('mdfcforps_feed_index') }}" class="btn btn-primary">
@@ -109,7 +115,9 @@
               </a>
             </div>
             <div class="card-body">
-              {{ include('@PrestaShop/Admin/Common/Grid/grid.html.twig', {'grid': productFeedGrid}) }}
+              {% if productFeedGrid is defined and productFeedGrid %}
+                {{ include('@PrestaShop/Admin/Common/Grid/grid.html.twig', {'grid': productFeedGrid}) }}
+              {% endif %}
             </div>
           </div>
         {% endif %}
@@ -202,7 +210,9 @@
           <h3 class="d-inline-block card-header-title mb-0">{{ 'Products in feed'|trans({}, 'Modules.Mdfcforps.Admin') }}</h3>
         </div>
         <div class="card-body">
-          {{ include('@PrestaShop/Admin/Common/Grid/grid.html.twig', {'grid': productFeedGrid}) }}
+          {% if productFeedGrid is defined and productFeedGrid %}
+            {{ include('@PrestaShop/Admin/Common/Grid/grid.html.twig', {'grid': productFeedGrid}) }}
+          {% endif %}
         </div>
       </div>
     {% endif %}

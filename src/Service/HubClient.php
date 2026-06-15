@@ -129,7 +129,19 @@ class HubClient
      */
     public function getStatus(): array
     {
-        return $this->get('/api/ps/status');
+        try {
+            return $this->get('/api/ps/status');
+        } catch (\Throwable $firstError) {
+            // Auto-recover common hosted cases (missing/stale token or unknown store row):
+            // re-run self-registration, persist returned token, then retry once.
+            $registerResult = $this->selfRegister();
+            if (!empty($registerResult['secureToken'])) {
+                $this->secureToken = (string) $registerResult['secureToken'];
+                ModuleConfig::update('MDFCFORPS_SECURE_TOKEN', $this->secureToken);
+            }
+
+            return $this->get('/api/ps/status');
+        }
     }
 
     /**

@@ -168,13 +168,6 @@ class Installer
 
     private function getTabIdByClassName(string $className): int
     {
-        $query = new \DbQuery();
-        $query->select('id_tab')
-            ->from('tab')
-            ->where("class_name = '" . pSQL($className) . "'")
-            ->orderBy('id_tab ASC')
-            ->limit(1);
-
-        return (int) \Db::getInstance()->getValue($query);
+        return (int) \Tab::getIdFromClassName($className);
     }
 }

@@ -24,6 +24,13 @@ class AdminMdfcforpsController extends ModuleAdminController
     /** @var string[] */
     private const TABS = ['dashboard', 'feed', 'sales'];
 
+    /** @var array<string, string> */
+    private const TAB_ROUTES = [
+        'dashboard' => 'mdfcforps_dashboard_index',
+        'feed' => 'mdfcforps_feed_index',
+        'sales' => 'mdfcforps_sales_index',
+    ];
+
     public function __construct()
     {
         $this->bootstrap = true;
@@ -47,22 +54,50 @@ class AdminMdfcforpsController extends ModuleAdminController
             $tab = 'dashboard';
         }
 
-        // Legacy controller acts as an entrypoint shim to explicit Symfony tab routes.
-        $router = PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()->get('router');
-        if ($tab === 'feed') {
-            Tools::redirectAdmin($router->generate('mdfcforps_feed_index'));
-
-            return;
-        }
-
+        $routeParams = [];
         if ($tab === 'sales') {
-            $page = max(1, (int) Tools::getValue('sales_page', 1));
-            Tools::redirectAdmin($router->generate('mdfcforps_sales_index', ['sales_page' => $page]));
-
-            return;
+            $routeParams['sales_page'] = max(1, (int) Tools::getValue('sales_page', 1));
         }
 
-        Tools::redirectAdmin($router->generate('mdfcforps_dashboard_index'));
+        $targetUrl = $this->buildTabUrl($tab, $routeParams);
+        Tools::redirectAdmin($targetUrl);
+    }
+
+    /**
+     * Build target tab URL using Symfony route when available, fallback to module configure URL.
+     *
+     * @param array<string, int|string> $routeParams
+     */
+    private function buildTabUrl(string $tab, array $routeParams = []): string
+    {
+        $routeName = self::TAB_ROUTES[$tab] ?? self::TAB_ROUTES['dashboard'];
+
+        try {
+            $container = PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance();
+            if ($container && $container->has('router')) {
+                $url = $container->get('router')->generate($routeName, $routeParams);
+                if (is_string($url) && $url !== '') {
+                    return $url;
+                }
+            }
+        } catch (\Throwable $e) {
+            PrestaShopLogger::addLog(
+                '[MDF] Legacy route fallback for tab "' . $tab . '": ' . (string) $e->getMessage(),
+                2,
+                null,
+                'Mdfcforps'
+            );
+        }
+
+        $query = ['configure' => 'mdfcforps'];
+        if ($tab !== 'dashboard') {
+            $query['tab'] = $tab;
+        }
+        if ($tab === 'sales' && isset($routeParams['sales_page'])) {
+            $query['sales_page'] = (int) $routeParams['sales_page'];
+        }
+
+        return $this->context->link->getAdminLink('AdminModules', true, [], $query);
     }
 
     public function initPageHeaderToolbar(): void

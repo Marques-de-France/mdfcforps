@@ -55,12 +55,23 @@ final class ModuleConfig
 
     private static function getCurrentShopId(): int
     {
-        $context = \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()
-            ->get('prestashop.adapter.legacy.context')
-            ->getContext();
-
-        if (isset($context->shop)) {
+        // Front controllers can run without a fully booted Symfony container.
+        // Resolve shop ID from legacy context first, then static Shop fallbacks.
+        $context = \Context::getContext();
+        if ($context && isset($context->shop) && \Validate::isLoadedObject($context->shop)) {
             return (int) $context->shop->id;
+        }
+
+        if (class_exists('Shop')) {
+            $contextShopId = (int) \Shop::getContextShopID();
+            if ($contextShopId > 0) {
+                return $contextShopId;
+            }
+        }
+
+        $defaultShopId = (int) \Configuration::get('PS_SHOP_DEFAULT');
+        if ($defaultShopId > 0) {
+            return $defaultShopId;
         }
 
         return 0;
