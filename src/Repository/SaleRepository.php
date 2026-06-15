@@ -1,4 +1,7 @@
 <?php
+/**
+ * Module source file.
+ */
 
 declare(strict_types=1);
 
@@ -10,8 +13,6 @@ if (!defined('_PS_VERSION_')) {
 
 class SaleRepository
 {
-    private const TABLE = _DB_PREFIX_ . 'mdfcforps_sales';
-
     /**
      * @var array<int, string>
      */

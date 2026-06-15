@@ -1,4 +1,7 @@
 <?php
+/**
+ * PHPStan bootstrap for module static analysis.
+ */
 
 declare(strict_types=1);
 

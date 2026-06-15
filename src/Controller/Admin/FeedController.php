@@ -1,4 +1,7 @@
 <?php
+/**
+ * Module source file.
+ */
 
 declare(strict_types=1);
 
@@ -85,7 +88,7 @@ class FeedController extends PrestaShopAdminController
             $dashboardStats['monthRevenue'] = (float) ($monthSummary['totalRevenue'] ?? 0.0);
             $dashboardStats['monthSales'] = (int) ($monthSummary['total'] ?? 0);
         } catch (\Throwable $e) {
-            $error = $this->trans('Unable to reach the Marques de France platform.', 'Modules.Mdfcforps.Admin', []);
+            $error = $this->trans('Unable to reach the Marques de France platform.', [], 'Modules.Mdfcforps.Admin');
         }
 
         return $this->render(
@@ -113,7 +116,7 @@ class FeedController extends PrestaShopAdminController
 
             $analytics = (new \Mdfcforps\Service\HubClient())->getAnalytics($dateFrom, $dateTo, 'day');
         } catch (\Throwable $e) {
-            $analyticsError = $this->trans('Unable to load analytics chart data.', 'Modules.Mdfcforps.Admin', []);
+            $analyticsError = $this->trans('Unable to load analytics chart data.', [], 'Modules.Mdfcforps.Admin');
         }
 
         $allParams = array_replace_recursive(

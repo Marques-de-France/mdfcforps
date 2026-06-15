@@ -1,4 +1,7 @@
 <?php
+/**
+ * PHPUnit bootstrap for module tests.
+ */
 
 declare(strict_types=1);
 

@@ -1,4 +1,7 @@
 <?php
+/**
+ * Module source file.
+ */
 
 declare(strict_types=1);
 
@@ -28,7 +31,10 @@ final class ProductCatalogDataDecorator implements GridDataFactoryInterface
     public function __construct(GridDataFactoryInterface $inner)
     {
         $this->inner = $inner;
-        $this->link  = \Context::getContext()->link;
+        $this->link = \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()
+            ->get('prestashop.adapter.legacy.context')
+            ->getContext()
+            ->link;
     }
 
     public function getData(SearchCriteriaInterface $searchCriteria)
@@ -98,17 +104,23 @@ final class ProductCatalogDataDecorator implements GridDataFactoryInterface
 
     private function trans(string $message): string
     {
-        return \Context::getContext()->getTranslator()->trans($message, [], 'Modules.Mdfcforps.Admin');
+        return \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()
+            ->get('prestashop.adapter.legacy.context')
+            ->getContext()
+            ->getTranslator()
+            ->trans($message, [], 'Modules.Mdfcforps.Admin');
     }
 
     private function formatPrice(float $amount): string
     {
-        $context = \Context::getContext();
-        $isoCode = isset($context->currency) && isset($context->currency->iso_code)
+        $context = \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()
+            ->get('prestashop.adapter.legacy.context')
+            ->getContext();
+        $isoCode = isset($context->currency)
             ? (string) $context->currency->iso_code
             : 'EUR';
 
-        if (isset($context->currentLocale) && $context->currentLocale) {
+        if (isset($context->currentLocale)) {
             return (string) $context->currentLocale->formatPrice($amount, $isoCode);
         }
 

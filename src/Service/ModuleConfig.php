@@ -1,4 +1,7 @@
 <?php
+/**
+ * Module source file.
+ */
 
 declare(strict_types=1);
 
@@ -7,6 +10,7 @@ namespace Mdfcforps\Service;
 if (!defined('_PS_VERSION_')) {
     exit;
 }
+
 
 final class ModuleConfig
 {
@@ -48,9 +52,11 @@ final class ModuleConfig
 
     private static function getCurrentShopId(): int
     {
-        $context = \Context::getContext();
+        $context = \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()
+            ->get('prestashop.adapter.legacy.context')
+            ->getContext();
 
-        if (isset($context->shop) && $context->shop) {
+        if (isset($context->shop)) {
             return (int) $context->shop->id;
         }
 

@@ -1,4 +1,7 @@
 <?php
+/**
+ * Module source file.
+ */
 
 declare(strict_types=1);
 
@@ -263,9 +266,7 @@ class HubClient
             throw new \RuntimeException("Hub POST {$path} — network error");
         }
 
-        $responseHeaders = function_exists('http_get_last_response_headers')
-            ? (http_get_last_response_headers() ?: [])
-            : (isset($http_response_header) && is_array($http_response_header) ? $http_response_header : []);
+        $responseHeaders = is_array($http_response_header) ? $http_response_header : [];
         $statusCode = $this->extractStatusCode($responseHeaders);
         if ($statusCode < 200 || $statusCode >= 300) {
             throw new \RuntimeException("Hub POST {$path} — HTTP {$statusCode}");
@@ -309,9 +310,7 @@ class HubClient
             throw new \RuntimeException("Hub GET {$path} — network error");
         }
 
-        $responseHeaders = function_exists('http_get_last_response_headers')
-            ? (http_get_last_response_headers() ?: [])
-            : (isset($http_response_header) && is_array($http_response_header) ? $http_response_header : []);
+        $responseHeaders = is_array($http_response_header) ? $http_response_header : [];
         $statusCode = $this->extractStatusCode($responseHeaders);
         if ($statusCode < 200 || $statusCode >= 300) {
             throw new \RuntimeException("Hub GET {$path} — HTTP {$statusCode}");

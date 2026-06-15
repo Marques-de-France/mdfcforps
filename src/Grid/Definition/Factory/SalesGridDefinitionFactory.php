@@ -1,4 +1,7 @@
 <?php
+/**
+ * Module source file.
+ */
 
 declare(strict_types=1);
 
@@ -120,6 +123,6 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
                 ->setAssociatedColumn('status')
             );
 
-            return $filters;
+        return $filters;
     }
 }

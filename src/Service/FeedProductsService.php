@@ -1,4 +1,7 @@
 <?php
+/**
+ * Module source file.
+ */
 
 declare(strict_types=1);
 
@@ -44,7 +47,7 @@ class FeedProductsService
     public static function paginateForBo(int $idLang, int $page = 1, int $perPage = 25): array
     {
         $offset = ($page - 1) * $perPage;
-        $idShop = (int) \Context::getContext()->shop->id;
+        $idShop = (int) self::getContext()->shop->id;
 
         $countQuery = new \DbQuery();
         $countQuery->select('COUNT(*)')
@@ -73,7 +76,7 @@ class FeedProductsService
             $rows = [];
         }
 
-        $link = \Context::getContext()->link;
+        $link = self::getContext()->link;
         $products = [];
 
         foreach ($rows as $row) {
@@ -120,7 +123,7 @@ class FeedProductsService
     ): array {
         $offset  = ($page - 1) * $perPage;
         $safeSql = \pSQL($search);
-        $idShop  = (int) \Context::getContext()->shop->id;
+        $idShop  = (int) self::getContext()->shop->id;
 
         $where = 'pl.id_lang = ' . $idLang;
         if ($search !== '') {
@@ -176,7 +179,7 @@ class FeedProductsService
         }
 
         $selectedIds = array_flip(self::getSelectedProductIds());
-        $link        = \Context::getContext()->link;
+        $link        = self::getContext()->link;
 
         $products = [];
         foreach ($rows as $row) {
@@ -252,20 +255,27 @@ class FeedProductsService
 
     private static function trans(string $message): string
     {
-        return \Context::getContext()->getTranslator()->trans($message, [], 'Modules.Mdfcforps.Admin');
+        return self::getContext()->getTranslator()->trans($message, [], 'Modules.Mdfcforps.Admin');
     }
 
     private static function formatPrice(float $amount): string
     {
-        $context = \Context::getContext();
-        $isoCode = isset($context->currency) && isset($context->currency->iso_code)
+        $context = self::getContext();
+        $isoCode = isset($context->currency)
             ? (string) $context->currency->iso_code
             : 'EUR';
 
-        if (isset($context->currentLocale) && $context->currentLocale) {
+        if (isset($context->currentLocale)) {
             return (string) $context->currentLocale->formatPrice($amount, $isoCode);
         }
 
         return number_format($amount, 2, '.', ' ') . ' ' . $isoCode;
+    }
+
+    private static function getContext()
+    {
+        return \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()
+            ->get('prestashop.adapter.legacy.context')
+            ->getContext();
     }
 }

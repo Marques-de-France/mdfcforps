@@ -1,4 +1,7 @@
 <?php
+/**
+ * Module source file.
+ */
 
 declare(strict_types=1);
 
@@ -29,7 +32,9 @@ class FeedService
 
     public function __construct(?FeedEligibilityService $eligibilityService = null)
     {
-        $this->context  = \Context::getContext();
+        $this->context = \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()
+            ->get('prestashop.adapter.legacy.context')
+            ->getContext();
         $this->shopName = (string) \Configuration::get('PS_SHOP_NAME');
 
         $defaultCurrency = \Currency::getDefaultCurrency();

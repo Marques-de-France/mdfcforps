@@ -1,4 +1,7 @@
 <?php
+/**
+ * Module source file.
+ */
 
 declare(strict_types=1);
 
@@ -109,7 +112,10 @@ class AttributionService
      */
     public function stampCookie(array $data): void
     {
-        $cookie = \Context::getContext()->cookie;
+        $cookie = \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()
+            ->get('prestashop.adapter.legacy.context')
+            ->getContext()
+            ->cookie;
 
         $fields = [
             'mdf_click_id',

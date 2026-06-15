@@ -1,4 +1,7 @@
 <?php
+/**
+ * Module source file.
+ */
 
 declare(strict_types=1);
 
@@ -100,7 +103,7 @@ class Mdfcforps extends Module
     public function getContent(): string
     {
         Tools::redirectAdmin(
-            Context::getContext()->link->getAdminLink('AdminMdfcforps')
+            $this->context->link->getAdminLink('AdminMdfcforps')
         );
 
         return '';
@@ -252,7 +255,7 @@ class Mdfcforps extends Module
         }
 
         $this->context->smarty->assign([
-            'mdfcforps_ajax_url' => Context::getContext()->link->getModuleLink(
+            'mdfcforps_ajax_url' => $this->context->link->getModuleLink(
                 $this->name,
                 'ajax',
                 [],
