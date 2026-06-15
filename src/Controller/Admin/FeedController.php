@@ -11,13 +11,16 @@ declare(strict_types=1);
 
 namespace Mdfcforps\Controller\Admin;
 
-if (!class_exists('PrestaShopBundle\\Controller\\Admin\\PrestaShopAdminController')
-    && class_exists('PrestaShopBundle\\Controller\\Admin\\FrameworkBundleAdminController')
-) {
-    class_alias(
-        'PrestaShopBundle\\Controller\\Admin\\FrameworkBundleAdminController',
-        'PrestaShopBundle\\Controller\\Admin\\PrestaShopAdminController'
-    );
+$mdfModuleRoot = dirname(__DIR__, 3);
+foreach ([
+    '/src/Service/HubClient.php',
+    '/src/Service/FeedProductsService.php',
+    '/src/Service/ModuleConfig.php',
+] as $mdfRequiredFile) {
+    $mdfRequiredPath = $mdfModuleRoot . $mdfRequiredFile;
+    if (is_file($mdfRequiredPath)) {
+        require_once $mdfRequiredPath;
+    }
 }
 
 use Mdfcforps\Service\FeedProductsService;
@@ -25,7 +28,7 @@ use Mdfcforps\Service\ModuleConfig;
 use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 use PrestaShop\PrestaShop\Core\Grid\GridFactory;
 use PrestaShop\PrestaShop\Core\Search\Filters;
-use PrestaShopBundle\Controller\Admin\PrestaShopAdminController;
+use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -36,9 +39,20 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
  * Symfony controller for the Product Feed tab.
  *
  * Routes: mdfcforps_feed_index, mdfcforps_feed_toggle, mdfcforps_feed_bulk, mdfcforps_feed_mode
+ *
+ * Twig is injected via constructor (not fetched from container at runtime) to support
+ * both PS8 (Symfony 4 — twig is public) and PS9 (Symfony 6 — twig is a private/inlined service).
  */
-class FeedController extends PrestaShopAdminController
+class FeedController extends FrameworkBundleAdminController
 {
+    /** @var \Twig\Environment */
+    private $twigEnv;
+
+    public function __construct(\Twig\Environment $twig)
+    {
+        $this->twigEnv = $twig;
+    }
+
     public function dashboardAction(): Response
     {
         $hubClient = new \Mdfcforps\Service\HubClient();
@@ -76,10 +90,10 @@ class FeedController extends PrestaShopAdminController
             $dashboardStats['monthRevenue'] = (float) ($monthSummary['totalRevenue'] ?? 0.0);
             $dashboardStats['monthSales'] = (int) ($monthSummary['total'] ?? 0);
         } catch (\Throwable $e) {
-            $error = $this->trans('Unable to reach the Marques de France platform.', [], 'Modules.Mdfcforps.Admin');
+            $error = $this->mdfTrans('Unable to reach the Marques de France platform.');
         }
 
-        return $this->render(
+        return $this->mdfRender(
             '@Modules/mdfcforps/views/templates/admin/mdfcforps/dashboard.html.twig',
             [
                 'dashboardStats' => $dashboardStats,
@@ -104,7 +118,7 @@ class FeedController extends PrestaShopAdminController
 
             $analytics = (new \Mdfcforps\Service\HubClient())->getAnalytics($dateFrom, $dateTo, 'day');
         } catch (\Throwable $e) {
-            $analyticsError = $this->trans('Unable to load analytics chart data.', [], 'Modules.Mdfcforps.Admin');
+            $analyticsError = $this->mdfTrans('Unable to load analytics chart data.');
         }
 
         $allParams = array_replace_recursive(
@@ -126,11 +140,11 @@ class FeedController extends PrestaShopAdminController
             'limit' => (int) ($salesParams['limit'] ?? 25),
         ];
 
-        $salesGrid = $this->presentGrid(
+        $salesGrid = $this->mdfPresentGrid(
             $this->getSalesGridFactory()->getGrid(new Filters($salesFilters, 'sales'))
         );
 
-        return $this->render(
+        return $this->mdfRender(
             '@Modules/mdfcforps/views/templates/admin/mdfcforps/sales.html.twig',
             [
                 'salesGrid' => $salesGrid,
@@ -198,7 +212,7 @@ class FeedController extends PrestaShopAdminController
             'limit' => (int) ($feedParams['limit'] ?? 25),
         ];
 
-        $productFeedGrid = $this->presentGrid(
+        $productFeedGrid = $this->mdfPresentGrid(
             $this->getProductFeedGridFactory()->getGrid(new Filters($feedFilters, 'product_feed'))
         );
 
@@ -238,12 +252,12 @@ class FeedController extends PrestaShopAdminController
                 'limit' => (int) ($catalogParams['limit'] ?? 20),
             ];
 
-            $templateVars['productCatalogGrid'] = $this->presentGrid(
+            $templateVars['productCatalogGrid'] = $this->mdfPresentGrid(
                 $this->getProductCatalogGridFactory()->getGrid(new Filters($catalogFilters, 'product_catalog'))
             );
         }
 
-        return $this->render(
+        return $this->mdfRender(
             '@Modules/mdfcforps/views/templates/admin/mdfcforps/feed.html.twig',
             $templateVars
         );
@@ -357,5 +371,41 @@ class FeedController extends PrestaShopAdminController
     private function getCsrfTokenManager(): CsrfTokenManagerInterface
     {
         return SymfonyContainer::getInstance()->get('security.csrf.token_manager');
+    }
+
+    /**
+     * Version-agnostic trans() — works on PS8 (Symfony 4) and PS9 (Symfony 6).
+     */
+    private function mdfTrans(string $id, string $domain = 'Modules.Mdfcforps.Admin'): string
+    {
+        /** @var \Symfony\Component\Translation\TranslatorInterface $translator */
+        $translator = SymfonyContainer::getInstance()->get('translator');
+
+        return $translator->trans($id, [], $domain);
+    }
+
+    /**
+     * Version-agnostic render() — uses injected Twig environment.
+     * Works on PS8 (Symfony 4) and PS9 (Symfony 6 where 'twig' is a private/inlined service).
+     *
+     * @param array<string, mixed> $params
+     */
+    private function mdfRender(string $template, array $params = []): Response
+    {
+        return new Response($this->twigEnv->render($template, $params));
+    }
+
+    /**
+     * Version-agnostic presentGrid() — uses the grid presenter service.
+     *
+     * @param \PrestaShop\PrestaShop\Core\Grid\GridInterface $grid
+     *
+     * @return array<string, mixed>
+     */
+    private function mdfPresentGrid($grid): array
+    {
+        $presenter = SymfonyContainer::getInstance()->get('prestashop.core.grid.presenter.grid_presenter');
+
+        return $presenter->present($grid);
     }
 }

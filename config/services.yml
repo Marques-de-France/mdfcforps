@@ -47,12 +47,12 @@ services:
   mdfcforps.controller.admin.feed:
     class: Mdfcforps\Controller\Admin\FeedController
     file: '%kernel.project_dir%/modules/mdfcforps/src/Controller/Admin/FeedController.php'
-    tags:
-      - { name: controller.service_arguments }
-    public: true
-
-  Mdfcforps\Controller\Admin\FeedController:
-    alias: 'mdfcforps.controller.admin.feed'
+    # @twig is injected via constructor (not fetched at runtime) for PS9/Symfony 6 compatibility.
+    # In Symfony 6, 'twig' is a private/inlined service — DI injection works, container::get() does not.
+    arguments:
+      - '@twig'
+    calls:
+      - [setContainer, ['@service_container']]
     public: true
 
   # -------------------------------------------------------------------------
