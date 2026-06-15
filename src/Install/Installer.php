@@ -141,7 +141,7 @@ class Installer
         $tab->class_name = 'AdminMdfcforps';
         $tab->module = $this->module->name;
         $tab->id_parent = (int) \Tab::getIdFromClassName('DEFAULT'); // hidden tab
-        $tab->icon = 'store';
+        $tab->icon = 'hexagon';
 
         foreach (\Language::getLanguages(false) as $lang) {
             $tab->name[$lang['id_lang']] = 'Marques de France';
