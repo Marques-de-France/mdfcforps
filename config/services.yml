@@ -47,7 +47,7 @@ services:
   # Symfony Feed Controller — explicit constructor injection (two GridFactory args can't be autowired)
   Mdfcforps\Controller\Admin\FeedController:
     class: Mdfcforps\Controller\Admin\FeedController
-    file: '%kernel.project_dir%/modules/mdfcforps/src/Controller/Admin/FeedController.php'
+    file: '../src/Controller/Admin/FeedController.php'
     autoconfigure: true
     arguments:
       - '@mdfcforps.grid.factory.product_feed'
