@@ -108,6 +108,8 @@ class Mdfcforps extends Module
         // Attempt self-registration immediately after install
         $installer->selfRegister();
 
+        $this->clearModuleRuntimeCaches();
+
         return true;
     }
 
@@ -116,7 +118,52 @@ class Mdfcforps extends Module
         $installer = new Mdfcforps\Install\Installer($this);
         $installer->uninstall();
 
+        $this->clearModuleRuntimeCaches();
+
         return parent::uninstall();
+    }
+
+    private function clearModuleRuntimeCaches(): void
+    {
+        $cacheRoot = defined('_PS_CACHE_DIR_') ? (string) _PS_CACHE_DIR_ : '';
+        if ($cacheRoot === '' || !is_dir($cacheRoot)) {
+            return;
+        }
+
+        foreach (['dev', 'prod'] as $env) {
+            $dir = rtrim($cacheRoot, '/\\') . DIRECTORY_SEPARATOR . $env;
+            if (is_dir($dir)) {
+                $this->removeDirectoryRecursively($dir);
+            }
+        }
+    }
+
+    private function removeDirectoryRecursively(string $directory): void
+    {
+        try {
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::CHILD_FIRST
+            );
+
+            foreach ($iterator as $item) {
+                /** @var SplFileInfo $item */
+                if ($item->isDir()) {
+                    @rmdir($item->getPathname());
+                } else {
+                    @unlink($item->getPathname());
+                }
+            }
+
+            @rmdir($directory);
+        } catch (Throwable $e) {
+            PrestaShopLogger::addLog(
+                '[MDF] Cache cleanup warning: ' . $this->sanitizeLogMessage($e->getMessage()),
+                2,
+                null,
+                'Mdfcforps'
+            );
+        }
     }
 
     // -----------------------------------------------------------------------
