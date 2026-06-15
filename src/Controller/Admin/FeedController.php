@@ -26,6 +26,7 @@ if (!class_exists('PrestaShopBundle\\Controller\\Admin\\PrestaShopAdminControlle
 
 use Mdfcforps\Service\FeedProductsService;
 use Mdfcforps\Service\ModuleConfig;
+use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 use PrestaShop\PrestaShop\Core\Grid\GridFactory;
 use PrestaShop\PrestaShop\Core\Search\Filters;
 use PrestaShopBundle\Controller\Admin\PrestaShopAdminController;
@@ -42,18 +43,6 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
  */
 class FeedController extends PrestaShopAdminController
 {
-    /** @var GridFactory */
-    private $productFeedGridFactory;
-
-    /** @var GridFactory */
-    private $productCatalogGridFactory;
-
-    /** @var GridFactory */
-    private $salesGridFactory;
-
-    /** @var CsrfTokenManagerInterface */
-    private $csrfTokenManager;
-
     public function dashboardAction(): Response
     {
         $hubClient = new \Mdfcforps\Service\HubClient();
@@ -142,7 +131,7 @@ class FeedController extends PrestaShopAdminController
         ];
 
         $salesGrid = $this->presentGrid(
-            $this->salesGridFactory->getGrid(new Filters($salesFilters, 'sales'))
+            $this->getSalesGridFactory()->getGrid(new Filters($salesFilters, 'sales'))
         );
 
         return $this->render(
@@ -156,18 +145,6 @@ class FeedController extends PrestaShopAdminController
                 'layoutTitle' => 'Marques de France',
             ]
         );
-    }
-
-    public function __construct(
-        GridFactory $productFeedGridFactory,
-        GridFactory $productCatalogGridFactory,
-        GridFactory $salesGridFactory,
-        CsrfTokenManagerInterface $csrfTokenManager,
-    ) {
-        $this->productFeedGridFactory = $productFeedGridFactory;
-        $this->productCatalogGridFactory = $productCatalogGridFactory;
-        $this->salesGridFactory = $salesGridFactory;
-        $this->csrfTokenManager = $csrfTokenManager;
     }
 
     /**
@@ -226,7 +203,7 @@ class FeedController extends PrestaShopAdminController
         ];
 
         $productFeedGrid = $this->presentGrid(
-            $this->productFeedGridFactory->getGrid(new Filters($feedFilters, 'product_feed'))
+            $this->getProductFeedGridFactory()->getGrid(new Filters($feedFilters, 'product_feed'))
         );
 
         // ---- Feed mode & URL -----------------------------------------
@@ -239,7 +216,7 @@ class FeedController extends PrestaShopAdminController
         $templateVars = [
             'productFeedGrid' => $productFeedGrid,
             'feedMode' => $feedMode,
-            'feedCsrfToken' => $this->csrfTokenManager->getToken('mdfcforps_feed_actions')->getValue(),
+            'feedCsrfToken' => $this->getCsrfTokenManager()->getToken('mdfcforps_feed_actions')->getValue(),
             'feedUrl' => $feedUrl,
             'manage' => $manage,
             'currentTab' => 'feed',
@@ -266,7 +243,7 @@ class FeedController extends PrestaShopAdminController
             ];
 
             $templateVars['productCatalogGrid'] = $this->presentGrid(
-                $this->productCatalogGridFactory->getGrid(new Filters($catalogFilters, 'product_catalog'))
+                $this->getProductCatalogGridFactory()->getGrid(new Filters($catalogFilters, 'product_catalog'))
             );
         }
 
@@ -361,8 +338,28 @@ class FeedController extends PrestaShopAdminController
             return false;
         }
 
-        return $this->csrfTokenManager->isTokenValid(
+        return $this->getCsrfTokenManager()->isTokenValid(
             new CsrfToken('mdfcforps_feed_actions', $submittedToken)
         );
+    }
+
+    private function getProductFeedGridFactory(): GridFactory
+    {
+        return SymfonyContainer::getInstance()->get('mdfcforps.grid.factory.product_feed');
+    }
+
+    private function getProductCatalogGridFactory(): GridFactory
+    {
+        return SymfonyContainer::getInstance()->get('mdfcforps.grid.factory.product_catalog');
+    }
+
+    private function getSalesGridFactory(): GridFactory
+    {
+        return SymfonyContainer::getInstance()->get('mdfcforps.grid.factory.sales');
+    }
+
+    private function getCsrfTokenManager(): CsrfTokenManagerInterface
+    {
+        return SymfonyContainer::getInstance()->get('security.csrf.token_manager');
     }
 }

@@ -42,23 +42,6 @@ services:
     public: true
 
   # -------------------------------------------------------------------------
-  # Symfony Feed Controller
-  # -------------------------------------------------------------------------
-  # Symfony Feed Controller — explicit constructor injection (two GridFactory args can't be autowired)
-  Mdfcforps\Controller\Admin\FeedController:
-    class: Mdfcforps\Controller\Admin\FeedController
-    file: '../src/Controller/Admin/FeedController.php'
-    autoconfigure: true
-    arguments:
-      - '@mdfcforps.grid.factory.product_feed'
-      - '@mdfcforps.grid.factory.product_catalog'
-      - '@mdfcforps.grid.factory.sales'
-      - '@security.csrf.token_manager'
-    tags:
-      - { name: controller.service_arguments }
-    public: true
-
-  # -------------------------------------------------------------------------
   # ProductFeed Grid (products currently in feed)
   # -------------------------------------------------------------------------
   mdfcforps.grid.query_builder.product_feed:
