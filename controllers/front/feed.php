@@ -31,7 +31,7 @@ class MdfcforpsFeedModuleFrontController extends ModuleFrontController
         // ---------------------------------------------------------------
         // Token validation
         // ---------------------------------------------------------------
-        $storedToken = (string) Configuration::get('MDFCFORPS_SECURE_TOKEN');
+        $storedToken = \Mdfcforps\Service\ModuleConfig::get('MDFCFORPS_SECURE_TOKEN', '');
 
         if ($storedToken !== '') {
             $providedToken = (string) (Tools::getValue('token') ?? '');

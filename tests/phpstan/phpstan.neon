@@ -1,0 +1,17 @@
+parameters:
+  level: 4
+  paths:
+    - mdfcforps.php
+    - src
+    - controllers
+    - upgrade
+  tmpDir: var/phpstan
+  bootstrapFiles:
+    - tests/phpstan/bootstrap.php
+  scanDirectories:
+    - vendor
+
+  ignoreErrors:
+    - '#Undefined type: (Module|Order|OrderState|Context|Configuration|Db|Product|Currency|Tools|AdminController|Employee|Tab|Language|Validate|PrestaShopLogger)#'
+    - '#Undefined constant: _PS_VERSION_#'
+    - '#Undefined constant: _DB_PREFIX_#'

@@ -34,6 +34,7 @@
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <form method="post" action="{{ path('mdfcforps_feed_mode') }}" id="mdf-feed-mode-modal-form">
+            <input type="hidden" name="_token" value="{{ feedCsrfToken|default('') }}">
             <div class="modal-header">
               <h5 class="modal-title" id="mdf-feed-mode-modal-label">{{ 'Change mode'|trans({}, 'Modules.Mdfcforps.Admin') }}</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="if (window.mdfCloseFeedModeModal) { window.mdfCloseFeedModeModal(); } return false;">
@@ -214,6 +215,7 @@
 window.mdfcforpsFeed = {
   toggleUrl: "{{ path('mdfcforps_feed_toggle') }}",
   bulkUrl:   "{{ path('mdfcforps_feed_bulk') }}",
+  csrfToken: "{{ feedCsrfToken|default('')|e('js') }}",
   i18n: {
     selectDeselectAllVisible: "{{ 'Select / deselect all visible'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}",
     errorLoadingProducts: "{{ 'Error loading products.'|trans({}, 'Modules.Mdfcforps.Admin')|e('js') }}",

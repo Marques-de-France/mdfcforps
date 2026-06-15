@@ -6,12 +6,15 @@ namespace Mdfcforps\Controller\Admin;
 
 use Configuration;
 use Mdfcforps\Service\FeedProductsService;
+use Mdfcforps\Service\ModuleConfig;
 use PrestaShop\PrestaShop\Core\Grid\GridFactory;
 use PrestaShop\PrestaShop\Core\Search\Filters;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Csrf\CsrfToken;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Tools;
 
 /**
@@ -29,6 +32,9 @@ class FeedController extends FrameworkBundleAdminController
 
     /** @var GridFactory */
     private $salesGridFactory;
+
+    /** @var CsrfTokenManagerInterface */
+    private $csrfTokenManager;
 
     public function dashboardAction(): Response
     {
@@ -137,11 +143,13 @@ class FeedController extends FrameworkBundleAdminController
     public function __construct(
         GridFactory $productFeedGridFactory,
         GridFactory $productCatalogGridFactory,
-        GridFactory $salesGridFactory
+        GridFactory $salesGridFactory,
+        CsrfTokenManagerInterface $csrfTokenManager
     ) {
         $this->productFeedGridFactory    = $productFeedGridFactory;
         $this->productCatalogGridFactory = $productCatalogGridFactory;
         $this->salesGridFactory          = $salesGridFactory;
+        $this->csrfTokenManager          = $csrfTokenManager;
     }
 
     /**
@@ -204,7 +212,7 @@ class FeedController extends FrameworkBundleAdminController
         );
 
         // ---- Feed mode & URL -----------------------------------------
-        $feedMode = (string) Configuration::get('MDFCFORPS_FEED_FILTER_MODE');
+        $feedMode = ModuleConfig::get('MDFCFORPS_FEED_FILTER_MODE', 'TAG');
         $hubUrl   = rtrim((string) (getenv('MDF_HUB_URL') ?: 'https://flux.marques-de-france.fr'), '/');
         $shopUrl  = (Configuration::get('PS_SSL_ENABLED') ? 'https' : 'http')
                     . '://' . Configuration::get('PS_SHOP_DOMAIN');
@@ -213,6 +221,7 @@ class FeedController extends FrameworkBundleAdminController
         $templateVars = [
             'productFeedGrid'     => $productFeedGrid,
             'feedMode'            => $feedMode,
+            'feedCsrfToken'       => $this->csrfTokenManager->getToken('mdfcforps_feed_actions')->getValue(),
             'feedUrl'             => $feedUrl,
             'manage'              => $manage,
             'currentTab'          => 'feed',
@@ -255,6 +264,10 @@ class FeedController extends FrameworkBundleAdminController
      */
     public function toggleAction(Request $request): JsonResponse
     {
+        if (!$this->isValidFeedCsrfToken((string) $request->request->get('_token'))) {
+            return $this->json(['success' => false, 'error' => 'Invalid CSRF token'], 403);
+        }
+
         $productId = (int) $request->request->get('product_id', 0);
         $action    = $request->request->get('action', '');
 
@@ -283,6 +296,10 @@ class FeedController extends FrameworkBundleAdminController
      */
     public function bulkAction(Request $request): JsonResponse
     {
+        if (!$this->isValidFeedCsrfToken((string) $request->request->get('_token'))) {
+            return $this->json(['success' => false, 'error' => 'Invalid CSRF token'], 403);
+        }
+
         $action = $request->request->get('action', '');
         $ids    = $request->request->all()['product_ids'] ?? [];
 
@@ -310,9 +327,24 @@ class FeedController extends FrameworkBundleAdminController
      */
     public function updateModeAction(Request $request): Response
     {
+        if (!$this->isValidFeedCsrfToken((string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token');
+        }
+
         $mode = $request->request->get('feed_mode') === 'SERVERLIST' ? 'SERVERLIST' : 'TAG';
-        Configuration::updateValue('MDFCFORPS_FEED_FILTER_MODE', $mode);
+        ModuleConfig::update('MDFCFORPS_FEED_FILTER_MODE', $mode);
 
         return $this->redirectToRoute('mdfcforps_feed_index');
+    }
+
+    private function isValidFeedCsrfToken(string $submittedToken): bool
+    {
+        if ($submittedToken === '') {
+            return false;
+        }
+
+        return $this->csrfTokenManager->isTokenValid(
+            new CsrfToken('mdfcforps_feed_actions', $submittedToken)
+        );
     }
 }

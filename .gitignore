@@ -19,6 +19,11 @@ Thumbs.db
 *.log
 error_log
 
+# QA / static analysis generated files
+/.php-cs-fixer.cache
+/.phpunit.result.cache
+/var/
+
 # Smarty compiled templates (generated at runtime inside PS)
 /views/smarty/
 

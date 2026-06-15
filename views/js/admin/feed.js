@@ -56,6 +56,9 @@
 		var config = window.mdfcforpsFeed;
 		var url    = config && config.toggleUrl ? config.toggleUrl : '';
 		var body = new URLSearchParams( params );
+		if ( config && config.csrfToken ) {
+			body.append( '_token', config.csrfToken );
+		}
 
 		return fetch( url, {
 			method:      'POST',
@@ -79,6 +82,10 @@
 				form.append( k, v );
 			}
 		} );
+
+		if ( config && config.csrfToken ) {
+			form.append( '_token', config.csrfToken );
+		}
 
 		return fetch( url, {
 			method:      'POST',

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Mdfcforps\Install;
 
+use Mdfcforps\Service\ModuleConfig;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -32,9 +34,9 @@ class Installer
         }
 
         \Configuration::updateValue('MDFCFORPS_DB_VERSION', \Mdfcforps::DB_VERSION);
-        \Configuration::updateValue('MDFCFORPS_FEED_FILTER_MODE', 'TAG');
-        \Configuration::updateValue('MDFCFORPS_BACKFILL_DONE', 0);
-        \Configuration::updateValue('MDFCFORPS_LAST_FLUSH', 0);
+        ModuleConfig::update('MDFCFORPS_FEED_FILTER_MODE', 'TAG');
+        ModuleConfig::update('MDFCFORPS_BACKFILL_DONE', 0);
+        ModuleConfig::update('MDFCFORPS_LAST_FLUSH', 0);
 
         return true;
     }
@@ -75,7 +77,7 @@ class Installer
             $result = $hubClient->selfRegister();
 
             if (!empty($result['secureToken'])) {
-                \Configuration::updateValue('MDFCFORPS_SECURE_TOKEN', $result['secureToken']);
+                ModuleConfig::update('MDFCFORPS_SECURE_TOKEN', $result['secureToken']);
             }
         } catch (\Throwable $e) {
             // Non-fatal: token can arrive later via lazy-cron retry

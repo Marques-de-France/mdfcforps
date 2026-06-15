@@ -7,6 +7,7 @@ namespace Mdfcforps\Grid\Query;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Mdfcforps\Service\FeedEligibilityService;
+use Mdfcforps\Service\ModuleConfig;
 use PrestaShop\PrestaShop\Core\Grid\Query\AbstractDoctrineQueryBuilder;
 use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteriaInterface;
 
@@ -94,7 +95,7 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
 
     private function getBaseQuery(): QueryBuilder
     {
-        $feedMode = (string) \Configuration::get('MDFCFORPS_FEED_FILTER_MODE');
+        $feedMode = ModuleConfig::get('MDFCFORPS_FEED_FILTER_MODE', 'TAG');
         $isServerListMode = $feedMode === 'SERVERLIST';
 
         $qb = $this->connection->createQueryBuilder();

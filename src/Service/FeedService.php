@@ -62,7 +62,7 @@ class FeedService
     {
         $idLang = (int) $this->context->language->id;
         $idShop = (int) $this->context->shop->id;
-        $mode   = (string) \Configuration::get('MDFCFORPS_FEED_FILTER_MODE');
+        $mode   = ModuleConfig::get('MDFCFORPS_FEED_FILTER_MODE', 'TAG');
 
         if ($mode === 'SERVERLIST') {
             $productIds = \Mdfcforps\Service\FeedProductsService::getSelectedProductIds();

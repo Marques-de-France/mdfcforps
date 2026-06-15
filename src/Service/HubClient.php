@@ -33,7 +33,7 @@ class HubClient
             (bool) \Configuration::get('PS_SSL_ENABLED') ? 'https' : 'http'
         ) . '://' . \Configuration::get('PS_SHOP_DOMAIN');
 
-        $this->secureToken = (string) \Configuration::get('MDFCFORPS_SECURE_TOKEN');
+        $this->secureToken = ModuleConfig::get('MDFCFORPS_SECURE_TOKEN', '');
     }
 
     // -----------------------------------------------------------------------

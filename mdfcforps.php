@@ -17,6 +17,7 @@ require_once __DIR__ . '/src/Repository/SaleRepository.php';
 require_once __DIR__ . '/src/Service/AttributionService.php';
 require_once __DIR__ . '/src/Service/FeedService.php';
 require_once __DIR__ . '/src/Service/FeedProductsService.php';
+require_once __DIR__ . '/src/Service/ModuleConfig.php';
 
 class Mdfcforps extends Module
 {
@@ -141,7 +142,7 @@ class Mdfcforps extends Module
 
         if (!$sale) {
             \PrestaShopLogger::addLog(
-                '[MDF] Immediate sync skipped: unable to resolve inserted sale row for order #' . (int) $order->id,
+                '[MDF] Immediate sync skipped: unable to resolve inserted sale row for ' . $this->maskEntityId('order', (int) $order->id),
                 2,
                 null,
                 'Mdfcforps'
@@ -157,7 +158,7 @@ class Mdfcforps extends Module
                 if (!$marked) {
                     $saleRepo->incrementSyncAttempts((int) $sale['id']);
                     \PrestaShopLogger::addLog(
-                        '[MDF] Immediate sync reached Hub but local markSynced failed for sale #' . (int) $sale['id'],
+                        '[MDF] Immediate sync reached Hub but local markSynced failed for ' . $this->maskEntityId('sale', (int) $sale['id']),
                         2,
                         null,
                         'Mdfcforps'
@@ -169,7 +170,7 @@ class Mdfcforps extends Module
         } catch (\Throwable $e) {
             $saleRepo->incrementSyncAttempts((int) $sale['id']);
             \PrestaShopLogger::addLog(
-                '[MDF] Immediate sync error for sale #' . (int) $sale['id'] . ': ' . $e->getMessage(),
+                '[MDF] Immediate sync error for ' . $this->maskEntityId('sale', (int) $sale['id']) . ': ' . $this->sanitizeLogMessage($e->getMessage()),
                 3,
                 null,
                 'Mdfcforps'
@@ -268,12 +269,12 @@ class Mdfcforps extends Module
 
     private function runLazyCron(): void
     {
-        $lastFlush = (int) Configuration::get('MDFCFORPS_LAST_FLUSH');
+        $lastFlush = \Mdfcforps\Service\ModuleConfig::getInt('MDFCFORPS_LAST_FLUSH', 0);
         if ((time() - $lastFlush) < self::LAZY_INTERVAL_SEC) {
             return;
         }
 
-        Configuration::updateValue('MDFCFORPS_LAST_FLUSH', time());
+        \Mdfcforps\Service\ModuleConfig::update('MDFCFORPS_LAST_FLUSH', time());
 
         $saleRepo = new \Mdfcforps\Repository\SaleRepository();
         $hubClient = new \Mdfcforps\Service\HubClient();
@@ -296,7 +297,7 @@ class Mdfcforps extends Module
         }
 
         // Backfill: push historic orders on first run only
-        if (!Configuration::get('MDFCFORPS_BACKFILL_DONE')) {
+        if (\Mdfcforps\Service\ModuleConfig::getInt('MDFCFORPS_BACKFILL_DONE', 0) !== 1) {
             $this->runBackfill($saleRepo, $hubClient);
         }
     }
@@ -323,7 +324,7 @@ class Mdfcforps extends Module
                 }
             }
 
-            Configuration::updateValue('MDFCFORPS_BACKFILL_DONE', 1);
+            \Mdfcforps\Service\ModuleConfig::update('MDFCFORPS_BACKFILL_DONE', 1);
         } catch (\Throwable $e) {
             // Silently fail — will retry next cron cycle
         }
@@ -419,12 +420,32 @@ class Mdfcforps extends Module
             }
         } catch (\Throwable $e) {
             \PrestaShopLogger::addLog(
-                '[MDF] Reconciliation error: ' . $e->getMessage(),
+                '[MDF] Reconciliation error: ' . $this->sanitizeLogMessage($e->getMessage()),
                 2,
                 null,
                 'Mdfcforps'
             );
         }
+    }
+
+    private function maskEntityId(string $entity, int $id): string
+    {
+        if ($id <= 0) {
+            return $entity . '_unknown';
+        }
+
+        return $entity . '_' . substr(hash('sha256', (string) $id), 0, 10);
+    }
+
+    private function sanitizeLogMessage(string $message): string
+    {
+        $normalized = trim(preg_replace('/\s+/', ' ', $message) ?? '');
+
+        if ($normalized === '') {
+            return 'unexpected error';
+        }
+
+        return substr($normalized, 0, 180);
     }
 
     /**
