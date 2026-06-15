@@ -58,6 +58,7 @@ services:
     # In Symfony 6, 'twig' is a private/inlined service — DI injection works, container::get() does not.
     arguments:
       - '@twig'
+      - '@security.csrf.token_manager'
     calls:
       - [setContainer, ['@service_container']]
     public: true

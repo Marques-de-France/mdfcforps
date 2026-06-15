@@ -61,9 +61,13 @@ class FeedController extends FrameworkBundleAdminController
     /** @var \Twig\Environment */
     private $twigEnv;
 
-    public function __construct(\Twig\Environment $twig)
+    /** @var CsrfTokenManagerInterface */
+    private $csrfTokenManager;
+
+    public function __construct(\Twig\Environment $twig, CsrfTokenManagerInterface $csrfTokenManager)
     {
         $this->twigEnv = $twig;
+        $this->csrfTokenManager = $csrfTokenManager;
     }
 
     public function dashboardAction(): Response
@@ -402,7 +406,7 @@ class FeedController extends FrameworkBundleAdminController
 
     private function getCsrfTokenManager(): CsrfTokenManagerInterface
     {
-        return SymfonyContainer::getInstance()->get('security.csrf.token_manager');
+        return $this->csrfTokenManager;
     }
 
     /**
