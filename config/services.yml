@@ -44,11 +44,15 @@ services:
   # -------------------------------------------------------------------------
   # Symfony Feed Controller
   # -------------------------------------------------------------------------
-  Mdfcforps\Controller\Admin\FeedController:
+  mdfcforps.controller.admin.feed:
     class: Mdfcforps\Controller\Admin\FeedController
     file: '%kernel.project_dir%/modules/mdfcforps/src/Controller/Admin/FeedController.php'
     tags:
       - { name: controller.service_arguments }
+    public: true
+
+  Mdfcforps\Controller\Admin\FeedController:
+    alias: 'mdfcforps.controller.admin.feed'
     public: true
 
   # -------------------------------------------------------------------------

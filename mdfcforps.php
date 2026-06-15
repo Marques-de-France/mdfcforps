@@ -43,6 +43,7 @@ require_once __DIR__ . '/src/Service/AttributionService.php';
 require_once __DIR__ . '/src/Service/FeedService.php';
 require_once __DIR__ . '/src/Service/FeedProductsService.php';
 require_once __DIR__ . '/src/Service/ModuleConfig.php';
+require_once __DIR__ . '/src/Controller/Admin/FeedController.php';
 
 class Mdfcforps extends Module
 {

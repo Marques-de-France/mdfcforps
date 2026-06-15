@@ -2,7 +2,7 @@ mdfcforps_dashboard_index:
     path: /mdfcforps/dashboard
     methods: [GET]
     defaults:
-        _controller: 'Mdfcforps\Controller\Admin\FeedController::dashboardAction'
+        _controller: 'mdfcforps.controller.admin.feed::dashboardAction'
         _legacy_controller: AdminMdfcforps
         _legacy_link:
             - AdminMdfcforps
@@ -12,7 +12,7 @@ mdfcforps_sales_index:
     path: /mdfcforps/sales
     methods: [GET, POST]
     defaults:
-        _controller: 'Mdfcforps\Controller\Admin\FeedController::salesAction'
+        _controller: 'mdfcforps.controller.admin.feed::salesAction'
         _legacy_controller: AdminMdfcforps
         _legacy_link:
             - AdminMdfcforps:sales
@@ -21,7 +21,7 @@ mdfcforps_feed_index:
     path: /mdfcforps/feed
     methods: [GET, POST]
     defaults:
-        _controller: 'Mdfcforps\Controller\Admin\FeedController::indexAction'
+        _controller: 'mdfcforps.controller.admin.feed::indexAction'
         _legacy_controller: AdminMdfcforps
         _legacy_link:
             - AdminMdfcforps:feed
@@ -30,19 +30,19 @@ mdfcforps_feed_toggle:
     path: /mdfcforps/feed/toggle
     methods: [POST]
     defaults:
-        _controller: 'Mdfcforps\Controller\Admin\FeedController::toggleAction'
+        _controller: 'mdfcforps.controller.admin.feed::toggleAction'
         _legacy_controller: AdminMdfcforps
 
 mdfcforps_feed_bulk:
     path: /mdfcforps/feed/bulk
     methods: [POST]
     defaults:
-        _controller: 'Mdfcforps\Controller\Admin\FeedController::bulkAction'
+        _controller: 'mdfcforps.controller.admin.feed::bulkAction'
         _legacy_controller: AdminMdfcforps
 
 mdfcforps_feed_mode:
     path: /mdfcforps/feed/mode
     methods: [POST]
     defaults:
-        _controller: 'Mdfcforps\Controller\Admin\FeedController::updateModeAction'
+        _controller: 'mdfcforps.controller.admin.feed::updateModeAction'
         _legacy_controller: AdminMdfcforps
