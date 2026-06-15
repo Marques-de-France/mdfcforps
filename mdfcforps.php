@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -63,7 +66,7 @@ class Mdfcforps extends Module
             return false;
         }
 
-        $installer = new \Mdfcforps\Install\Installer($this);
+        $installer = new Mdfcforps\Install\Installer($this);
 
         if (!$installer->install()) {
             return false;
@@ -90,7 +93,7 @@ class Mdfcforps extends Module
 
     public function uninstall(): bool
     {
-        $installer = new \Mdfcforps\Install\Installer($this);
+        $installer = new Mdfcforps\Install\Installer($this);
         $installer->uninstall();
 
         return parent::uninstall();
@@ -121,10 +124,10 @@ class Mdfcforps extends Module
             return;
         }
 
-        $attributionService = new \Mdfcforps\Service\AttributionService();
+        $attributionService = new Mdfcforps\Service\AttributionService();
         $attributionData = $attributionService->collectFromCookies();
 
-        $saleRepo = new \Mdfcforps\Repository\SaleRepository();
+        $saleRepo = new Mdfcforps\Repository\SaleRepository();
         $inserted = $saleRepo->recordSale($order, $attributionData);
 
         // Immediate sync for freshly created rows.
@@ -134,7 +137,7 @@ class Mdfcforps extends Module
         }
 
         $sale = null;
-        $insertedId = (int) \Db::getInstance()->Insert_ID();
+        $insertedId = (int) Db::getInstance()->Insert_ID();
         if ($insertedId > 0) {
             $sale = $saleRepo->findById($insertedId);
         }
@@ -144,23 +147,24 @@ class Mdfcforps extends Module
         }
 
         if (!$sale) {
-            \PrestaShopLogger::addLog(
+            PrestaShopLogger::addLog(
                 '[MDF] Immediate sync skipped: unable to resolve inserted sale row for ' . $this->maskEntityId('order', (int) $order->id),
                 2,
                 null,
                 'Mdfcforps'
             );
+
             return;
         }
 
         try {
-            $hubClient = new \Mdfcforps\Service\HubClient();
+            $hubClient = new Mdfcforps\Service\HubClient();
             $result = $hubClient->syncSale($sale);
             if ($result) {
                 $marked = $saleRepo->markSynced((int) $sale['id']);
                 if (!$marked) {
                     $saleRepo->incrementSyncAttempts((int) $sale['id']);
-                    \PrestaShopLogger::addLog(
+                    PrestaShopLogger::addLog(
                         '[MDF] Immediate sync reached Hub but local markSynced failed for ' . $this->maskEntityId('sale', (int) $sale['id']),
                         2,
                         null,
@@ -170,9 +174,9 @@ class Mdfcforps extends Module
             } else {
                 $saleRepo->incrementSyncAttempts((int) $sale['id']);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $saleRepo->incrementSyncAttempts((int) $sale['id']);
-            \PrestaShopLogger::addLog(
+            PrestaShopLogger::addLog(
                 '[MDF] Immediate sync error for ' . $this->maskEntityId('sale', (int) $sale['id']) . ': ' . $this->sanitizeLogMessage($e->getMessage()),
                 3,
                 null,
@@ -200,15 +204,15 @@ class Mdfcforps extends Module
 
         $newStatus = match ((int) $newOrderStatus->id) {
             $cancelledState => 'cancelled',
-            $refundedState  => 'refunded',
-            default         => null,
+            $refundedState => 'refunded',
+            default => null,
         };
 
         if ($newStatus === null) {
             return;
         }
 
-        $saleRepo = new \Mdfcforps\Repository\SaleRepository();
+        $saleRepo = new Mdfcforps\Repository\SaleRepository();
         $sale = $saleRepo->findByOrderId($orderId);
 
         if (!$sale) {
@@ -217,7 +221,7 @@ class Mdfcforps extends Module
 
         $saleRepo->updateStatus((int) $sale['id'], $newStatus);
 
-        $hubClient = new \Mdfcforps\Service\HubClient();
+        $hubClient = new Mdfcforps\Service\HubClient();
         $hubClient->updateSaleStatus((int) $sale['id'], $newStatus);
     }
 
@@ -272,15 +276,15 @@ class Mdfcforps extends Module
 
     private function runLazyCron(): void
     {
-        $lastFlush = \Mdfcforps\Service\ModuleConfig::getInt('MDFCFORPS_LAST_FLUSH', 0);
+        $lastFlush = Mdfcforps\Service\ModuleConfig::getInt('MDFCFORPS_LAST_FLUSH', 0);
         if ((time() - $lastFlush) < self::LAZY_INTERVAL_SEC) {
             return;
         }
 
-        \Mdfcforps\Service\ModuleConfig::update('MDFCFORPS_LAST_FLUSH', time());
+        Mdfcforps\Service\ModuleConfig::update('MDFCFORPS_LAST_FLUSH', time());
 
-        $saleRepo = new \Mdfcforps\Repository\SaleRepository();
-        $hubClient = new \Mdfcforps\Service\HubClient();
+        $saleRepo = new Mdfcforps\Repository\SaleRepository();
+        $hubClient = new Mdfcforps\Service\HubClient();
 
         $this->runReconciliation($saleRepo, $hubClient);
 
@@ -294,20 +298,20 @@ class Mdfcforps extends Module
                 } else {
                     $saleRepo->incrementSyncAttempts((int) $sale['id']);
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $saleRepo->incrementSyncAttempts((int) $sale['id']);
             }
         }
 
         // Backfill: push historic orders on first run only
-        if (\Mdfcforps\Service\ModuleConfig::getInt('MDFCFORPS_BACKFILL_DONE', 0) !== 1) {
+        if (Mdfcforps\Service\ModuleConfig::getInt('MDFCFORPS_BACKFILL_DONE', 0) !== 1) {
             $this->runBackfill($saleRepo, $hubClient);
         }
     }
 
     private function runBackfill(
-        \Mdfcforps\Repository\SaleRepository $saleRepo,
-        \Mdfcforps\Service\HubClient $hubClient
+        Mdfcforps\Repository\SaleRepository $saleRepo,
+        Mdfcforps\Service\HubClient $hubClient,
     ): void {
         try {
             $hubSalesByOrderId = $this->fetchHubSalesByOrderId($hubClient, '', '');
@@ -327,15 +331,15 @@ class Mdfcforps extends Module
                 }
             }
 
-            \Mdfcforps\Service\ModuleConfig::update('MDFCFORPS_BACKFILL_DONE', 1);
-        } catch (\Throwable $e) {
+            Mdfcforps\Service\ModuleConfig::update('MDFCFORPS_BACKFILL_DONE', 1);
+        } catch (Throwable $e) {
             // Silently fail — will retry next cron cycle
         }
     }
 
     private function runReconciliation(
-        \Mdfcforps\Repository\SaleRepository $saleRepo,
-        \Mdfcforps\Service\HubClient $hubClient
+        Mdfcforps\Repository\SaleRepository $saleRepo,
+        Mdfcforps\Service\HubClient $hubClient,
     ): void {
         try {
             $localSales = $saleRepo->findRecent(self::RECONCILE_WINDOW_DAYS, self::RECONCILE_LOCAL_LIMIT);
@@ -367,7 +371,7 @@ class Mdfcforps extends Module
                 }
 
                 if ($saleRepo->upsertFromHubSale($hubSale)) {
-                    $restoredLocal++;
+                    ++$restoredLocal;
                 }
             }
 
@@ -385,7 +389,7 @@ class Mdfcforps extends Module
                 // Requeue local row to upsert back to Hub through the normal sync path.
                 if ($isLocalSynced && !$isHubPresent) {
                     if ($saleRepo->markPending((int) $sale['id'])) {
-                        $requeued++;
+                        ++$requeued;
                     }
                     continue;
                 }
@@ -393,7 +397,7 @@ class Mdfcforps extends Module
                 // Late local consistency: mark synced when already present remotely.
                 if (!$isLocalSynced && $isHubPresent) {
                     if ($saleRepo->markSynced((int) $sale['id'])) {
-                        $fixedSynced++;
+                        ++$fixedSynced;
                     }
                 }
 
@@ -404,14 +408,14 @@ class Mdfcforps extends Module
 
                     if ($remoteStatus !== '' && $remoteStatus !== $localStatus) {
                         if ($saleRepo->updateStatus((int) $sale['id'], $remoteStatus)) {
-                            $statusAligned++;
+                            ++$statusAligned;
                         }
                     }
                 }
             }
 
             if ($requeued > 0 || $fixedSynced > 0 || $restoredLocal > 0 || $statusAligned > 0) {
-                \PrestaShopLogger::addLog(
+                PrestaShopLogger::addLog(
                     '[MDF] Reconciliation done: requeued=' . $requeued
                     . ', fixedSynced=' . $fixedSynced
                     . ', restoredLocal=' . $restoredLocal
@@ -421,8 +425,8 @@ class Mdfcforps extends Module
                     'Mdfcforps'
                 );
             }
-        } catch (\Throwable $e) {
-            \PrestaShopLogger::addLog(
+        } catch (Throwable $e) {
+            PrestaShopLogger::addLog(
                 '[MDF] Reconciliation error: ' . $this->sanitizeLogMessage($e->getMessage()),
                 2,
                 null,
@@ -455,13 +459,13 @@ class Mdfcforps extends Module
      * @return array<string, array<string, mixed>>
      */
     private function fetchHubSalesByOrderId(
-        \Mdfcforps\Service\HubClient $hubClient,
+        Mdfcforps\Service\HubClient $hubClient,
         string $dateFrom,
-        string $dateTo
+        string $dateTo,
     ): array {
         $map = [];
 
-        for ($page = 1; $page <= self::HUB_MAX_PAGES; $page++) {
+        for ($page = 1; $page <= self::HUB_MAX_PAGES; ++$page) {
             $response = $hubClient->getHubSalesPage(
                 $page,
                 self::HUB_PAGE_LIMIT,

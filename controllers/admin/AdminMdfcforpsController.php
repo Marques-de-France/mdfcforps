@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -44,7 +47,7 @@ class AdminMdfcforpsController extends ModuleAdminController
         }
 
         // Legacy controller acts as an entrypoint shim to explicit Symfony tab routes.
-        $router = \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()->get('router');
+        $router = PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()->get('router');
         if ($tab === 'feed') {
             Tools::redirectAdmin($router->generate('mdfcforps_feed_index'));
 

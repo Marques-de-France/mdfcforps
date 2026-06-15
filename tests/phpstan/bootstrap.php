@@ -1,6 +1,9 @@
 <?php
+
 /**
  * PHPStan bootstrap for module static analysis.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);

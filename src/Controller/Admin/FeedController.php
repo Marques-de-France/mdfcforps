@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -20,7 +23,6 @@ if (!class_exists('PrestaShopBundle\\Controller\\Admin\\PrestaShopAdminControlle
     );
 }
 
-use Configuration;
 use Mdfcforps\Service\FeedProductsService;
 use Mdfcforps\Service\ModuleConfig;
 use PrestaShop\PrestaShop\Core\Grid\GridFactory;
@@ -159,12 +161,12 @@ class FeedController extends PrestaShopAdminController
         GridFactory $productFeedGridFactory,
         GridFactory $productCatalogGridFactory,
         GridFactory $salesGridFactory,
-        CsrfTokenManagerInterface $csrfTokenManager
+        CsrfTokenManagerInterface $csrfTokenManager,
     ) {
-        $this->productFeedGridFactory    = $productFeedGridFactory;
+        $this->productFeedGridFactory = $productFeedGridFactory;
         $this->productCatalogGridFactory = $productCatalogGridFactory;
-        $this->salesGridFactory          = $salesGridFactory;
-        $this->csrfTokenManager          = $csrfTokenManager;
+        $this->salesGridFactory = $salesGridFactory;
+        $this->csrfTokenManager = $csrfTokenManager;
     }
 
     /**
@@ -228,20 +230,20 @@ class FeedController extends PrestaShopAdminController
 
         // ---- Feed mode & URL -----------------------------------------
         $feedMode = ModuleConfig::get('MDFCFORPS_FEED_FILTER_MODE', 'TAG');
-        $hubUrl   = rtrim((string) (getenv('MDF_HUB_URL') ?: 'https://flux.marques-de-france.fr'), '/');
-        $shopUrl  = (Configuration::get('PS_SSL_ENABLED') ? 'https' : 'http')
-                    . '://' . Configuration::get('PS_SHOP_DOMAIN');
-        $feedUrl  = $hubUrl . '/feed/xml/' . rawurlencode($shopUrl);
+        $hubUrl = rtrim((string) (getenv('MDF_HUB_URL') ?: 'https://flux.marques-de-france.fr'), '/');
+        $shopUrl = (\Configuration::get('PS_SSL_ENABLED') ? 'https' : 'http')
+                    . '://' . \Configuration::get('PS_SHOP_DOMAIN');
+        $feedUrl = $hubUrl . '/feed/xml/' . rawurlencode($shopUrl);
 
         $templateVars = [
-            'productFeedGrid'     => $productFeedGrid,
-            'feedMode'            => $feedMode,
-            'feedCsrfToken'       => $this->csrfTokenManager->getToken('mdfcforps_feed_actions')->getValue(),
-            'feedUrl'             => $feedUrl,
-            'manage'              => $manage,
-            'currentTab'          => 'feed',
-            'enableSidebar'       => true,
-            'layoutTitle'         => 'Marques de France',
+            'productFeedGrid' => $productFeedGrid,
+            'feedMode' => $feedMode,
+            'feedCsrfToken' => $this->csrfTokenManager->getToken('mdfcforps_feed_actions')->getValue(),
+            'feedUrl' => $feedUrl,
+            'manage' => $manage,
+            'currentTab' => 'feed',
+            'enableSidebar' => true,
+            'layoutTitle' => 'Marques de France',
         ];
 
         // ---- Product Catalog grid (manage panel) ----------------------
@@ -284,7 +286,7 @@ class FeedController extends PrestaShopAdminController
         }
 
         $productId = (int) $request->request->get('product_id', 0);
-        $action    = $request->request->get('action', '');
+        $action = $request->request->get('action', '');
 
         if ($productId <= 0) {
             return $this->json(['success' => false, 'error' => 'Invalid product ID']);
@@ -316,7 +318,7 @@ class FeedController extends PrestaShopAdminController
         }
 
         $action = $request->request->get('action', '');
-        $ids    = $request->request->all()['product_ids'] ?? [];
+        $ids = $request->request->all()['product_ids'] ?? [];
 
         if (!in_array($action, ['add', 'remove'], true)) {
             return $this->json(['success' => false, 'error' => 'Invalid action']);

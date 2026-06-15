@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -36,14 +39,14 @@ class AttributionService
      */
     public function collectFromCookies(): array
     {
-        $clickId       = $this->sanitize($_COOKIE['mdf_click_id'] ?? '');
-        $landingRef    = $this->sanitize($_COOKIE['mdf_landing_ref'] ?? '');
-        $utmSource     = $this->sanitize($_COOKIE['mdf_utm_source'] ?? '');
-        $utmMedium     = $this->sanitize($_COOKIE['mdf_utm_medium'] ?? '');
-        $utmCampaign   = $this->sanitize($_COOKIE['mdf_utm_campaign'] ?? '');
-        $utmContent    = $this->sanitize($_COOKIE['mdf_utm_content'] ?? '');
-        $utmTerm       = $this->sanitize($_COOKIE['mdf_utm_term'] ?? '');
-        $landingSite   = $this->sanitize($_COOKIE['mdf_landing_site'] ?? '');
+        $clickId = $this->sanitize($_COOKIE['mdf_click_id'] ?? '');
+        $landingRef = $this->sanitize($_COOKIE['mdf_landing_ref'] ?? '');
+        $utmSource = $this->sanitize($_COOKIE['mdf_utm_source'] ?? '');
+        $utmMedium = $this->sanitize($_COOKIE['mdf_utm_medium'] ?? '');
+        $utmCampaign = $this->sanitize($_COOKIE['mdf_utm_campaign'] ?? '');
+        $utmContent = $this->sanitize($_COOKIE['mdf_utm_content'] ?? '');
+        $utmTerm = $this->sanitize($_COOKIE['mdf_utm_term'] ?? '');
+        $landingSite = $this->sanitize($_COOKIE['mdf_landing_site'] ?? '');
         $referringSite = $this->sanitize($_COOKIE['mdf_referring_site'] ?? '');
 
         $source = $this->resolveSource(
@@ -54,16 +57,16 @@ class AttributionService
         );
 
         return [
-            'source'        => $source,
-            'click_id'      => $clickId,
-            'landing_ref'   => $landingRef,
-            'utm_source'    => $utmSource,
-            'utm_medium'    => $utmMedium,
-            'utm_campaign'  => $utmCampaign,
-            'utm_content'   => $utmContent,
-            'utm_term'      => $utmTerm,
-            'landing_site'  => $landingSite,
-            'referring_site'=> $referringSite,
+            'source' => $source,
+            'click_id' => $clickId,
+            'landing_ref' => $landingRef,
+            'utm_source' => $utmSource,
+            'utm_medium' => $utmMedium,
+            'utm_campaign' => $utmCampaign,
+            'utm_content' => $utmContent,
+            'utm_term' => $utmTerm,
+            'landing_site' => $landingSite,
+            'referring_site' => $referringSite,
         ];
     }
 
@@ -75,7 +78,7 @@ class AttributionService
         string $clickId,
         string $landingRef,
         string $utmSource,
-        string $referringSite
+        string $referringSite,
     ): string {
         // 1. Direct MDF click ID
         if ($clickId !== '') {

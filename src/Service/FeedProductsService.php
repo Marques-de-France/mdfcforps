@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -80,9 +83,9 @@ class FeedProductsService
         $products = [];
 
         foreach ($rows as $row) {
-            $pid      = (int) $row['product_id'];
+            $pid = (int) $row['product_id'];
             $imageUrl = '';
-            $cover    = \Image::getCover($pid);
+            $cover = \Image::getCover($pid);
             if (is_array($cover) && isset($cover['id_image'])) {
                 $imageUrl = (string) $link->getImageLink(
                     'product',
@@ -92,21 +95,21 @@ class FeedProductsService
             }
 
             $products[] = [
-                'id'           => $pid,
-                'name'         => (string) ($row['product_name'] ?? ''),
-                'brand'        => (string) ($row['brand_name'] ?? ''),
-                'reference'    => (string) ($row['reference'] ?? ''),
+                'id' => $pid,
+                'name' => (string) ($row['product_name'] ?? ''),
+                'brand' => (string) ($row['brand_name'] ?? ''),
+                'reference' => (string) ($row['reference'] ?? ''),
                 'availability' => ((int) ($row['quantity'] ?? 0) > 0) ? self::trans('In stock') : self::trans('Out of stock'),
-                'price'        => self::formatPrice((float) ($row['price'] ?? 0)),
-                'status'       => ((int) ($row['active'] ?? 0) === 1) ? self::trans('Active') : self::trans('Disabled'),
-                'image'        => $imageUrl,
-                'added_at'     => (string) ($row['added_at'] ?? ''),
+                'price' => self::formatPrice((float) ($row['price'] ?? 0)),
+                'status' => ((int) ($row['active'] ?? 0) === 1) ? self::trans('Active') : self::trans('Disabled'),
+                'image' => $imageUrl,
+                'added_at' => (string) ($row['added_at'] ?? ''),
             ];
         }
 
         return [
             'products' => $products,
-            'total'    => $total,
+            'total' => $total,
         ];
     }
 
@@ -119,11 +122,11 @@ class FeedProductsService
         string $search,
         int $idLang,
         int $page = 1,
-        int $perPage = 20
+        int $perPage = 20,
     ): array {
-        $offset  = ($page - 1) * $perPage;
+        $offset = ($page - 1) * $perPage;
         $safeSql = \pSQL($search);
-        $idShop  = (int) self::getContext()->shop->id;
+        $idShop = (int) self::getContext()->shop->id;
 
         $where = 'pl.id_lang = ' . $idLang;
         if ($search !== '') {
@@ -179,13 +182,13 @@ class FeedProductsService
         }
 
         $selectedIds = array_flip(self::getSelectedProductIds());
-        $link        = self::getContext()->link;
+        $link = self::getContext()->link;
 
         $products = [];
         foreach ($rows as $row) {
-            $pid      = (int) $row['id_product'];
+            $pid = (int) $row['id_product'];
             $imageUrl = '';
-            $cover    = \Image::getCover($pid);
+            $cover = \Image::getCover($pid);
             if (is_array($cover) && isset($cover['id_image'])) {
                 $imageUrl = (string) $link->getImageLink(
                     'product',
@@ -195,21 +198,21 @@ class FeedProductsService
             }
 
             $products[] = [
-                'id'           => $pid,
-                'name'         => (string) ($row['name'] ?? ''),
-                'brand'        => (string) ($row['brand_name'] ?? ''),
-                'reference'    => (string) ($row['reference'] ?? ''),
+                'id' => $pid,
+                'name' => (string) ($row['name'] ?? ''),
+                'brand' => (string) ($row['brand_name'] ?? ''),
+                'reference' => (string) ($row['reference'] ?? ''),
                 'availability' => ((int) ($row['quantity'] ?? 0) > 0) ? self::trans('In stock') : self::trans('Out of stock'),
-                'price'        => self::formatPrice((float) ($row['price'] ?? 0)),
-                'status'       => ((int) ($row['active'] ?? 0) === 1) ? self::trans('Active') : self::trans('Disabled'),
-                'image'        => $imageUrl,
-                'in_feed'      => isset($selectedIds[$pid]),
+                'price' => self::formatPrice((float) ($row['price'] ?? 0)),
+                'status' => ((int) ($row['active'] ?? 0) === 1) ? self::trans('Active') : self::trans('Disabled'),
+                'image' => $imageUrl,
+                'in_feed' => isset($selectedIds[$pid]),
             ];
         }
 
         return [
             'products' => $products,
-            'total'    => $total,
+            'total' => $total,
         ];
     }
 
@@ -223,7 +226,7 @@ class FeedProductsService
             'mdfcforps_feed_products',
             [
                 'product_id' => $productId,
-                'added_at'   => date('Y-m-d H:i:s'),
+                'added_at' => date('Y-m-d H:i:s'),
             ],
             false,
             true,

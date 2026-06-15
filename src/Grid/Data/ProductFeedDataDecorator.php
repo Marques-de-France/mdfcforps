@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -41,14 +44,14 @@ final class ProductFeedDataDecorator implements GridDataFactoryInterface
 
     public function getData(SearchCriteriaInterface $searchCriteria)
     {
-        $data    = $this->inner->getData($searchCriteria);
+        $data = $this->inner->getData($searchCriteria);
         $records = [];
 
         foreach ($data->getRecords() as $record) {
             $pid = (int) ($record['id'] ?? 0);
 
             // Image URL
-            $imageId  = (int) ($record['id_image'] ?? 0);
+            $imageId = (int) ($record['id_image'] ?? 0);
             $record['image'] = $imageId
                 ? (string) $this->link->getImageLink('product', $imageId, 'small_default')
                 : '';

@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -60,7 +63,7 @@ class MdfcforpsAjaxModuleFrontController extends ModuleFrontController
 
         try {
             $data = json_decode($raw, true, 8, JSON_THROW_ON_ERROR);
-        } catch (\JsonException $e) {
+        } catch (JsonException $e) {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'Invalid JSON']);
             exit;
@@ -72,7 +75,7 @@ class MdfcforpsAjaxModuleFrontController extends ModuleFrontController
             exit;
         }
 
-        $attributionService = new \Mdfcforps\Service\AttributionService();
+        $attributionService = new Mdfcforps\Service\AttributionService();
         $attributionService->stampCookie($data);
 
         echo json_encode(['success' => true]);

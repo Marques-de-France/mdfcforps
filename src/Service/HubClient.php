@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -49,9 +52,9 @@ class HubClient
     public function selfRegister(): array
     {
         return $this->post('/api/ps/self-register', [
-            'siteUrl'    => $this->shopUrl,
-            'shopUrl'    => $this->shopUrl,
-            'platform'   => 'prestashop',
+            'siteUrl' => $this->shopUrl,
+            'shopUrl' => $this->shopUrl,
+            'platform' => 'prestashop',
             'moduleVersion' => \Mdfcforps::VERSION,
         ], false);
     }
@@ -67,22 +70,22 @@ class HubClient
     {
         try {
             $response = $this->post('/api/ps/sales', [
-                'orderId'          => $sale['order_id'],
-                'orderReference'   => $sale['order_reference'],
-                'amount'           => (float) $sale['amount'],
-                'currency'         => $sale['currency'],
-                'attributionSource'=> $sale['attribution_source'],
-                'utmSource'        => $sale['utm_source'],
-                'utmMedium'        => $sale['utm_medium'],
-                'utmCampaign'      => $sale['utm_campaign'],
-                'utmContent'       => $sale['utm_content'],
-                'utmTerm'          => $sale['utm_term'],
-                'landingSite'      => $sale['landing_site'],
-                'referringSite'    => $sale['referring_site'],
-                'landingRef'       => $sale['landing_ref'],
-                'clickId'          => $sale['click_id'],
-                'status'           => $sale['status'],
-                'createdAt'        => $sale['created_at'],
+                'orderId' => $sale['order_id'],
+                'orderReference' => $sale['order_reference'],
+                'amount' => (float) $sale['amount'],
+                'currency' => $sale['currency'],
+                'attributionSource' => $sale['attribution_source'],
+                'utmSource' => $sale['utm_source'],
+                'utmMedium' => $sale['utm_medium'],
+                'utmCampaign' => $sale['utm_campaign'],
+                'utmContent' => $sale['utm_content'],
+                'utmTerm' => $sale['utm_term'],
+                'landingSite' => $sale['landing_site'],
+                'referringSite' => $sale['referring_site'],
+                'landingRef' => $sale['landing_ref'],
+                'clickId' => $sale['click_id'],
+                'status' => $sale['status'],
+                'createdAt' => $sale['created_at'],
             ]);
 
             // Success means either newly recorded or already present (idempotent).
@@ -163,6 +166,7 @@ class HubClient
     public function getHubSales(): array
     {
         $response = $this->getHubSalesPage();
+
         return $response['sales'] ?? [];
     }
 
@@ -175,7 +179,7 @@ class HubClient
         int $page = 1,
         int $limit = 100,
         string $dateFrom = '',
-        string $dateTo = ''
+        string $dateTo = '',
     ): array {
         return $this->getHubSalesList($page, $limit, [
             'dateFrom' => $dateFrom,
@@ -187,12 +191,13 @@ class HubClient
      * Fetch a page of Hub sales with optional filters/sorting.
      *
      * @param array<string, string|int|float> $filters
+     *
      * @return array<string, mixed>
      */
     public function getHubSalesList(int $page = 1, int $limit = 25, array $filters = []): array
     {
         $query = [
-            'page'  => max(1, $page),
+            'page' => max(1, $page),
             'limit' => min(100, max(1, $limit)),
         ];
 
@@ -230,6 +235,7 @@ class HubClient
 
     /**
      * @param array<string, mixed> $payload
+     *
      * @return array<string, mixed>
      */
     private function post(string $path, array $payload, bool $requireToken = true): array
@@ -248,10 +254,10 @@ class HubClient
 
         $context = stream_context_create([
             'http' => [
-                'method'        => 'POST',
-                'header'        => implode("\r\n", $headers),
-                'content'       => $body,
-                'timeout'       => $this->timeout,
+                'method' => 'POST',
+                'header' => implode("\r\n", $headers),
+                'content' => $body,
+                'timeout' => $this->timeout,
                 'ignore_errors' => true,
             ],
             'ssl' => [
@@ -266,7 +272,7 @@ class HubClient
             throw new \RuntimeException("Hub POST {$path} — network error");
         }
 
-        $responseHeaders = is_array($http_response_header) ? $http_response_header : [];
+        $responseHeaders = $http_response_header;
         $statusCode = $this->extractStatusCode($responseHeaders);
         if ($statusCode < 200 || $statusCode >= 300) {
             throw new \RuntimeException("Hub POST {$path} — HTTP {$statusCode}");
@@ -293,9 +299,9 @@ class HubClient
 
         $context = stream_context_create([
             'http' => [
-                'method'        => 'GET',
-                'header'        => implode("\r\n", $headers),
-                'timeout'       => $this->timeout,
+                'method' => 'GET',
+                'header' => implode("\r\n", $headers),
+                'timeout' => $this->timeout,
                 'ignore_errors' => true,
             ],
             'ssl' => [
@@ -310,7 +316,7 @@ class HubClient
             throw new \RuntimeException("Hub GET {$path} — network error");
         }
 
-        $responseHeaders = is_array($http_response_header) ? $http_response_header : [];
+        $responseHeaders = $http_response_header;
         $statusCode = $this->extractStatusCode($responseHeaders);
         if ($statusCode < 200 || $statusCode >= 300) {
             throw new \RuntimeException("Hub GET {$path} — HTTP {$statusCode}");

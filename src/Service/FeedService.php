@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -38,7 +41,7 @@ class FeedService
         $this->shopName = (string) \Configuration::get('PS_SHOP_NAME');
 
         $defaultCurrency = \Currency::getDefaultCurrency();
-        $this->currency  = $defaultCurrency ? $defaultCurrency->iso_code : 'EUR';
+        $this->currency = $defaultCurrency ? $defaultCurrency->iso_code : 'EUR';
         $this->eligibilityService = $eligibilityService
             ?: new FeedEligibilityService((int) \Configuration::get('PS_ORDER_OUT_OF_STOCK'));
     }
@@ -53,6 +56,7 @@ class FeedService
     public function buildFeed(int $perPage = 200, int $page = 1): string
     {
         $products = $this->getFeedProducts($perPage, $page);
+
         return $this->buildRss($products);
     }
 
@@ -67,10 +71,10 @@ class FeedService
     {
         $idLang = (int) $this->context->language->id;
         $idShop = (int) $this->context->shop->id;
-        $mode   = ModuleConfig::get('MDFCFORPS_FEED_FILTER_MODE', 'TAG');
+        $mode = ModuleConfig::get('MDFCFORPS_FEED_FILTER_MODE', 'TAG');
 
         if ($mode === 'SERVERLIST') {
-            $productIds = \Mdfcforps\Service\FeedProductsService::getSelectedProductIds();
+            $productIds = FeedProductsService::getSelectedProductIds();
             if (empty($productIds)) {
                 return [];
             }
@@ -84,7 +88,7 @@ class FeedService
 
         foreach ($rawProducts as $raw) {
             $productId = (int) $raw['id_product'];
-            $product   = new \Product($productId, true, $idLang, $idShop);
+            $product = new \Product($productId, true, $idLang, $idShop);
 
             if (!\Validate::isLoadedObject($product)) {
                 continue;
@@ -97,12 +101,12 @@ class FeedService
                     continue;
                 }
 
-                $prices     = array_filter(array_map(fn ($c) => (float) $c['price_computed'], $combinations));
-                $minPrice   = $prices ? min($prices) : null;
+                $prices = array_filter(array_map(fn ($c) => (float) $c['price_computed'], $combinations));
+                $minPrice = $prices ? min($prices) : null;
 
                 foreach ($combinations as $combo) {
                     $isCheapest = $minPrice !== null && (float) $combo['price_computed'] === $minPrice;
-                    $items[]    = $this->normaliseCombination($combo, $product, $idLang, $isCheapest);
+                    $items[] = $this->normaliseCombination($combo, $product, $idLang, $isCheapest);
                 }
             } else {
                 $stockContext = $this->eligibilityService->getProductStockContext($productId, $idShop);
@@ -128,61 +132,61 @@ class FeedService
      */
     private function normaliseProduct(\Product $product, int $idLang): array
     {
-        $imageUrl  = $this->getProductImageUrl($product);
+        $imageUrl = $this->getProductImageUrl($product);
         $addImages = $this->getAdditionalImageUrls($product);
-        $category  = $this->getCategoryPath($product, $idLang);
-        $tags      = $this->getProductTags($product, $idLang);
-        $link      = $this->context->link->getProductLink($product);
-        $title     = strip_tags($product->name);
-        $mpn       = $product->reference ?: '';
-        $gtin      = (string) ($product->ean13 ?: $product->isbn ?: $product->upc ?: '');
+        $category = $this->getCategoryPath($product, $idLang);
+        $tags = $this->getProductTags($product, $idLang);
+        $link = $this->context->link->getProductLink($product);
+        $title = strip_tags($product->name);
+        $mpn = $product->reference ?: '';
+        $gtin = (string) ($product->ean13 ?: $product->isbn ?: $product->upc ?: '');
 
-        $availStr  = $this->getAvailabilityString($product);
+        $availStr = $this->getAvailabilityString($product);
 
         return [
-            'id'                      => (string) $product->id,
-            'title'                   => $title,
-            'parent_title'            => $title,
-            'parent_link'             => $link,
-            'description'             => $this->sanitizeRichHtml($product->description ?: $product->description_short),
-            'short_description'       => $this->sanitizeRichHtml($product->description_short),
-            'link'                    => $link,
-            'image'                   => $imageUrl,
-            'parent_image'            => $imageUrl,
-            'variant_image'           => '',
-            'additional_images'       => $addImages,
-            'price'                   => $this->getProductPrice($product),
-            'regular_price'           => $this->getProductPrice($product, false),
-            'sale_price'              => $this->getProductSalePrice($product),
-            'currency'                => $this->currency,
-            'sku'                     => $mpn,
-            'availability'            => $availStr,
-            'availability_date'       => '',
-            'condition'               => 'new',
-            'category'                => $category,
-            'brand'                   => $this->getProductBrand($product),
-            'gtin'                    => $gtin,
-            'mpn'                     => $mpn,
-            'tags'                    => $tags,
-            'color'                   => '',
-            'size'                    => '',
-            'gender'                  => $this->inferGender($product, $idLang),
-            'age_group'               => $this->inferAgeGroup($product, $idLang),
+            'id' => (string) $product->id,
+            'title' => $title,
+            'parent_title' => $title,
+            'parent_link' => $link,
+            'description' => $this->sanitizeRichHtml($product->description ?: $product->description_short),
+            'short_description' => $this->sanitizeRichHtml($product->description_short),
+            'link' => $link,
+            'image' => $imageUrl,
+            'parent_image' => $imageUrl,
+            'variant_image' => '',
+            'additional_images' => $addImages,
+            'price' => $this->getProductPrice($product),
+            'regular_price' => $this->getProductPrice($product, false),
+            'sale_price' => $this->getProductSalePrice($product),
+            'currency' => $this->currency,
+            'sku' => $mpn,
+            'availability' => $availStr,
+            'availability_date' => '',
+            'condition' => 'new',
+            'category' => $category,
+            'brand' => $this->getProductBrand($product),
+            'gtin' => $gtin,
+            'mpn' => $mpn,
+            'tags' => $tags,
+            'color' => '',
+            'size' => '',
+            'gender' => $this->inferGender($product, $idLang),
+            'age_group' => $this->inferAgeGroup($product, $idLang),
             'google_product_category' => $this->getGoogleProductCategory($category),
-            'shipping'                => $this->getShippingBlock(),
-            'identifier_exists'       => !empty($gtin) || !empty($mpn),
-            'has_variants'            => false,
-            'is_cheapest_variant'     => true,
-            'woo_product_type'        => 'simple',
-            'mdf_product_type'        => 'external',
-            'attributes'              => $this->getProductFeatures($product, $idLang),
-            'item_group_id'           => (string) $product->id,
-            'shipping_weight'         => $product->weight ? $product->weight . ' kg' : '',
-            'shipping_length'         => '',
-            'shipping_width'          => '',
-            'shipping_height'         => '',
-            'shipping_label'          => '',
-            'add_to_cart_url'         => $this->context->link->getAddToCartURL((int) $product->id, 0),
+            'shipping' => $this->getShippingBlock(),
+            'identifier_exists' => !empty($gtin) || !empty($mpn),
+            'has_variants' => false,
+            'is_cheapest_variant' => true,
+            'woo_product_type' => 'simple',
+            'mdf_product_type' => 'external',
+            'attributes' => $this->getProductFeatures($product, $idLang),
+            'item_group_id' => (string) $product->id,
+            'shipping_weight' => $product->weight ? $product->weight . ' kg' : '',
+            'shipping_length' => '',
+            'shipping_width' => '',
+            'shipping_height' => '',
+            'shipping_label' => '',
+            'add_to_cart_url' => $this->context->link->getAddToCartURL((int) $product->id, 0),
         ];
     }
 
@@ -191,81 +195,82 @@ class FeedService
     // -----------------------------------------------------------------------
 
     /**
-     * @param array<string, mixed> $combo  Row from Combination::getAttributeById()
+     * @param array<string, mixed> $combo Row from Combination::getAttributeById()
+     *
      * @return array<string, mixed>
      */
     private function normaliseCombination(array $combo, \Product $product, int $idLang, bool $isCheapest): array
     {
-        $parentImageUrl   = $this->getProductImageUrl($product);
-        $variantImageUrl  = $this->getCombinationImageUrl($product, (int) $combo['id_product_attribute']);
-        $displayImageUrl  = $variantImageUrl ?: $parentImageUrl;
-        $addImages        = $this->getAdditionalImageUrls($product);
+        $parentImageUrl = $this->getProductImageUrl($product);
+        $variantImageUrl = $this->getCombinationImageUrl($product, (int) $combo['id_product_attribute']);
+        $displayImageUrl = $variantImageUrl ?: $parentImageUrl;
+        $addImages = $this->getAdditionalImageUrls($product);
 
-        $category  = $this->getCategoryPath($product, $idLang);
-        $tags      = $this->getProductTags($product, $idLang);
-        $link      = $this->context->link->getProductLink($product);
+        $category = $this->getCategoryPath($product, $idLang);
+        $tags = $this->getProductTags($product, $idLang);
+        $link = $this->context->link->getProductLink($product);
 
         // Build title: "Product Name – Attr1, Attr2"
         $attrValues = array_filter(array_column($combo['attributes'] ?? [], 'value'));
-        $title      = strip_tags($product->name);
+        $title = strip_tags($product->name);
         if (!empty($attrValues)) {
             $title .= ' – ' . implode(', ', $attrValues);
         }
 
         $parentTitle = strip_tags($product->name);
-        $mpn         = $combo['reference'] ?: $product->reference ?: '';
-        $gtin        = $combo['ean13'] ?: $combo['isbn'] ?: $combo['upc'] ?: '';
+        $mpn = $combo['reference'] ?: $product->reference ?: '';
+        $gtin = $combo['ean13'] ?: $combo['isbn'] ?: $combo['upc'] ?: '';
 
-        $comboPrice   = (float) $combo['price_computed'];
+        $comboPrice = (float) $combo['price_computed'];
         $comboRegular = $comboPrice; // PS: use computed price as regular (discount handled separately)
-        $comboSale    = ''; // PS discount resolution is complex — leave blank in feed
+        $comboSale = ''; // PS discount resolution is complex — leave blank in feed
 
         return [
-            'id'                      => $product->id . '_' . $combo['id_product_attribute'],
-            'title'                   => $title,
-            'parent_title'            => $parentTitle,
-            'parent_link'             => $link,
-            'description'             => $this->sanitizeRichHtml($product->description ?: $product->description_short),
-            'short_description'       => $this->sanitizeRichHtml($product->description_short),
-            'link'                    => $link,
-            'image'                   => $displayImageUrl,
-            'parent_image'            => $parentImageUrl,
-            'variant_image'           => $variantImageUrl,
-            'additional_images'       => $addImages,
-            'price'                   => (string) $comboPrice,
-            'regular_price'           => (string) $comboRegular,
-            'sale_price'              => $comboSale,
-            'currency'                => $this->currency,
-            'sku'                     => $mpn,
-            'availability'            => $combo['in_stock']
+            'id' => $product->id . '_' . $combo['id_product_attribute'],
+            'title' => $title,
+            'parent_title' => $parentTitle,
+            'parent_link' => $link,
+            'description' => $this->sanitizeRichHtml($product->description ?: $product->description_short),
+            'short_description' => $this->sanitizeRichHtml($product->description_short),
+            'link' => $link,
+            'image' => $displayImageUrl,
+            'parent_image' => $parentImageUrl,
+            'variant_image' => $variantImageUrl,
+            'additional_images' => $addImages,
+            'price' => (string) $comboPrice,
+            'regular_price' => (string) $comboRegular,
+            'sale_price' => $comboSale,
+            'currency' => $this->currency,
+            'sku' => $mpn,
+            'availability' => $combo['in_stock']
                 ? 'in stock'
                 : (($combo['allows_out_of_stock_orders'] ?? false) ? 'preorder' : 'out of stock'),
-            'availability_date'       => '',
-            'condition'               => 'new',
-            'category'                => $category,
-            'brand'                   => $this->getProductBrand($product),
-            'gtin'                    => (string) $gtin,
-            'mpn'                     => $mpn,
-            'tags'                    => $tags,
-            'color'                   => $this->getCombinationColor($combo),
-            'size'                    => $this->getCombinationSize($combo),
-            'gender'                  => $this->inferGender($product, $idLang),
-            'age_group'               => $this->inferAgeGroup($product, $idLang),
+            'availability_date' => '',
+            'condition' => 'new',
+            'category' => $category,
+            'brand' => $this->getProductBrand($product),
+            'gtin' => (string) $gtin,
+            'mpn' => $mpn,
+            'tags' => $tags,
+            'color' => $this->getCombinationColor($combo),
+            'size' => $this->getCombinationSize($combo),
+            'gender' => $this->inferGender($product, $idLang),
+            'age_group' => $this->inferAgeGroup($product, $idLang),
             'google_product_category' => $this->getGoogleProductCategory($category),
-            'shipping'                => $this->getShippingBlock(),
-            'identifier_exists'       => !empty($gtin) || !empty($mpn),
-            'has_variants'            => true,
-            'is_cheapest_variant'     => $isCheapest,
-            'woo_product_type'        => 'variable',
-            'mdf_product_type'        => 'variable',
-            'attributes'              => $combo['attributes'] ?? [],
-            'item_group_id'           => (string) $product->id,
-            'shipping_weight'         => $product->weight ? $product->weight . ' kg' : '',
-            'shipping_length'         => '',
-            'shipping_width'          => '',
-            'shipping_height'         => '',
-            'shipping_label'          => '',
-            'add_to_cart_url'         => $this->context->link->getAddToCartURL((int) $product->id, (int) $combo['id_product_attribute']),
+            'shipping' => $this->getShippingBlock(),
+            'identifier_exists' => !empty($gtin) || !empty($mpn),
+            'has_variants' => true,
+            'is_cheapest_variant' => $isCheapest,
+            'woo_product_type' => 'variable',
+            'mdf_product_type' => 'variable',
+            'attributes' => $combo['attributes'] ?? [],
+            'item_group_id' => (string) $product->id,
+            'shipping_weight' => $product->weight ? $product->weight . ' kg' : '',
+            'shipping_length' => '',
+            'shipping_width' => '',
+            'shipping_height' => '',
+            'shipping_label' => '',
+            'add_to_cart_url' => $this->context->link->getAddToCartURL((int) $product->id, (int) $combo['id_product_attribute']),
         ];
     }
 
@@ -283,13 +288,14 @@ class FeedService
         // Filter zero-price items
         $valid = array_values(array_filter($products, function ($p) {
             $effectivePrice = $p['regular_price'] !== '' ? (float) $p['regular_price'] : (float) $p['price'];
+
             return $effectivePrice > 0;
         }));
 
-        $totalVariants  = count($valid);
-        $totalProducts  = count(array_unique(array_column($valid, 'item_group_id')));
+        $totalVariants = count($valid);
+        $totalProducts = count(array_unique(array_column($valid, 'item_group_id')));
 
-        $xml  = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         $xml .= '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">' . "\n";
         $xml .= '  <channel>' . "\n";
         $xml .= '    <title><![CDATA[Marques de France Product Feed – ' . $this->shopName . ']]></title>' . "\n";
@@ -300,17 +306,17 @@ class FeedService
 
         foreach ($valid as $p) {
             $regularPrice = $p['regular_price'] !== '' ? number_format((float) $p['regular_price'], 2, '.', '') . ' ' . $p['currency'] : '';
-            $salePrice    = $p['sale_price'] !== '' ? number_format((float) $p['sale_price'], 2, '.', '') . ' ' . $p['currency'] : '';
+            $salePrice = $p['sale_price'] !== '' ? number_format((float) $p['sale_price'], 2, '.', '') . ' ' . $p['currency'] : '';
 
-            $x = static fn(string $v): string => htmlspecialchars($v, ENT_XML1, 'UTF-8');
-            $u = static fn(string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
+            $x = static fn (string $v): string => htmlspecialchars($v, ENT_XML1, 'UTF-8');
+            $u = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
 
             $xml .= '    <item>' . "\n";
-            $xml .= '      <g:id>'            . $x($p['id'])            . '</g:id>' . "\n";
+            $xml .= '      <g:id>' . $x($p['id']) . '</g:id>' . "\n";
             $xml .= '      <g:item_group_id>' . $x($p['item_group_id']) . '</g:item_group_id>' . "\n";
-            $xml .= '      <g:title><![CDATA[' . $p['title']           . ']]></g:title>' . "\n";
+            $xml .= '      <g:title><![CDATA[' . $p['title'] . ']]></g:title>' . "\n";
             $xml .= '      <parent_title><![CDATA[' . ($p['parent_title'] ?? $p['title']) . ']]></parent_title>' . "\n";
-            $xml .= '      <parent_link>'     . $u($p['parent_link'] ?? $p['link']) . '</parent_link>' . "\n";
+            $xml .= '      <parent_link>' . $u($p['parent_link'] ?? $p['link']) . '</parent_link>' . "\n";
             $xml .= '      <g:description><![CDATA[' . $p['description'] . ']]></g:description>' . "\n";
             if ($p['short_description'] ?? '') {
                 $xml .= '      <short_description><![CDATA[' . $p['short_description'] . ']]></short_description>' . "\n";
@@ -321,16 +327,16 @@ class FeedService
             if ($p['mpn'] ?? '') {
                 $xml .= '      <g:mpn>' . $x($p['mpn']) . '</g:mpn>' . "\n";
             }
-            $xml .= '      <g:price>'     . $x($regularPrice) . '</g:price>' . "\n";
+            $xml .= '      <g:price>' . $x($regularPrice) . '</g:price>' . "\n";
             if ($salePrice) {
                 $xml .= '      <g:sale_price>' . $x($salePrice) . '</g:sale_price>' . "\n";
             }
-            $xml .= '      <g:link>'        . $u($p['link'])  . '</g:link>' . "\n";
-            $xml .= '      <g:image_link>'  . $u($p['image']) . '</g:image_link>' . "\n";
+            $xml .= '      <g:link>' . $u($p['link']) . '</g:link>' . "\n";
+            $xml .= '      <g:image_link>' . $u($p['image']) . '</g:image_link>' . "\n";
             foreach (array_slice($p['additional_images'] ?? [], 0, 10) as $ai) {
                 $xml .= '      <g:additional_image_link>' . $u($ai) . '</g:additional_image_link>' . "\n";
             }
-            $xml .= '      <parent_image>'  . $u($p['parent_image'] ?? '') . '</parent_image>' . "\n";
+            $xml .= '      <parent_image>' . $u($p['parent_image'] ?? '') . '</parent_image>' . "\n";
             $xml .= '      <variant_image>' . $u($p['variant_image'] ?? '') . '</variant_image>' . "\n";
             if ($p['brand'] ?? '') {
                 $xml .= '      <g:brand><![CDATA[' . $p['brand'] . ']]></g:brand>' . "\n";
@@ -363,10 +369,10 @@ class FeedService
             }
             $xml .= '      <g:identifier_exists>' . (($p['identifier_exists'] ?? false) ? 'yes' : 'no') . '</g:identifier_exists>' . "\n";
             $xml .= '      <is_cheapest_variant>' . (($p['is_cheapest_variant'] ?? false) ? '1' : '0') . '</is_cheapest_variant>' . "\n";
-            $xml .= '      <has_variants>'         . (($p['has_variants'] ?? false) ? '1' : '0') . '</has_variants>' . "\n";
-            $xml .= '      <woo_product_type>'     . $x($p['woo_product_type'] ?? '') . '</woo_product_type>' . "\n";
-            $xml .= '      <mdf_product_type>'     . $x($p['mdf_product_type'] ?? '') . '</mdf_product_type>' . "\n";
-            $xml .= '      <g:condition>'          . $x($p['condition']) . '</g:condition>' . "\n";
+            $xml .= '      <has_variants>' . (($p['has_variants'] ?? false) ? '1' : '0') . '</has_variants>' . "\n";
+            $xml .= '      <woo_product_type>' . $x($p['woo_product_type'] ?? '') . '</woo_product_type>' . "\n";
+            $xml .= '      <mdf_product_type>' . $x($p['mdf_product_type'] ?? '') . '</mdf_product_type>' . "\n";
+            $xml .= '      <g:condition>' . $x($p['condition']) . '</g:condition>' . "\n";
             if ($p['google_product_category'] ?? '') {
                 $xml .= '      <g:google_product_category>' . $x($p['google_product_category']) . '</g:google_product_category>' . "\n";
             }
@@ -383,8 +389,8 @@ class FeedService
                 $xml .= '      <add_to_cart_url>' . $u($p['add_to_cart_url']) . '</add_to_cart_url>' . "\n";
             }
             foreach (array_slice($p['attributes'] ?? [], 0, 3) as $i => $attr) {
-                $n    = $i + 1;
-                $xml .= '      <custom_attribute_' . $n . '_name>'  . $x($attr['name']  ?? '') . '</custom_attribute_' . $n . '_name>' . "\n";
+                $n = $i + 1;
+                $xml .= '      <custom_attribute_' . $n . '_name>' . $x($attr['name'] ?? '') . '</custom_attribute_' . $n . '_name>' . "\n";
                 $xml .= '      <custom_attribute_' . $n . '_value>' . $x($attr['value'] ?? '') . '</custom_attribute_' . $n . '_value>' . "\n";
             }
             $xml .= '    </item>' . "\n\n";
@@ -427,11 +433,13 @@ class FeedService
               ->limit($perPage, $offset);
 
         $result = \Db::getInstance()->executeS($query);
+
         return is_array($result) ? $result : [];
     }
 
     /**
      * @param int[] $ids
+     *
      * @return array<int, array<string, mixed>>
      */
     private function getProductsByIds(array $ids, int $idLang, int $idShop, int $perPage, int $page): array
@@ -440,8 +448,8 @@ class FeedService
             return [];
         }
 
-        $offset   = ($page - 1) * $perPage;
-        $safeIds  = implode(',', array_map('intval', $ids));
+        $offset = ($page - 1) * $perPage;
+        $safeIds = implode(',', array_map('intval', $ids));
 
         $query = new \DbQuery();
         $query->select('p.id_product')
@@ -460,6 +468,7 @@ class FeedService
               ->limit($perPage, $offset);
 
         $result = \Db::getInstance()->executeS($query);
+
         return is_array($result) ? $result : [];
     }
 
@@ -483,18 +492,18 @@ class FeedService
             if (!isset($grouped[$idPA])) {
                 $grouped[$idPA] = [
                     'id_product_attribute' => $idPA,
-                    'reference'            => $row['reference'] ?? '',
-                    'ean13'                => $row['ean13'] ?? '',
-                    'isbn'                 => $row['isbn'] ?? '',
-                    'upc'                  => $row['upc'] ?? '',
-                    'quantity'             => (int) $row['quantity'],
-                    'price_computed'       => 0.0,
-                    'in_stock'             => (int) $row['quantity'] > 0,
-                    'attributes'           => [],
+                    'reference' => $row['reference'] ?? '',
+                    'ean13' => $row['ean13'] ?? '',
+                    'isbn' => $row['isbn'] ?? '',
+                    'upc' => $row['upc'] ?? '',
+                    'quantity' => (int) $row['quantity'],
+                    'price_computed' => 0.0,
+                    'in_stock' => (int) $row['quantity'] > 0,
+                    'attributes' => [],
                 ];
             }
             $grouped[$idPA]['attributes'][] = [
-                'name'  => $row['group_name'] ?? '',
+                'name' => $row['group_name'] ?? '',
                 'value' => $row['attribute_name'] ?? '',
             ];
         }
@@ -531,6 +540,7 @@ class FeedService
         if (!$cover) {
             return '';
         }
+
         return $this->context->link->getImageLink(
             $product->link_rewrite,
             (int) $cover['id_image'],
@@ -543,12 +553,14 @@ class FeedService
         $images = $product->getCombinationImages((int) $this->context->language->id);
         if (is_array($images) && isset($images[$idProductAttribute][0])) {
             $imageId = (int) $images[$idProductAttribute][0]['id_image'];
+
             return $this->context->link->getImageLink(
                 $product->link_rewrite,
                 $imageId,
                 'large_default'
             );
         }
+
         return '';
     }
 
@@ -569,6 +581,7 @@ class FeedService
                 'large_default'
             );
         }
+
         return $urls;
     }
 
@@ -584,6 +597,7 @@ class FeedService
                 return html_entity_decode((string) $manufacturerName, ENT_QUOTES | ENT_HTML5, 'UTF-8');
             }
         }
+
         return $this->shopName;
     }
 
@@ -614,6 +628,7 @@ class FeedService
         if (!is_array($tags) || !isset($tags[$idLang])) {
             return [];
         }
+
         return $tags[$idLang];
     }
 
@@ -629,16 +644,18 @@ class FeedService
         $result = [];
         foreach (array_slice($features, 0, 3) as $feature) {
             $result[] = [
-                'name'  => $feature['name'] ?? '',
+                'name' => $feature['name'] ?? '',
                 'value' => $feature['value'] ?? '',
             ];
         }
+
         return $result;
     }
 
     private function getProductPrice(\Product $product, bool $withTax = true): string
     {
         $price = \Product::getPriceStatic((int) $product->id, $withTax);
+
         return $price > 0 ? (string) $price : '';
     }
 
@@ -671,6 +688,7 @@ class FeedService
                 return $attr['value'] ?? '';
             }
         }
+
         return '';
     }
 
@@ -683,17 +701,18 @@ class FeedService
                 return $attr['value'] ?? '';
             }
         }
+
         return '';
     }
 
     private function inferGender(\Product $product, int $idLang): string
     {
         $genderMap = [
-            'homme'    => 'male',   'men'    => 'male',   'man'      => 'male',
-            'masculin' => 'male',   'male'   => 'male',
-            'femme'    => 'female', 'women'  => 'female', 'woman'    => 'female',
-            'feminin'  => 'female', 'female' => 'female',
-            'unisex'   => 'unisex', 'mixte'  => 'unisex',
+            'homme' => 'male',   'men' => 'male',   'man' => 'male',
+            'masculin' => 'male',   'male' => 'male',
+            'femme' => 'female', 'women' => 'female', 'woman' => 'female',
+            'feminin' => 'female', 'female' => 'female',
+            'unisex' => 'unisex', 'mixte' => 'unisex',
         ];
 
         // Check product features first
@@ -724,11 +743,11 @@ class FeedService
     private function inferAgeGroup(\Product $product, int $idLang): string
     {
         $ageMap = [
-            'newborn'   => 'newborn', 'nouveau-ne' => 'newborn',
-            'infant'    => 'infant',  'bebe'       => 'infant',  'nourrisson' => 'infant',
-            'toddler'   => 'toddler', 'bambin'     => 'toddler',
-            'kids'      => 'kids',    'enfant'     => 'kids',    'child'      => 'kids',
-            'adult'     => 'adult',   'adulte'     => 'adult',
+            'newborn' => 'newborn', 'nouveau-ne' => 'newborn',
+            'infant' => 'infant',  'bebe' => 'infant',  'nourrisson' => 'infant',
+            'toddler' => 'toddler', 'bambin' => 'toddler',
+            'kids' => 'kids',    'enfant' => 'kids',    'child' => 'kids',
+            'adult' => 'adult',   'adulte' => 'adult',
         ];
 
         foreach ($this->getProductTags($product, $idLang) as $tag) {
@@ -744,12 +763,12 @@ class FeedService
     private function getGoogleProductCategory(string $category): string
     {
         $apparelMap = [
-            't-shirt'    => 'Vêtements', 'tshirt'    => 'Vêtements', 'chemise'   => 'Vêtements',
-            'robe'       => 'Vêtements', 'pantalon'  => 'Vêtements', 'veste'     => 'Vêtements',
-            'manteau'    => 'Vêtements', 'pull'      => 'Vêtements', 'sweat'     => 'Vêtements',
-            'chaussures' => 'Chaussures', 'sneakers' => 'Chaussures', 'bottes'   => 'Chaussures',
-            'casquette'  => 'Accessoires vestimentaires', 'chapeau' => 'Accessoires vestimentaires',
-            'sac'        => 'Bagages et sacs',            'ceinture'=> 'Accessoires vestimentaires',
+            't-shirt' => 'Vêtements', 'tshirt' => 'Vêtements', 'chemise' => 'Vêtements',
+            'robe' => 'Vêtements', 'pantalon' => 'Vêtements', 'veste' => 'Vêtements',
+            'manteau' => 'Vêtements', 'pull' => 'Vêtements', 'sweat' => 'Vêtements',
+            'chaussures' => 'Chaussures', 'sneakers' => 'Chaussures', 'bottes' => 'Chaussures',
+            'casquette' => 'Accessoires vestimentaires', 'chapeau' => 'Accessoires vestimentaires',
+            'sac' => 'Bagages et sacs',            'ceinture' => 'Accessoires vestimentaires',
         ];
 
         $lower = strtolower($category);
@@ -768,9 +787,9 @@ class FeedService
     private function getShippingBlock(): array
     {
         return [
-            'country'  => defined('MDFCFORPS_FEED_SHIPPING_COUNTRY')  ? MDFCFORPS_FEED_SHIPPING_COUNTRY  : 'FR',
-            'service'  => defined('MDFCFORPS_FEED_SHIPPING_SERVICE')  ? MDFCFORPS_FEED_SHIPPING_SERVICE  : 'Standard',
-            'price'    => defined('MDFCFORPS_FEED_SHIPPING_PRICE')    ? (float) MDFCFORPS_FEED_SHIPPING_PRICE    : 0.0,
+            'country' => defined('MDFCFORPS_FEED_SHIPPING_COUNTRY') ? MDFCFORPS_FEED_SHIPPING_COUNTRY : 'FR',
+            'service' => defined('MDFCFORPS_FEED_SHIPPING_SERVICE') ? MDFCFORPS_FEED_SHIPPING_SERVICE : 'Standard',
+            'price' => defined('MDFCFORPS_FEED_SHIPPING_PRICE') ? (float) MDFCFORPS_FEED_SHIPPING_PRICE : 0.0,
             'currency' => defined('MDFCFORPS_FEED_SHIPPING_CURRENCY') ? MDFCFORPS_FEED_SHIPPING_CURRENCY : $this->currency,
         ];
     }
@@ -814,9 +833,9 @@ class FeedService
 
         // 8. Remove emojis
         $html = (string) preg_replace('/[\x{1F000}-\x{1FFFF}]/u', '', $html);
-        $html = (string) preg_replace('/[\x{2600}-\x{27BF}]/u',   '', $html);
-        $html = (string) preg_replace('/[\x{FE00}-\x{FE0F}]/u',   '', $html);
-        $html = (string) preg_replace('/\x{200D}/u',               '', $html);
+        $html = (string) preg_replace('/[\x{2600}-\x{27BF}]/u', '', $html);
+        $html = (string) preg_replace('/[\x{FE00}-\x{FE0F}]/u', '', $html);
+        $html = (string) preg_replace('/\x{200D}/u', '', $html);
 
         // 9. Decode HTML entities
         $html = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');

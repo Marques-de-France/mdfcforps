@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -39,11 +42,11 @@ final class ProductCatalogDataDecorator implements GridDataFactoryInterface
 
     public function getData(SearchCriteriaInterface $searchCriteria)
     {
-        $data    = $this->inner->getData($searchCriteria);
+        $data = $this->inner->getData($searchCriteria);
         $records = [];
 
         foreach ($data->getRecords() as $record) {
-            $pid    = (int) ($record['id'] ?? 0);
+            $pid = (int) ($record['id'] ?? 0);
             $inFeed = (bool) ($record['in_feed'] ?? false);
 
             // Image URL

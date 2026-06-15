@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -32,24 +35,24 @@ class SaleRepository
         $currency = \Currency::getIsoCodeById((int) $order->id_currency);
 
         $data = [
-            'order_id'          => (int) $order->id,
-            'order_reference'   => pSQL($order->reference),
-            'amount'            => (float) $order->total_paid_tax_incl,
-            'currency'          => pSQL($currency ?: 'EUR'),
-            'attribution_source'=> pSQL($attribution['source'] ?? 'unknown'),
-            'utm_source'        => pSQL($attribution['utm_source'] ?? ''),
-            'utm_medium'        => pSQL($attribution['utm_medium'] ?? ''),
-            'utm_campaign'      => pSQL($attribution['utm_campaign'] ?? ''),
-            'utm_content'       => pSQL($attribution['utm_content'] ?? ''),
-            'utm_term'          => pSQL($attribution['utm_term'] ?? ''),
-            'landing_site'      => pSQL($attribution['landing_site'] ?? '', true),
-            'referring_site'    => pSQL($attribution['referring_site'] ?? '', true),
-            'landing_ref'       => pSQL($attribution['landing_ref'] ?? '', true),
-            'click_id'          => pSQL($attribution['click_id'] ?? ''),
-            'status'            => 'confirmed',
-            'hub_synced'        => 0,
+            'order_id' => (int) $order->id,
+            'order_reference' => pSQL($order->reference),
+            'amount' => (float) $order->total_paid_tax_incl,
+            'currency' => pSQL($currency ?: 'EUR'),
+            'attribution_source' => pSQL($attribution['source'] ?? 'unknown'),
+            'utm_source' => pSQL($attribution['utm_source'] ?? ''),
+            'utm_medium' => pSQL($attribution['utm_medium'] ?? ''),
+            'utm_campaign' => pSQL($attribution['utm_campaign'] ?? ''),
+            'utm_content' => pSQL($attribution['utm_content'] ?? ''),
+            'utm_term' => pSQL($attribution['utm_term'] ?? ''),
+            'landing_site' => pSQL($attribution['landing_site'] ?? '', true),
+            'referring_site' => pSQL($attribution['referring_site'] ?? '', true),
+            'landing_ref' => pSQL($attribution['landing_ref'] ?? '', true),
+            'click_id' => pSQL($attribution['click_id'] ?? ''),
+            'status' => 'confirmed',
+            'hub_synced' => 0,
             'hub_sync_attempts' => 0,
-            'created_at'        => date('Y-m-d H:i:s'),
+            'created_at' => date('Y-m-d H:i:s'),
         ];
 
         return (bool) \Db::getInstance()->insert(
@@ -118,29 +121,30 @@ class SaleRepository
         $createdAt = $this->normalizeCreatedAt((string) ($hubSale['createdAt'] ?? ''));
 
         $data = [
-            'order_id'          => $orderId,
-            'order_reference'   => pSQL($orderReference),
-            'amount'            => (float) ($hubSale['amount'] ?? 0),
-            'currency'          => pSQL(strtoupper((string) ($hubSale['currency'] ?? 'EUR')) ?: 'EUR'),
-            'attribution_source'=> pSQL((string) ($hubSale['attributionSource'] ?? 'unknown')),
-            'utm_source'        => '',
-            'utm_medium'        => '',
-            'utm_campaign'      => '',
-            'utm_content'       => '',
-            'utm_term'          => '',
-            'landing_site'      => '',
-            'referring_site'    => '',
-            'landing_ref'       => '',
-            'click_id'          => pSQL((string) ($hubSale['clickId'] ?? '')),
-            'status'            => pSQL($status),
-            'hub_synced'        => 1,
+            'order_id' => $orderId,
+            'order_reference' => pSQL($orderReference),
+            'amount' => (float) ($hubSale['amount'] ?? 0),
+            'currency' => pSQL(strtoupper((string) ($hubSale['currency'] ?? 'EUR')) ?: 'EUR'),
+            'attribution_source' => pSQL((string) ($hubSale['attributionSource'] ?? 'unknown')),
+            'utm_source' => '',
+            'utm_medium' => '',
+            'utm_campaign' => '',
+            'utm_content' => '',
+            'utm_term' => '',
+            'landing_site' => '',
+            'referring_site' => '',
+            'landing_ref' => '',
+            'click_id' => pSQL((string) ($hubSale['clickId'] ?? '')),
+            'status' => pSQL($status),
+            'hub_synced' => 1,
             'hub_sync_attempts' => 0,
-            'created_at'        => pSQL($createdAt),
+            'created_at' => pSQL($createdAt),
         ];
 
         $existing = $this->findByOrderId($orderId);
         if ($existing) {
             unset($data['order_id']);
+
             return (bool) \Db::getInstance()->update(
                 'mdfcforps_sales',
                 $data,

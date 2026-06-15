@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -34,7 +37,7 @@ class MdfcforpsFeedModuleFrontController extends ModuleFrontController
         // ---------------------------------------------------------------
         // Token validation
         // ---------------------------------------------------------------
-        $storedToken = \Mdfcforps\Service\ModuleConfig::get('MDFCFORPS_SECURE_TOKEN', '');
+        $storedToken = Mdfcforps\Service\ModuleConfig::get('MDFCFORPS_SECURE_TOKEN', '');
 
         if ($storedToken !== '') {
             $providedToken = (string) (Tools::getValue('token') ?? '');
@@ -61,13 +64,13 @@ class MdfcforpsFeedModuleFrontController extends ModuleFrontController
         // Pagination params
         // ---------------------------------------------------------------
         $perPage = min(500, max(1, (int) (Tools::getValue('per_page') ?: 200)));
-        $page    = max(1, (int) (Tools::getValue('page') ?: 1));
+        $page = max(1, (int) (Tools::getValue('page') ?: 1));
 
         // ---------------------------------------------------------------
         // Generate feed
         // ---------------------------------------------------------------
-        $feedService = new \Mdfcforps\Service\FeedService();
-        $xml         = $feedService->buildFeed($perPage, $page);
+        $feedService = new Mdfcforps\Service\FeedService();
+        $xml = $feedService->buildFeed($perPage, $page);
 
         // ---------------------------------------------------------------
         // Serve raw XML

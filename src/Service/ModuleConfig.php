@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -10,7 +13,6 @@ namespace Mdfcforps\Service;
 if (!defined('_PS_VERSION_')) {
     exit;
 }
-
 
 final class ModuleConfig
 {

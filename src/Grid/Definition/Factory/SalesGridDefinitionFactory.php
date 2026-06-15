@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -39,35 +42,40 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
     protected function getColumns(): ColumnCollection
     {
         return (new ColumnCollection())
-            ->add((new DataColumn('order_reference'))
+            ->add(
+                (new DataColumn('order_reference'))
                 ->setName($this->trans('Reference', [], 'Modules.Mdfcforps.Admin'))
                 ->setOptions([
                     'field' => 'order_reference',
                     'sortable' => true,
                 ])
             )
-            ->add((new DataColumn('amount'))
+            ->add(
+                (new DataColumn('amount'))
                 ->setName($this->trans('Amount', [], 'Modules.Mdfcforps.Admin'))
                 ->setOptions([
                     'field' => 'amount_display',
                     'sortable' => true,
                 ])
             )
-            ->add((new HtmlColumn('source'))
+            ->add(
+                (new HtmlColumn('source'))
                 ->setName($this->trans('Source', [], 'Modules.Mdfcforps.Admin'))
                 ->setOptions([
                     'field' => 'source_badge',
                     'sortable' => false,
                 ])
             )
-            ->add((new HtmlColumn('status'))
+            ->add(
+                (new HtmlColumn('status'))
                 ->setName($this->trans('Status', [], 'Modules.Mdfcforps.Admin'))
                 ->setOptions([
                     'field' => 'status_badge',
                     'sortable' => true,
                 ])
             )
-            ->add((new DataColumn('created_at'))
+            ->add(
+                (new DataColumn('created_at'))
                 ->setName($this->trans('Date', [], 'Modules.Mdfcforps.Admin'))
                 ->setOptions([
                     'field' => 'created_at',
@@ -81,20 +89,23 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
         $filters = new FilterCollection();
 
         $filters
-            ->add((new Filter('order_reference', TextType::class))
+            ->add(
+                (new Filter('order_reference', TextType::class))
                 ->setTypeOptions([
                     'required' => false,
                     'attr' => ['placeholder' => $this->trans('Search reference', [], 'Modules.Mdfcforps.Admin')],
                 ])
                 ->setAssociatedColumn('order_reference')
             )
-            ->add((new Filter('amount', NumberMinMaxFilterType::class))
+            ->add(
+                (new Filter('amount', NumberMinMaxFilterType::class))
                 ->setTypeOptions([
                     'required' => false,
                 ])
                 ->setAssociatedColumn('amount')
             )
-            ->add((new Filter('source', ChoiceType::class))
+            ->add(
+                (new Filter('source', ChoiceType::class))
                 ->setTypeOptions([
                     'required' => false,
                     'placeholder' => $this->trans('All', [], 'Admin.Global'),
@@ -109,7 +120,8 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
                 ])
                 ->setAssociatedColumn('source')
             )
-            ->add((new Filter('status', ChoiceType::class))
+            ->add(
+                (new Filter('status', ChoiceType::class))
                 ->setTypeOptions([
                     'required' => false,
                     'placeholder' => $this->trans('All', [], 'Admin.Global'),

@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -35,12 +38,12 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
 
     /** Map grid column IDs to SQL order expressions */
     private const ORDER_MAP = [
-        'name'         => 'pl.name',
-        'brand'        => 'm.name',
-        'reference'    => 'p.reference',
-        'price'        => 'ps.price',
+        'name' => 'pl.name',
+        'brand' => 'm.name',
+        'reference' => 'p.reference',
+        'price' => 'ps.price',
         'availability' => 'sa.quantity',
-        'active'       => 'ps.active',
+        'active' => 'ps.active',
     ];
 
     public function __construct(
@@ -48,9 +51,8 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
         string $dbPrefix,
         int $contextLangId,
         int $contextShopId,
-        FeedEligibilityService $eligibilityService
-    )
-    {
+        FeedEligibilityService $eligibilityService,
+    ) {
         parent::__construct($connection, $dbPrefix);
         $this->contextLangId = $contextLangId;
         $this->contextShopId = $contextShopId;
@@ -75,7 +77,7 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $this->applyFilters($qb, $searchCriteria->getFilters());
 
-        $orderBy  = self::ORDER_MAP[$searchCriteria->getOrderBy()] ?? 'pl.name';
+        $orderBy = self::ORDER_MAP[$searchCriteria->getOrderBy()] ?? 'pl.name';
         $orderWay = in_array(strtolower((string) $searchCriteria->getOrderWay()), ['asc', 'desc'])
             ? strtoupper((string) $searchCriteria->getOrderWay())
             : 'ASC';
@@ -119,16 +121,36 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
         }
 
         $qb
-            ->leftJoin('p', $this->dbPrefix . 'product_lang', 'pl',
-                'pl.id_product = p.id_product AND pl.id_lang = :ctx_lang AND pl.id_shop = :ctx_shop')
-            ->leftJoin('p', $this->dbPrefix . 'product_shop', 'ps',
-                'ps.id_product = p.id_product AND ps.id_shop = :ctx_shop')
-            ->leftJoin('p', $this->dbPrefix . 'manufacturer', 'm',
-                'm.id_manufacturer = p.id_manufacturer')
-            ->leftJoin('p', $this->dbPrefix . 'stock_available', 'sa',
-                'sa.id_product = p.id_product AND sa.id_product_attribute = 0 AND sa.id_shop = :ctx_shop')
-            ->leftJoin('p', $this->dbPrefix . 'image', 'ci',
-                'ci.id_product = p.id_product AND ci.cover = 1')
+            ->leftJoin(
+                'p',
+                $this->dbPrefix . 'product_lang',
+                'pl',
+                'pl.id_product = p.id_product AND pl.id_lang = :ctx_lang AND pl.id_shop = :ctx_shop'
+            )
+            ->leftJoin(
+                'p',
+                $this->dbPrefix . 'product_shop',
+                'ps',
+                'ps.id_product = p.id_product AND ps.id_shop = :ctx_shop'
+            )
+            ->leftJoin(
+                'p',
+                $this->dbPrefix . 'manufacturer',
+                'm',
+                'm.id_manufacturer = p.id_manufacturer'
+            )
+            ->leftJoin(
+                'p',
+                $this->dbPrefix . 'stock_available',
+                'sa',
+                'sa.id_product = p.id_product AND sa.id_product_attribute = 0 AND sa.id_shop = :ctx_shop'
+            )
+            ->leftJoin(
+                'p',
+                $this->dbPrefix . 'image',
+                'ci',
+                'ci.id_product = p.id_product AND ci.cover = 1'
+            )
             ->leftJoin(
                 'p',
                 '(SELECT id_product, COUNT(*) AS combination_count FROM ' . $this->dbPrefix . 'product_attribute GROUP BY id_product)',

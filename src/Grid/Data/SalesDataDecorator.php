@@ -1,6 +1,9 @@
 <?php
+
 /**
  * Module source file.
+ *
+ * @author Marques de France
  */
 
 declare(strict_types=1);
@@ -89,6 +92,7 @@ final class SalesDataDecorator implements GridDataFactoryInterface
 
         try {
             $date = new \DateTimeImmutable($raw);
+
             return $date->format('d/m/Y H:i');
         } catch (\Throwable $e) {
             return $raw;
