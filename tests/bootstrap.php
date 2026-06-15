@@ -1,9 +1,9 @@
 <?php
-
 /**
  * PHPUnit bootstrap for module tests.
  *
  * @author Marques de France
+ * @copyright Copyright (c) Marques de France
  */
 
 declare(strict_types=1);
