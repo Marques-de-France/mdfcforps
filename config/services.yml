@@ -42,6 +42,16 @@ services:
     public: true
 
   # -------------------------------------------------------------------------
+  # Symfony Feed Controller
+  # -------------------------------------------------------------------------
+  Mdfcforps\Controller\Admin\FeedController:
+    class: Mdfcforps\Controller\Admin\FeedController
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Controller/Admin/FeedController.php'
+    tags:
+      - { name: controller.service_arguments }
+    public: true
+
+  # -------------------------------------------------------------------------
   # ProductFeed Grid (products currently in feed)
   # -------------------------------------------------------------------------
   mdfcforps.grid.query_builder.product_feed:

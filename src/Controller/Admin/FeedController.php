@@ -11,10 +11,6 @@ declare(strict_types=1);
 
 namespace Mdfcforps\Controller\Admin;
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
-
 if (!class_exists('PrestaShopBundle\\Controller\\Admin\\PrestaShopAdminController')
     && class_exists('PrestaShopBundle\\Controller\\Admin\\FrameworkBundleAdminController')
 ) {
