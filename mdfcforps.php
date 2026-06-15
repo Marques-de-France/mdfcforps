@@ -16,6 +16,24 @@ if (!defined('_PS_VERSION_')) {
 // PSR-4 autoloading for Symfony-style classes (Grid, Controller, Form types, etc.)
 if (file_exists(__DIR__ . '/vendor/autoload.php')) {
     require_once __DIR__ . '/vendor/autoload.php';
+} else {
+    // Fallback for source zip installs without Composer vendor directory.
+    spl_autoload_register(static function (string $class): void {
+        $prefix = 'Mdfcforps\\';
+        if (strpos($class, $prefix) !== 0) {
+            return;
+        }
+
+        $relative = substr($class, strlen($prefix));
+        if ($relative === false || $relative === '') {
+            return;
+        }
+
+        $path = __DIR__ . '/src/' . str_replace('\\', '/', $relative) . '.php';
+        if (file_exists($path)) {
+            require_once $path;
+        }
+    });
 }
 
 require_once __DIR__ . '/src/Install/Installer.php';
