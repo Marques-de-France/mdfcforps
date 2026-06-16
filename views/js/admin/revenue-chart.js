@@ -403,8 +403,13 @@
           position: 'right',
           ticks: {
             color: '#ed2e38',
+            precision: 0,
+            stepSize: 1,
             callback: function (value) {
-              return String(Math.round(value));
+              if (Math.round(value) !== value) {
+                return '';
+              }
+              return String(value);
             },
           },
           grid: {

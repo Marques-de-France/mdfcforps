@@ -15,7 +15,7 @@
 
       <trans-unit id="Modules.Mdfcforps.Admin.product_feed">
         <source>Product Feed</source>
-        <target>Flux produits</target>
+        <target>Flux de produits</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.attributed_sales">
@@ -271,7 +271,7 @@
 
       <trans-unit id="Modules.Mdfcforps.Admin.product_feed_lower">
         <source>Product feed</source>
-        <target>Flux produits</target>
+        <target>Flux de produits</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.sales_tracking">
