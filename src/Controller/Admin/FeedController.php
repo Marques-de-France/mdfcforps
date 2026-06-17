@@ -41,7 +41,7 @@ use Mdfcforps\Service\ModuleConfig;
 use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 use PrestaShop\PrestaShop\Core\Grid\GridFactory;
 use PrestaShop\PrestaShop\Core\Search\Filters;
-use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -55,8 +55,15 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
  *
  * Twig is injected via constructor (not fetched from container at runtime) to support
  * both PS8 (Symfony 4 — twig is public) and PS9 (Symfony 6 — twig is a private/inlined service).
+ *
+ * Extends Symfony's AbstractController (stable across Symfony 3.4/4.4/6.4) rather than
+ * PrestaShop's FrameworkBundleAdminController, which was removed in PrestaShop 9. The only
+ * base-class helpers used — json(), redirectToRoute(), createAccessDeniedException() — all
+ * live in AbstractController, so this keeps a single code path working on PS 1.7.8, 8 and 9.
+ * Back-office access control is still enforced via the route's _legacy_controller attribute,
+ * independently of the controller base class.
  */
-class FeedController extends FrameworkBundleAdminController
+class FeedController extends AbstractController
 {
     /** @var \Twig\Environment */
     private $twigEnv;

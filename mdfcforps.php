@@ -64,7 +64,7 @@ class Mdfcforps extends Module
         $this->author = 'Marques de France';
         $this->need_instance = 0;
         $this->bootstrap = true;
-        $this->ps_versions_compliancy = ['min' => '8.0.0', 'max' => _PS_VERSION_];
+        $this->ps_versions_compliancy = ['min' => '1.7.8.0', 'max' => _PS_VERSION_];
 
         parent::__construct();
 
@@ -125,6 +125,11 @@ class Mdfcforps extends Module
 
     private function clearModuleRuntimeCaches(): void
     {
+        // Reset PHP opcache so the stale compiled Symfony container PHP is evicted.
+        if (function_exists('opcache_reset')) {
+            opcache_reset();
+        }
+
         $cacheRoot = defined('_PS_CACHE_DIR_') ? (string) _PS_CACHE_DIR_ : '';
         if ($cacheRoot === '' || !is_dir($cacheRoot)) {
             return;
@@ -172,11 +177,14 @@ class Mdfcforps extends Module
 
     public function getContent(): string
     {
-        Tools::redirectAdmin(
-            $this->context->link->getAdminLink('AdminMdfcforps')
-        );
+        $url = $this->context->link->getAdminLink('AdminMdfcforps');
 
-        return '';
+        // Tools::redirectAdmin() calls exit() which terminates the Symfony kernel
+        // mid-flight on PS9 (Symfony 6), causing a 500. Return a JS redirect instead —
+        // works on all PS versions without relying on exit().
+        return '<script>window.location.replace(' . json_encode($url) . ');</script>'
+             . '<noscript><meta http-equiv="refresh" content="0; url='
+             . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '"></noscript>';
     }
 
     // -----------------------------------------------------------------------
@@ -269,11 +277,14 @@ class Mdfcforps extends Module
         $cancelledState = (int) Configuration::get('PS_OS_CANCELED');
         $refundedState = (int) Configuration::get('PS_OS_REFUND');
 
-        $newStatus = match ((int) $newOrderStatus->id) {
-            $cancelledState => 'cancelled',
-            $refundedState => 'refunded',
-            default => null,
-        };
+        $statusId = (int) $newOrderStatus->id;
+        if ($statusId === $cancelledState) {
+            $newStatus = 'cancelled';
+        } elseif ($statusId === $refundedState) {
+            $newStatus = 'refunded';
+        } else {
+            $newStatus = null;
+        }
 
         if ($newStatus === null) {
             return;
@@ -293,15 +304,16 @@ class Mdfcforps extends Module
     }
 
     // -----------------------------------------------------------------------
-    // Hook: displayHeader → lazy-cron flush + JS runtime injection
+    // Hook: displayHeader → lazy-cron flush
     // -----------------------------------------------------------------------
 
     public function hookDisplayHeader(array $params): string
     {
-        // Inject front tracker assets on all non-admin pages
-        if (!$this->context->controller instanceof AdminController) {
-            $this->context->controller->addJS($this->_path . 'views/js/front/mdf-attribution-context-ps.js');
-        }
+        // Front tracker JS is emitted as a plain <script> tag by the
+        // displayBeforeBodyClosingTag hook (tracker.tpl), not through the asset
+        // pipeline: PrestaShop 9 finalises media before displayHeader runs and may
+        // bundle pipeline assets via CCC, so a direct tag is the only mechanism that
+        // loads identically (and visibly, by name) on PS 1.7 / 8 / 9.
 
         // Lazy tasks run with strict throttle on BO and FO page loads.
         $isBoEmployee = $this->context->employee instanceof Employee
@@ -332,6 +344,10 @@ class Mdfcforps extends Module
                 [],
                 (bool) Configuration::get('PS_SSL_ENABLED')
             ),
+            // Direct script URL + version (cache-buster). Emitted as a plain
+            // <script> tag in tracker.tpl so it bypasses the PS9 asset pipeline/CCC.
+            'mdfcforps_js_url' => $this->_path . 'views/js/front/mdf-attribution-context-ps.js',
+            'mdfcforps_version' => $this->version,
         ]);
 
         return $this->display(__FILE__, 'views/templates/hook/tracker.tpl');
@@ -378,7 +394,7 @@ class Mdfcforps extends Module
 
     private function runBackfill(
         Mdfcforps\Repository\SaleRepository $saleRepo,
-        Mdfcforps\Service\HubClient $hubClient,
+        Mdfcforps\Service\HubClient $hubClient
     ): void {
         try {
             $hubSalesByOrderId = $this->fetchHubSalesByOrderId($hubClient, '', '');
@@ -406,7 +422,7 @@ class Mdfcforps extends Module
 
     private function runReconciliation(
         Mdfcforps\Repository\SaleRepository $saleRepo,
-        Mdfcforps\Service\HubClient $hubClient,
+        Mdfcforps\Service\HubClient $hubClient
     ): void {
         try {
             $localSales = $saleRepo->findRecent(self::RECONCILE_WINDOW_DAYS, self::RECONCILE_LOCAL_LIMIT);
@@ -528,7 +544,7 @@ class Mdfcforps extends Module
     private function fetchHubSalesByOrderId(
         Mdfcforps\Service\HubClient $hubClient,
         string $dateFrom,
-        string $dateTo,
+        string $dateTo
     ): array {
         $map = [];
 

@@ -28,12 +28,6 @@ use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteriaInterface;
  */
 final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
 {
-    /** @var int */
-    private $contextLangId;
-
-    /** @var int */
-    private $contextShopId;
-
     /** @var FeedEligibilityService */
     private $eligibilityService;
 
@@ -50,13 +44,9 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
     public function __construct(
         Connection $connection,
         string $dbPrefix,
-        int $contextLangId,
-        int $contextShopId,
-        FeedEligibilityService $eligibilityService,
+        FeedEligibilityService $eligibilityService
     ) {
         parent::__construct($connection, $dbPrefix);
-        $this->contextLangId = $contextLangId;
-        $this->contextShopId = $contextShopId;
         $this->eligibilityService = $eligibilityService;
     }
 
@@ -158,8 +148,8 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
                 'pa_stats',
                 'pa_stats.id_product = p.id_product'
             )
-            ->setParameter('ctx_lang', $this->contextLangId)
-            ->setParameter('ctx_shop', $this->contextShopId);
+            ->setParameter('ctx_lang', (int) \Context::getContext()->language->id)
+            ->setParameter('ctx_shop', (int) \Context::getContext()->shop->id);
 
         // Keep grid output consistent with feed output eligibility.
         $qb->andWhere('COALESCE(ps.active, p.active, 0) = 1')

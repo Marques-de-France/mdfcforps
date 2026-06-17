@@ -16,8 +16,8 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnCollection;
-use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\DataColumn;
-use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\HtmlColumn;
+use PrestaShop\PrestaShop\Core\Grid\Column\Type\DataColumn;
+use Mdfcforps\Grid\Column\Type\HtmlColumn;
 use PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory;
 use PrestaShop\PrestaShop\Core\Grid\Filter\Filter;
 use PrestaShop\PrestaShop\Core\Grid\Filter\FilterCollection;

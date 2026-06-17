@@ -129,8 +129,8 @@
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.add_tag_suffix">
-        <source>to each of your products manufactured in France (in the "SEO" tab when editing a product). This is the simplest and most direct method.</source>
-        <target>to each of your products manufactured in France (in the "SEO" tab when editing a product). This is the simplest and most direct method.</target>
+        <source>to each of your products manufactured in France (in the "Options" tab on PrestaShop 1.7, or the "SEO" tab on PrestaShop 8+). This is the simplest and most direct method.</source>
+        <target>to each of your products manufactured in France (in the "Options" tab on PrestaShop 1.7, or the "SEO" tab on PrestaShop 8+). This is the simplest and most direct method.</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.manual_selection_help">
@@ -194,8 +194,8 @@
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.seo_tab_tag_prefix">
-        <source>In the product page, go to the "SEO" tab and add the tag</source>
-        <target>In the product page, go to the "SEO" tab and add the tag</target>
+        <source>In the product page, go to the "Options" tab (PrestaShop 1.7) or "SEO" tab (PrestaShop 8+) and add the tag</source>
+        <target>In the product page, go to the "Options" tab (PrestaShop 1.7) or "SEO" tab (PrestaShop 8+) and add the tag</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.seo_tab_tag_suffix">
@@ -213,9 +213,14 @@
         <target>How to bulk edit?</target>
       </trans-unit>
 
+      <trans-unit id="Modules.Mdfcforps.Admin.admin_tags_nav_label">
+        <source>Shop parameters &gt; Search &gt; Tags</source>
+        <target>Shop parameters &gt; Search &gt; Tags</target>
+      </trans-unit>
+
       <trans-unit id="Modules.Mdfcforps.Admin.bulk_edit_prefix">
-        <source>To add the tag to multiple products at once, go to Shop parameters &gt; Search &gt; Tags. Then, create or edit the</source>
-        <target>To add the tag to multiple products at once, go to Shop parameters &gt; Search &gt; Tags. Then, create or edit the</target>
+        <source>To add the tag to multiple products at once, go to %tags_link%. Then, create or edit the</source>
+        <target>To add the tag to multiple products at once, go to %tags_link%. Then, create or edit the</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.bulk_edit_suffix">
@@ -499,8 +504,8 @@
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.bulk_edit_gt">
-        <source>To add the tag to multiple products at once, go to Shop parameters &gt; Search &gt; Tags. Then, create or edit the</source>
-        <target>To add the tag to multiple products at once, go to Shop parameters &gt; Search &gt; Tags. Then, create or edit the</target>
+        <source>To add the tag to multiple products at once, go to %tags_link%. Then, create or edit the</source>
+        <target>To add the tag to multiple products at once, go to %tags_link%. Then, create or edit the</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.unable_connect_support">

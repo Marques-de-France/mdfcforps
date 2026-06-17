@@ -15,3 +15,4 @@ window.mdfcforpsRuntime = {
   ajaxUrl: "{$mdfcforps_ajax_url|escape:'javascript':'UTF-8'}"
 };
 </script>
+<script src="{$mdfcforps_js_url|escape:'html':'UTF-8'}?v={$mdfcforps_version|escape:'html':'UTF-8'}" defer></script>

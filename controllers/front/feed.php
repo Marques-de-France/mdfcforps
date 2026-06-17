@@ -69,9 +69,34 @@ class MdfcforpsFeedModuleFrontController extends ModuleFrontController
 
         // ---------------------------------------------------------------
         // Generate feed
+        //
+        // Wrapped so any failure is logged and returned as a readable JSON error
+        // instead of an opaque PHP 500 (which the Hub reports as upstream_error:null).
+        // Reaching this point already required a valid token, so surfacing the
+        // message to the caller is safe for this internal, Hub-only endpoint.
         // ---------------------------------------------------------------
-        $feedService = new Mdfcforps\Service\FeedService();
-        $xml = $feedService->buildFeed($perPage, $page);
+        try {
+            $feedService = new Mdfcforps\Service\FeedService();
+            $xml = $feedService->buildFeed($perPage, $page);
+        } catch (\Throwable $e) {
+            PrestaShopLogger::addLog(
+                '[MDF] Feed generation failed: ' . $e->getMessage()
+                    . ' @ ' . $e->getFile() . ':' . $e->getLine(),
+                3,
+                null,
+                'Mdfcforps'
+            );
+
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'error' => 'Feed generation failed.',
+                'message' => $e->getMessage(),
+                'type' => get_class($e),
+                'where' => basename($e->getFile()) . ':' . $e->getLine(),
+            ]);
+            exit;
+        }
 
         // ---------------------------------------------------------------
         // Serve raw XML

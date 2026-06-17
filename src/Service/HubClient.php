@@ -192,7 +192,7 @@ class HubClient
         int $page = 1,
         int $limit = 100,
         string $dateFrom = '',
-        string $dateTo = '',
+        string $dateTo = ''
     ): array {
         return $this->getHubSalesList($page, $limit, [
             'dateFrom' => $dateFrom,

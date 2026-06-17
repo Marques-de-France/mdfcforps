@@ -130,8 +130,8 @@
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.add_tag_suffix">
-        <source>to each of your products manufactured in France (in the "SEO" tab when editing a product). This is the simplest and most direct method.</source>
-        <target>à chacun de vos produits fabriqués en France (dans l'onglet "Référencement - SEO" quand vous éditez un produit). C'est la méthode la plus simple et la plus directe.</target>
+        <source>to each of your products manufactured in France (in the "Options" tab on PrestaShop 1.7, or the "SEO" tab on PrestaShop 8+). This is the simplest and most direct method.</source>
+        <target>à chacun de vos produits fabriqués en France (dans l'onglet "Options" sur PrestaShop 1.7, ou "Référencement - SEO" sur PrestaShop 8+). C'est la méthode la plus simple et la plus directe.</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.manual_selection_help">
@@ -195,8 +195,8 @@
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.seo_tab_tag_prefix">
-        <source>In the product page, go to the "SEO" tab and add the tag</source>
-        <target>Dans la fiche produit, allez dans l'onglet "Référencement - SEO" et ajoutez l'étiquette "Mot-clé"</target>
+        <source>In the product page, go to the "Options" tab (PrestaShop 1.7) or "SEO" tab (PrestaShop 8+) and add the tag</source>
+        <target>Dans la fiche produit, allez dans l'onglet "Options" (PrestaShop 1.7) ou "Référencement - SEO" (PrestaShop 8+) et ajoutez l'étiquette "Mot-clé"</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.seo_tab_tag_suffix">
@@ -214,9 +214,14 @@
         <target>Comment modifier en masse ?</target>
       </trans-unit>
 
+      <trans-unit id="Modules.Mdfcforps.Admin.admin_tags_nav_label">
+        <source>Shop parameters &gt; Search &gt; Tags</source>
+        <target>Paramètres de la boutique &gt; Recherche &gt; Étiquettes / Mots-clés</target>
+      </trans-unit>
+
       <trans-unit id="Modules.Mdfcforps.Admin.bulk_edit_prefix">
-        <source>To add the tag to multiple products at once, go to Shop parameters &gt; Search &gt; Tags. Then, create or edit the</source>
-        <target>Pour ajouter l'étiquette à plusieurs produits en une fois, allez dans Paramètres de la boutique &gt; Recherche &gt; Étiquettes. Ensuite, créez ou modifiez l'étiquette</target>
+        <source>To add the tag to multiple products at once, go to %tags_link%. Then, create or edit the</source>
+        <target>Pour ajouter l'étiquette à plusieurs produits en une fois, allez dans %tags_link%. Ensuite, créez ou modifiez l'étiquette</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.bulk_edit_suffix">
@@ -500,8 +505,8 @@
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.bulk_edit_gt">
-        <source>To add the tag to multiple products at once, go to Shop parameters &gt; Search &gt; Tags. Then, create or edit the</source>
-        <target>Pour ajouter l'étiquette à plusieurs produits en une fois, allez dans Paramètres de la boutique &gt; Recherche &gt; Étiquettes / Mots-clés. Ensuite, créez ou modifiez l'étiquette</target>
+        <source>To add the tag to multiple products at once, go to %tags_link%. Then, create or edit the</source>
+        <target>Pour ajouter l'étiquette à plusieurs produits en une fois, allez dans %tags_link%. Ensuite, créez ou modifiez l'étiquette</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.unable_connect_support">

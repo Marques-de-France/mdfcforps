@@ -1,4 +1,15 @@
 services:
+  # Early autoloader bootstrap — registers the Mdfcforps\ PSR-4 autoloader on
+  # kernel.request (before RouterListener / controller resolution) so the controller
+  # FQCN used in routes.yml resolves on PrestaShop 1.7 (Symfony 3.4), where the
+  # resolver calls class_exists() before consulting the container. Harmless on PS 8/9.
+  mdfcforps.module_autoloader:
+    class: Mdfcforps\Bootstrap\ModuleAutoloader
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Bootstrap/ModuleAutoloader.php'
+    public: false
+    tags:
+      - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest, priority: 1024 }
+
   # Module main class
   mdfcforps.module:
     class: Mdfcforps
@@ -18,8 +29,6 @@ services:
   mdfcforps.feed_eligibility_service:
     class: Mdfcforps\Service\FeedEligibilityService
     file: '%kernel.project_dir%/modules/mdfcforps/src/Service/FeedEligibilityService.php'
-    arguments:
-      - "@=service('prestashop.adapter.legacy.configuration').get('PS_ORDER_OUT_OF_STOCK')"
     public: true
 
   mdfcforps.feed_service:
@@ -51,17 +60,22 @@ services:
   # -------------------------------------------------------------------------
   # Symfony Feed Controller
   # -------------------------------------------------------------------------
-  mdfcforps.controller.admin.feed:
+  # Registered under its real FQCN as the service id so the same routes.yml
+  # _controller reference resolves across Symfony 3.4 (PS 1.7), 4.4 (PS 8) and
+  # 6.4 (PS 9). On 3.4 the resolver requires class_exists(<id>) to be true, which
+  # only holds when the id is the actual class name.
+  Mdfcforps\Controller\Admin\FeedController:
     class: Mdfcforps\Controller\Admin\FeedController
     file: '%kernel.project_dir%/modules/mdfcforps/src/Controller/Admin/FeedController.php'
-    # @twig is injected via constructor (not fetched at runtime) for PS9/Symfony 6 compatibility.
-    # In Symfony 6, 'twig' is a private/inlined service — DI injection works, container::get() does not.
+    # @twig injected via constructor; in Symfony 6 'twig' is private/inlined — DI works,
+    # container::get('twig') does not.
     arguments:
       - '@twig'
       - '@security.csrf.token_manager'
     calls:
       - [setContainer, ['@service_container']]
     public: true
+    autoconfigure: false
 
   # -------------------------------------------------------------------------
   # ProductFeed Grid (products currently in feed)
@@ -71,8 +85,6 @@ services:
     file: '%kernel.project_dir%/modules/mdfcforps/src/Grid/Query/ProductFeedQueryBuilder.php'
     parent: prestashop.core.grid.abstract_query_builder
     arguments:
-      - "@=service('prestashop.adapter.legacy.context').getContext().language.id"
-      - "@=service('prestashop.adapter.legacy.context').getContext().shop.id"
       - '@mdfcforps.feed_eligibility_service'
     public: true
 
@@ -115,8 +127,6 @@ services:
     file: '%kernel.project_dir%/modules/mdfcforps/src/Grid/Query/ProductCatalogQueryBuilder.php'
     parent: prestashop.core.grid.abstract_query_builder
     arguments:
-      - "@=service('prestashop.adapter.legacy.context').getContext().language.id"
-      - "@=service('prestashop.adapter.legacy.context').getContext().shop.id"
       - '@mdfcforps.feed_eligibility_service'
     public: true
 
@@ -188,4 +198,18 @@ services:
       - '@prestashop.core.grid.filter.form_factory'
       - '@prestashop.core.hook.dispatcher'
     public: true
+
+  # -------------------------------------------------------------------------
+  # Twig path configurator — registers module views under @PrestaShop namespace
+  # so the custom mdfcforps_html column type template is found by GridExtension.
+  # -------------------------------------------------------------------------
+  mdfcforps.twig_path_configurator:
+    class: Mdfcforps\Twig\TwigPathConfigurator
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Twig/TwigPathConfigurator.php'
+    arguments:
+      - '@twig.loader.filesystem'
+      - '%kernel.project_dir%/modules/mdfcforps/views'
+    public: false
+    tags:
+      - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest, priority: 512 }
 

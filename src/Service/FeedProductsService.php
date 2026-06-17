@@ -123,7 +123,7 @@ class FeedProductsService
         string $search,
         int $idLang,
         int $page = 1,
-        int $perPage = 20,
+        int $perPage = 20
     ): array {
         $offset = ($page - 1) * $perPage;
         $safeSql = \pSQL($search);

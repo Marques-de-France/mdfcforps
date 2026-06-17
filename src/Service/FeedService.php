@@ -36,15 +36,18 @@ class FeedService
 
     public function __construct(?FeedEligibilityService $eligibilityService = null)
     {
-        $this->context = \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()
-            ->get('prestashop.adapter.legacy.context')
-            ->getContext();
+        // Use the legacy context directly. This service is only instantiated by the
+        // front feed controller, where Context::getContext() is fully initialised on
+        // PS 1.7 / 8 / 9 — avoiding any dependency on the Symfony container being
+        // booted/public for the legacy front-office request.
+        $this->context = \Context::getContext();
         $this->shopName = (string) \Configuration::get('PS_SHOP_NAME');
 
         $defaultCurrency = \Currency::getDefaultCurrency();
-        $this->currency = $defaultCurrency ? $defaultCurrency->iso_code : 'EUR';
-        $this->eligibilityService = $eligibilityService
-            ?: new FeedEligibilityService((int) \Configuration::get('PS_ORDER_OUT_OF_STOCK'));
+        $this->currency = ($defaultCurrency && $defaultCurrency->iso_code)
+            ? (string) $defaultCurrency->iso_code
+            : 'EUR';
+        $this->eligibilityService = $eligibilityService ?: new FeedEligibilityService();
     }
 
     // -----------------------------------------------------------------------
@@ -685,7 +688,7 @@ class FeedService
     {
         foreach ($combo['attributes'] ?? [] as $attr) {
             $name = strtolower($attr['name'] ?? '');
-            if (str_contains($name, 'color') || str_contains($name, 'colour') || str_contains($name, 'couleur')) {
+            if (strpos($name, 'color') !== false || strpos($name, 'colour') !== false || strpos($name, 'couleur') !== false) {
                 return $attr['value'] ?? '';
             }
         }
@@ -774,7 +777,7 @@ class FeedService
 
         $lower = strtolower($category);
         foreach ($apparelMap as $keyword => $gmc) {
-            if (str_contains($lower, $keyword)) {
+            if (strpos($lower, $keyword) !== false) {
                 return $gmc;
             }
         }

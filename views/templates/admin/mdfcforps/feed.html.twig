@@ -196,7 +196,10 @@
               <hr>
 
               <p class="font-weight-bold mb-2">{{ 'How to bulk edit?'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
-              <p class="text-muted mb-3">{{ 'To add the tag to multiple products at once, go to Shop parameters > Search > Tags. Then, create or edit the'|trans({}, 'Modules.Mdfcforps.Admin') }} <span class="badge badge-secondary">marques-de-france</span> {{ 'tag by adding products to it.'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
+              {% set adminTagsUrl = getAdminLink('AdminTags', true) %}
+              {% set adminTagsLabel = 'Shop parameters > Search > Tags'|trans({}, 'Modules.Mdfcforps.Admin') %}
+              {% set adminTagsLink = '<a href="' ~ adminTagsUrl ~ '" target="_blank" rel="noopener noreferrer">' ~ adminTagsLabel ~ '</a>' %}
+              <p class="text-muted mb-3">{{ 'To add the tag to multiple products at once, go to %tags_link%. Then, create or edit the'|trans({'%tags_link%': adminTagsLink}, 'Modules.Mdfcforps.Admin')|raw }} <span class="badge badge-secondary">marques-de-france</span> {{ 'tag by adding products to it.'|trans({}, 'Modules.Mdfcforps.Admin') }}</p>
             </div>
           </div>
         </div>

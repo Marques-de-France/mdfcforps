@@ -143,12 +143,27 @@ class Installer
 
     private function installAdminTab(): bool
     {
+        // If a tab with this class_name already exists (e.g. from a previous install
+        // that wasn't cleaned up), delete it before creating a new one.
+        $existingId = $this->getTabIdByClassName('AdminMdfcforps');
+        if ($existingId > 0) {
+            $existingTab = new \Tab($existingId);
+            $existingTab->delete();
+        }
+
+        // 'DEFAULT' is the hidden/invisible parent in PS ≤ 8.
+        // In PS 9 it may not exist; fall back to -1 (invisible tab) in that case.
+        $parentId = $this->getTabIdByClassName('DEFAULT');
+        if ($parentId <= 0) {
+            $parentId = -1;
+        }
+
         $tab = new \Tab();
         $tab->active = true;
         $tab->class_name = 'AdminMdfcforps';
         $tab->module = $this->module->name;
-        $tab->id_parent = $this->getTabIdByClassName('DEFAULT'); // hidden tab
-        $tab->icon = 'hexagon';
+        $tab->id_parent = $parentId;
+        $tab->icon = 'local_offer';
 
         foreach (\Language::getLanguages(false) as $lang) {
             $tab->name[$lang['id_lang']] = 'Marques de France';

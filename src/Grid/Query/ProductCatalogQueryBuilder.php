@@ -27,12 +27,6 @@ use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteriaInterface;
  */
 final class ProductCatalogQueryBuilder extends AbstractDoctrineQueryBuilder
 {
-    /** @var int */
-    private $contextLangId;
-
-    /** @var int */
-    private $contextShopId;
-
     /** @var FeedEligibilityService */
     private $eligibilityService;
 
@@ -48,13 +42,9 @@ final class ProductCatalogQueryBuilder extends AbstractDoctrineQueryBuilder
     public function __construct(
         Connection $connection,
         string $dbPrefix,
-        int $contextLangId,
-        int $contextShopId,
-        FeedEligibilityService $eligibilityService,
+        FeedEligibilityService $eligibilityService
     ) {
         parent::__construct($connection, $dbPrefix);
-        $this->contextLangId = $contextLangId;
-        $this->contextShopId = $contextShopId;
         $this->eligibilityService = $eligibilityService;
     }
 
@@ -137,8 +127,8 @@ final class ProductCatalogQueryBuilder extends AbstractDoctrineQueryBuilder
                 'ci',
                 'ci.id_product = p.id_product AND ci.cover = 1'
             )
-            ->setParameter('ctx_lang', $this->contextLangId)
-            ->setParameter('ctx_shop', $this->contextShopId);
+            ->setParameter('ctx_lang', (int) \Context::getContext()->language->id)
+            ->setParameter('ctx_shop', (int) \Context::getContext()->shop->id);
     }
 
     /** @param array<string, mixed> $filters */

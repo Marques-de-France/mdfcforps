@@ -57,12 +57,19 @@ final class ProductFeedDataDecorator implements GridDataFactoryInterface
                 ? (string) $this->link->getImageLink('product', $imageId, 'small_default')
                 : '';
 
-            // Link product name to BO edit page in a new tab using the documented PrestaShop route generation.
+            // Link product name to BO edit page in a new tab.
+            // PS 8+ uses the Symfony route 'admin_products_edit'; PS 1.7.x uses the legacy AdminProducts URL.
             $name = (string) ($record['name'] ?? '');
-            $editUrl = (string) $this->link->getAdminLink('AdminProducts', true, [
-                'route' => 'admin_products_edit',
-                'productId' => $pid,
-            ]);
+            try {
+                $editUrl = (string) $this->link->getAdminLink('AdminProducts', true, [
+                    'route' => 'admin_products_edit',
+                    'productId' => $pid,
+                ]);
+            } catch (\Exception $e) {
+                // PS 1.7.x fallback: legacy controller URL
+                $editUrl = (string) $this->link->getAdminLink('AdminProducts', true)
+                    . '&id_product=' . $pid . '&updateproduct';
+            }
 
             $combinationCount = $this->getCombinationCount($pid);
             $nameHtml = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');

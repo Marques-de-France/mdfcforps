@@ -26,8 +26,9 @@ final class FeedEligibilityService
     /** @var int */
     private $allowOrderOutOfStockByDefaultInt;
 
-    public function __construct($globalOutOfStockDefault)
+    public function __construct()
     {
+        $globalOutOfStockDefault = \Configuration::get('PS_ORDER_OUT_OF_STOCK');
         $this->allowOrderOutOfStockByDefault = (int) $globalOutOfStockDefault === 1;
         $this->allowOrderOutOfStockByDefaultInt = $this->allowOrderOutOfStockByDefault ? 1 : 0;
     }

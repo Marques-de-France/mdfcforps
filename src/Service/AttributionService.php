@@ -79,7 +79,7 @@ class AttributionService
         string $clickId,
         string $landingRef,
         string $utmSource,
-        string $referringSite,
+        string $referringSite
     ): string {
         // 1. Direct MDF click ID
         if ($clickId !== '') {
@@ -87,17 +87,17 @@ class AttributionService
         }
 
         // 2. Landing referrer containing MDF domain
-        if (str_contains(strtolower($landingRef), self::MDF_DOMAIN)) {
+        if (strpos(strtolower($landingRef), self::MDF_DOMAIN) !== false) {
             return 'mdf_landing_ref';
         }
 
         // 3. UTM source containing MDF domain
-        if (str_contains(strtolower($utmSource), self::MDF_DOMAIN)) {
+        if (strpos(strtolower($utmSource), self::MDF_DOMAIN) !== false) {
             return 'mdf_utm';
         }
 
         // 4. Referring site containing MDF domain
-        if (str_contains(strtolower($referringSite), self::MDF_REFERRER)) {
+        if (strpos(strtolower($referringSite), self::MDF_REFERRER) !== false) {
             return 'mdf_referrer';
         }
 
