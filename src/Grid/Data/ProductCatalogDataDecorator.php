@@ -32,6 +32,9 @@ final class ProductCatalogDataDecorator implements GridDataFactoryInterface
     /** @var \Link */
     private $link;
 
+    /** @var array<int, int> */
+    private $combinationCountCache = [];
+
     public function __construct(GridDataFactoryInterface $inner)
     {
         $this->inner = $inner;
@@ -69,11 +72,21 @@ final class ProductCatalogDataDecorator implements GridDataFactoryInterface
                 $editUrl .= '?' . $urlParts['query'];
             }
 
-            $record['linked_name'] = sprintf(
+            $linkedName = sprintf(
                 '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
                 htmlspecialchars((string) $editUrl, ENT_QUOTES, 'UTF-8'),
                 htmlspecialchars($name, ENT_QUOTES, 'UTF-8')
             );
+
+            // "X combinations" badge — mirrors the Products-in-feed grid.
+            $combinationCount = $this->getCombinationCount($pid);
+            if ($combinationCount > 0) {
+                $linkedName .= ' <span class="badge badge-secondary">'
+                    . $combinationCount
+                    . ' ' . htmlspecialchars($this->trans('combinations'), ENT_QUOTES, 'UTF-8') . '</span>';
+            }
+
+            $record['linked_name'] = $linkedName;
 
             // Availability badge HTML
             $qty = (int) ($record['quantity'] ?? 0);
@@ -104,6 +117,27 @@ final class ProductCatalogDataDecorator implements GridDataFactoryInterface
         }
 
         return new GridData(new RecordCollection($records), $data->getRecordsTotal(), $data->getQuery());
+    }
+
+    private function getCombinationCount(int $productId): int
+    {
+        if ($productId <= 0) {
+            return 0;
+        }
+
+        if (isset($this->combinationCountCache[$productId])) {
+            return $this->combinationCountCache[$productId];
+        }
+
+        $query = new \DbQuery();
+        $query->select('COUNT(*)')
+              ->from('product_attribute')
+              ->where('id_product = ' . (int) $productId);
+
+        $count = (int) \Db::getInstance()->getValue($query);
+        $this->combinationCountCache[$productId] = $count;
+
+        return $count;
     }
 
     private function trans(string $message): string

@@ -412,32 +412,50 @@ window.mdfcforpsFeed = {
     });
   }
 
+  // Collect the manage-grid row checkboxes. Scoped by class only (not by a grid
+  // wrapper id) so it works regardless of how PS 1.7 / 8 / 9 nest the grid table.
+  function getManageCheckboxes() {
+    return Array.prototype.slice.call(document.querySelectorAll('.mdf-manage-cb'));
+  }
+
+  function updateManageSelectAllState() {
+    var selectAll = document.getElementById('mdf-manage-select-all');
+    if (!selectAll) {
+      return;
+    }
+
+    var all = getManageCheckboxes();
+    var checked = all.filter(function (cb) { return cb.checked; });
+    selectAll.checked = all.length > 0 && checked.length === all.length;
+    selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+  }
+
   function ensureManageSelectAll() {
     var currentUrl = new URL(window.location.href);
     if (currentUrl.searchParams.get('manage') !== '1') {
       return;
     }
 
-    var grid = document.getElementById('product_catalog_grid');
-    if (!grid) {
+    // Locate the manage table via an actual row checkbox rather than a grid id,
+    // since the grid wrapper markup differs across PrestaShop versions.
+    var firstCheckbox = document.querySelector('.mdf-manage-cb');
+    if (!firstCheckbox) {
       return;
     }
 
-    var firstHeader = grid.querySelector('thead th:first-child');
-    if (!firstHeader) {
-      return;
-    }
-
-    if (firstHeader.querySelector('#mdf-manage-select-all')) {
+    var table = firstCheckbox.closest('table');
+    var firstHeader = table ? table.querySelector('thead th:first-child') : null;
+    if (!firstHeader || firstHeader.querySelector('#mdf-manage-select-all')) {
       return;
     }
 
     var i18n = window.mdfcforpsFeed && window.mdfcforpsFeed.i18n ? window.mdfcforpsFeed.i18n : {};
     firstHeader.innerHTML = '<div class="md-checkbox md-checkbox-inline"><label><input type="checkbox" id="mdf-manage-select-all" class="form-check-input" title="' + (i18n.selectDeselectAllVisible || 'Select / deselect all visible') + '"><i class="md-checkbox-control"></i></label></div>';
+    updateManageSelectAllState();
   }
 
   function toggleSelectAll(checked) {
-    var checkboxes = document.querySelectorAll('#product_catalog_grid tbody .mdf-manage-cb');
+    var checkboxes = getManageCheckboxes();
     var toAdd = [];
     var toRemove = [];
 
@@ -469,6 +487,10 @@ window.mdfcforpsFeed = {
       ids.forEach(function (id) {
         form.append('product_ids[]', id);
       });
+      // Module CSRF token — bulkAction() rejects the request (403) without it.
+      if (config && config.csrfToken) {
+        form.append('_token', config.csrfToken);
+      }
 
       return fetch(url, {
         method: 'POST',
@@ -482,7 +504,7 @@ window.mdfcforpsFeed = {
         }
 
         ids.forEach(function (pid) {
-          var rowCb = document.querySelector('#product_catalog_grid tbody .mdf-manage-cb[data-product-id="' + pid + '"]');
+          var rowCb = document.querySelector('.mdf-manage-cb[data-product-id="' + pid + '"]');
           if (!rowCb) {
             return;
           }
@@ -495,6 +517,8 @@ window.mdfcforpsFeed = {
           rowCb.checked = next;
           rowCb.setAttribute('data-in-feed', next ? '1' : '0');
         });
+
+        updateManageSelectAllState();
       });
     }
 
@@ -521,6 +545,13 @@ window.mdfcforpsFeed = {
     preserveManageMode(gridId, panel);
     if (gridId === 'product_catalog') {
       ensureManageSelectAll();
+      // The grid table is re-rendered on AJAX sort/filter/paginate, which wipes the
+      // injected header checkbox — re-inject it whenever the panel content changes.
+      if (window.MutationObserver) {
+        new MutationObserver(function () {
+          ensureManageSelectAll();
+        }).observe(panel, { childList: true, subtree: true });
+      }
     }
 
     // Enable core Grid behavior (sorting, filter submit/reset, pagination actions).
@@ -564,11 +595,6 @@ window.mdfcforpsFeed = {
     // Fallback: paginator page-size selector to query params for this grid.
     panel.addEventListener('change', function (event) {
       var target = event.target;
-      if (target && target.id === 'mdf-manage-select-all') {
-        toggleSelectAll(target.checked);
-        return;
-      }
-
       if (!target || target.name !== 'paginator_select_page_limit') {
         return;
       }
@@ -610,11 +636,34 @@ window.mdfcforpsFeed = {
     });
   }
 
+  function initManageSelectAll() {
+    if (window.__mdfManageSelectAllBound) {
+      return;
+    }
+    window.__mdfManageSelectAllBound = true;
+
+    // Document-level delegation so the select-all works regardless of grid DOM
+    // nesting (PS 1.7 differs from 8/9) and survives grid re-renders.
+    document.addEventListener('change', function (event) {
+      var target = event.target;
+      if (!target) {
+        return;
+      }
+      if (target.id === 'mdf-manage-select-all') {
+        toggleSelectAll(target.checked);
+      } else if (target.classList && target.classList.contains('mdf-manage-cb')) {
+        // Keep the header checkbox in sync when a single row is toggled.
+        updateManageSelectAllState();
+      }
+    });
+  }
+
   function boot(attempt) {
     attempt = attempt || 0;
 
     initFeedModeModal();
     initTagHelpModal();
+    initManageSelectAll();
 
     // Parent scripts can be deferred; wait until PrestaShop components are ready.
     if (!window.prestashop || !window.prestashop.component || !window.prestashop.component.GridExtensions) {
