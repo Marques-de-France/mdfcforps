@@ -1,0 +1,35 @@
+name: Build release ZIP
+
+# On every pushed tag (e.g. 1.1.0), build a clean module ZIP whose top-level
+# folder is `mdfcforps/` (NOT the `mdfcforps-<branch>` folder GitHub's auto
+# "Source code (zip)" produces, which breaks PrestaShop install) and attach it
+# to the GitHub Release. Customers download the stable link:
+#   https://github.com/Marques-de-France/mdfcforps/releases/latest/download/mdfcforps.zip
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and attach module ZIP
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # `git archive` honours `.gitattributes export-ignore`, so dev files
+      # (tests/, phpunit.xml.dist, .php_cs.dist, .github/, dotfiles) are dropped.
+      # --prefix wraps everything in mdfcforps/ so the ZIP installs as-is.
+      - name: Build distributable ZIP
+        run: git archive --prefix=mdfcforps/ --format=zip -o mdfcforps.zip HEAD
+
+      - name: Create release and attach ZIP
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mdfcforps.zip
+          fail_on_unmatched_files: true
+          generate_release_notes: true
