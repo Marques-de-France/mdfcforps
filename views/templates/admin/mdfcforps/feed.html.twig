@@ -4,6 +4,11 @@
 {% extends '@PrestaShop/Admin/layout.html.twig' %}
 {% trans_default_domain 'Modules.Mdfcforps.Admin' %}
 
+{% block stylesheets %}
+  {{ parent() }}
+  <link rel="stylesheet" href="{{ asset('../modules/mdfcforps/views/css/admin.css') }}&mdf=20260612">
+{% endblock %}
+
 {% block content %}
 <div class="mdf-admin-wrap">
 
