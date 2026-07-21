@@ -173,3 +173,10 @@
 		height: 200px;
 	}
 }
+
+/* Feed grid — price cell with an active specific price / catalog price rule */
+.mdf-price-regular {
+	color: #888;
+	text-decoration: line-through;
+	white-space: nowrap;
+}

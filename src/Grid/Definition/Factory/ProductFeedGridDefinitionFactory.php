@@ -69,8 +69,12 @@ final class ProductFeedGridDefinitionFactory extends AbstractGridDefinitionFacto
                 ->setName($this->trans('Reference', [], 'Admin.Catalog.Feature'))
                 ->setOptions(['field' => 'reference'])
             )
+            // HtmlColumn, not DataColumn: the cell carries the struck-through regular
+            // price alongside the discounted one when a specific price applies.
+            // Sorting/filtering still run on the raw catalog price in SQL — see
+            // ProductFeedQueryBuilder::ORDER_MAP.
             ->add(
-                (new DataColumn('price'))
+                (new HtmlColumn('price'))
                 ->setName($this->trans('Price', [], 'Admin.Global'))
                 ->setOptions([
                     'field' => 'price',

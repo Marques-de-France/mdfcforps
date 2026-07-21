@@ -84,6 +84,12 @@ final class SalesDataDecorator implements GridDataFactoryInterface
         return new GridData(new RecordCollection($records), $data->getRecordsTotal(), $data->getQuery());
     }
 
+    /**
+     * Render a Hub timestamp on the shop's clock.
+     *
+     * The Hub returns UTC ISO 8601 ("2026-07-21T14:56:22.000Z"). Formatting it without
+     * converting prints the UTC wall clock, so a 16:56 sale in Paris displayed as 14:56.
+     */
     private function formatDateTime(string $raw): string
     {
         $raw = trim($raw);
@@ -94,7 +100,9 @@ final class SalesDataDecorator implements GridDataFactoryInterface
         try {
             $date = new \DateTimeImmutable($raw);
 
-            return $date->format('d/m/Y H:i');
+            return $date
+                ->setTimezone(new \DateTimeZone(date_default_timezone_get()))
+                ->format('d/m/Y H:i');
         } catch (\Throwable $e) {
             return $raw;
         }

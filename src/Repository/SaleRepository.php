@@ -295,6 +295,13 @@ class SaleRepository
         return 'confirmed';
     }
 
+    /**
+     * Convert a Hub timestamp into the shop-local naive format this table stores.
+     *
+     * The Hub returns UTC ISO 8601 ("2026-07-21T14:56:22.000Z"). Formatting that
+     * directly would write the UTC wall clock into a column that holds local time,
+     * shifting every imported sale by the shop's offset — two hours in summer.
+     */
     private function normalizeCreatedAt(string $createdAt): string
     {
         if ($createdAt === '') {
@@ -302,7 +309,9 @@ class SaleRepository
         }
 
         try {
-            return (new \DateTimeImmutable($createdAt))->format('Y-m-d H:i:s');
+            return (new \DateTimeImmutable($createdAt))
+                ->setTimezone(new \DateTimeZone(date_default_timezone_get()))
+                ->format('Y-m-d H:i:s');
         } catch (\Throwable $e) {
             return date('Y-m-d H:i:s');
         }

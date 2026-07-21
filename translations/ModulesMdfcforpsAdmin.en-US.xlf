@@ -563,6 +563,11 @@
         <target>Active</target>
       </trans-unit>
 
+      <trans-unit id="Modules.Mdfcforps.Admin.combination">
+        <source>combination</source>
+        <target>combination</target>
+      </trans-unit>
+
       <trans-unit id="Modules.Mdfcforps.Admin.combinations">
         <source>combinations</source>
         <target>combinations</target>

@@ -6,14 +6,26 @@ product feed for your French-made products.
 
 ## Compatibility
 
-- PrestaShop: 1.7.8 – 9.x
-- PHP: 7.4+
+- PrestaShop: 1.7.7.5 – 9.x
+- PHP: **7.4 or newer** (hard requirement)
+- MySQL 5.6+ / MariaDB 10.x
+
+> **PHP 7.4 is required even on PrestaShop 1.7.7.x.** The module uses typed properties
+> and arrow functions, so it cannot run on PHP 7.3 or below. PrestaShop 1.7.7 officially
+> supports PHP 7.1–7.3, so a 1.7.7.x shop must be hosted on PHP 7.4+ for this module to
+> load at all.
+>
+> On PrestaShop 1.7.7.x running PHP 7.4, keep **debug mode off**. PrestaShop 1.7.7 core
+> emits PHP 7.4 deprecation notices; with `display_errors` enabled they are written to the
+> response before the feed sets its headers, which makes the feed return an error page
+> instead of XML. This is a core/PHP-version interaction, not a module fault.
 
 ## Features
 
 - Sales attribution capture from front-office signals (UTM, referrer, click context).
 - Sales synchronization with the Marques de France Hub, with retry and reconciliation.
-- Google Merchant-compatible product feed for eligible products.
+- Google Merchant-compatible product feed for eligible products, with tax-included
+  prices and sale prices resolved from specific prices and catalog price rules.
 - Back-office dashboard, feed management, and sales views.
 
 ## Installation
@@ -55,8 +67,10 @@ Run from the module root:
 
 Releases are packaged automatically by GitHub Actions:
 
-1. Bump the version in `config.xml` and `mdfcforps.php` (`VERSION` and `$this->version`).
-   Add an `upgrade/upgrade-X.Y.Z.php` script if the release changes the database or structure.
+1. Bump the version in `config.xml`, `config_fr.xml` and `mdfcforps.php` (`VERSION` **and**
+   `$this->version`) — all four must match or PrestaShop will not offer the upgrade.
+   Add an `upgrade/upgrade-X.Y.Z.php` script if the release changes the database, the
+   service definitions in `config/services.yml`, or the translation catalogue.
 2. Commit and push to `main`.
 3. Tag the version and push the tag: `git tag X.Y.Z && git push origin X.Y.Z`.
 
@@ -64,6 +78,49 @@ The [`.github/workflows/release.yml`](.github/workflows/release.yml) workflow bu
 `mdfcforps.zip` (top-level `mdfcforps/` folder, dev files excluded via `.gitattributes`) and
 attaches it to a new GitHub Release. The `releases/latest/download/mdfcforps.zip` link always
 points to the newest version.
+
+## Changelog
+
+### 1.1.0
+
+**Feed — breaking change to published values.** `<g:price>` now carries the
+**tax-included** price. Previous versions published the tax-excluded price by mistake,
+so feed prices rise by the applicable VAT rate on upgrade. `<g:sale_price>` is now
+populated whenever a specific price or catalog price rule applies; it was always empty
+before. Combinations carry their own regular and sale prices.
+
+A specific price that overrides the price outright (its `price` column set rather than
+`reduction`) is reported as the new catalog price rather than as a discount — this
+matches what PrestaShop itself displays on the storefront.
+
+**Back office.**
+
+- The "Products in feed" price column shows the discounted price with the regular price
+  struck through; sorting and filtering run on the same tax-included, discount-aware
+  figures rather than on the raw catalog price.
+- Fixed the record count for that grid. It always reported `1`, which capped the listing
+  at a single page — merchants saw only the first 25 products and had to search for the
+  rest.
+- The combinations badge is now correctly singular or plural.
+
+**Sales.**
+
+- Sale timestamps are transmitted with their UTC offset. They were sent without a
+  timezone, so the Hub resolved them against its own server timezone and stored them up
+  to two hours off when it runs in UTC.
+- Sales dates are rendered in the shop timezone instead of UTC, and timestamps imported
+  from the Hub are converted rather than stored verbatim.
+- The module now reports its version to the Hub via `X-Plugin-Version`.
+
+**Fixes.**
+
+- Removed a `class_alias` shim that broke the module Upgrade action with
+  `Cannot declare class …\Common\DataColumn, because the name is already in use`.
+- Hub self-registration no longer fails outside a legacy module context; it referenced a
+  class that is not autoloadable from Symfony controllers, the feed controller or cron.
+
+**Compatibility.** Declared minimum lowered from 1.7.8.0 to 1.7.7.5. Verified against
+PrestaShop 1.7.7.5 (PHP 7.4 / MariaDB 10.6) and 8.2.6 (PHP 8.1 / MySQL 8).
 
 ## Privacy
 

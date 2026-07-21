@@ -27,6 +27,7 @@ class HubClient
     private string $hubUrl;
     private string $shopUrl;
     private string $secureToken;
+    private string $moduleVersion;
     private int $timeout = 5;
 
     public function __construct()
@@ -41,11 +42,68 @@ class HubClient
         ) . '://' . \Configuration::get('PS_SHOP_DOMAIN');
 
         $this->secureToken = ModuleConfig::get('MDFCFORPS_SECURE_TOKEN', '');
+        // Resolved once: the fallback path queries ps_module, and every request sends it.
+        $this->moduleVersion = $this->resolveModuleVersion();
     }
 
     // -----------------------------------------------------------------------
     // Self-register
     // -----------------------------------------------------------------------
+
+    /**
+     * Module version, resolved without depending on the root \Mdfcforps class.
+     *
+     * That class lives in mdfcforps.php and is loaded by PrestaShop only in a legacy
+     * module context. The module's PSR-4 autoloader maps Mdfcforps\… to src/, so it
+     * does not cover the un-namespaced root class — referencing it from here fataled
+     * with "Class \"Mdfcforps\" not found" in every non-legacy context (Symfony admin
+     * controllers, the front feed controller, cron, CLI), which killed self-registration.
+     */
+    private function resolveModuleVersion(): string
+    {
+        if (class_exists('\Mdfcforps') && defined('\Mdfcforps::VERSION')) {
+            return (string) \Mdfcforps::VERSION;
+        }
+
+        try {
+            $version = \Db::getInstance()->getValue(
+                'SELECT `version` FROM `' . _DB_PREFIX_ . 'module` WHERE `name` = "mdfcforps"'
+            );
+
+            return $version ? (string) $version : '';
+        } catch (\Throwable $e) {
+            return '';
+        }
+    }
+
+    /**
+     * Convert a locally stored naive timestamp into an unambiguous ISO 8601 string.
+     *
+     * mdfcforps_sales.created_at holds shop-local wall-clock time with no timezone.
+     * Sent as-is, the Hub resolves it with new Date(...) against the Node process's own
+     * timezone — right only when the Hub happens to run in the shop's timezone, and two
+     * hours out when it runs in UTC, which is the Docker default. The WooCommerce and
+     * Shopify connectors sidestep this by sending no timestamp at all and letting the Hub
+     * stamp new Date(); we send the offset instead, so the true sale time also survives a
+     * sync that only succeeds on a later retry.
+     *
+     * Returns '' when the value cannot be parsed — the Hub then falls back to its own
+     * clock rather than recording a wrong instant.
+     */
+    private function toIso8601(string $localDateTime): string
+    {
+        $localDateTime = trim($localDateTime);
+
+        if ($localDateTime === '') {
+            return '';
+        }
+
+        try {
+            return (new \DateTimeImmutable($localDateTime))->format(\DATE_ATOM);
+        } catch (\Throwable $e) {
+            return '';
+        }
+    }
 
     /**
      * @return array<string, mixed>
@@ -56,7 +114,7 @@ class HubClient
             'siteUrl' => $this->shopUrl,
             'shopUrl' => $this->shopUrl,
             'platform' => 'prestashop',
-            'moduleVersion' => \Mdfcforps::VERSION,
+            'moduleVersion' => $this->moduleVersion,
         ], false);
     }
 
@@ -86,7 +144,7 @@ class HubClient
                 'landingRef' => $sale['landing_ref'],
                 'clickId' => $sale['click_id'],
                 'status' => $sale['status'],
-                'createdAt' => $sale['created_at'],
+                'createdAt' => $this->toIso8601((string) ($sale['created_at'] ?? '')),
             ]);
 
             // Success means either newly recorded or already present (idempotent).
@@ -134,7 +192,14 @@ class HubClient
         } catch (\Throwable $firstError) {
             // Auto-recover common hosted cases (missing/stale token or unknown store row):
             // re-run self-registration, persist returned token, then retry once.
-            $registerResult = $this->selfRegister();
+            // If recovery itself fails, surface the ORIGINAL error — it describes why the
+            // status call failed, whereas the recovery error is a second-order symptom.
+            try {
+                $registerResult = $this->selfRegister();
+            } catch (\Throwable $registerError) {
+                throw $firstError;
+            }
+
             if (!empty($registerResult['secureToken'])) {
                 $this->secureToken = (string) $registerResult['secureToken'];
                 ModuleConfig::update('MDFCFORPS_SECURE_TOKEN', $this->secureToken);
@@ -261,6 +326,10 @@ class HubClient
             'X-MDF-Shop: ' . $this->shopUrl,
         ];
 
+        if ($this->moduleVersion !== '') {
+            $headers[] = 'X-Plugin-Version: ' . $this->moduleVersion;
+        }
+
         if ($requireToken && $this->secureToken !== '') {
             $headers[] = 'X-MDF-Token: ' . $this->secureToken;
         }
@@ -305,6 +374,10 @@ class HubClient
             'Accept: application/json',
             'X-MDF-Shop: ' . $this->shopUrl,
         ];
+
+        if ($this->moduleVersion !== '') {
+            $headers[] = 'X-Plugin-Version: ' . $this->moduleVersion;
+        }
 
         if ($this->secureToken !== '') {
             $headers[] = 'X-MDF-Token: ' . $this->secureToken;

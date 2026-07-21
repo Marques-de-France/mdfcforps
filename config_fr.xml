@@ -3,14 +3,9 @@
     <name>mdfcforps</name>
     <displayName><![CDATA[Marques de France]]></displayName>
     <version><![CDATA[1.1.0]]></version>
-    <description><![CDATA[Connect your PrestaShop store to the Marques de France platform.]]></description>
+    <description><![CDATA[Connectez votre boutique PrestaShop &agrave; la plateforme Marques de France.]]></description>
     <author><![CDATA[Marques de France]]></author>
     <tab><![CDATA[market_place]]></tab>
     <is_configurable>1</is_configurable>
     <need_instance>0</need_instance>
-    <limited_countries></limited_countries>
-    <compatibility>
-        <min><![CDATA[1.7.7.5]]></min>
-        <max><![CDATA[9.99.99]]></max>
-    </compatibility>
 </module>

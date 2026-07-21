@@ -31,12 +31,17 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
     /** @var FeedEligibilityService */
     private $eligibilityService;
 
-    /** Map grid column IDs to SQL order expressions */
+    /** @var ProductPriceSqlBuilder */
+    private $priceSqlBuilder;
+
+    /**
+     * Map grid column IDs to SQL order expressions.
+     * 'price' is resolved separately — its expression is built at runtime.
+     */
     private const ORDER_MAP = [
         'name' => 'pl.name',
         'brand' => 'm.name',
         'reference' => 'p.reference',
-        'price' => 'ps.price',
         'availability' => 'sa.quantity',
         'active' => 'ps.active',
     ];
@@ -44,10 +49,12 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
     public function __construct(
         Connection $connection,
         string $dbPrefix,
-        FeedEligibilityService $eligibilityService
+        FeedEligibilityService $eligibilityService,
+        ?ProductPriceSqlBuilder $priceSqlBuilder = null
     ) {
         parent::__construct($connection, $dbPrefix);
         $this->eligibilityService = $eligibilityService;
+        $this->priceSqlBuilder = $priceSqlBuilder ?: new ProductPriceSqlBuilder($dbPrefix);
     }
 
     public function getSearchQueryBuilder(SearchCriteriaInterface $searchCriteria): QueryBuilder
@@ -59,6 +66,11 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
                 'COALESCE(m.name, \'\') AS brand',
                 'COALESCE(p.reference, \'\') AS reference',
                 'COALESCE(ps.price, p.price, 0) AS price_raw',
+                // Tax-included, discount-aware prices. The cell itself is rendered from
+                // PriceResolver so it can never disagree with the feed; these exist so
+                // sorting, filtering and pagination key off the same figures.
+                $this->priceSqlBuilder->getRegularExpression() . ' AS price_regular_ttc',
+                $this->priceSqlBuilder->getEffectiveExpression() . ' AS price_effective_ttc',
                 'COALESCE(ps.active, p.active, 0) AS active',
                 'COALESCE(sa.quantity, 0) AS quantity',
                 'COALESCE(ci.id_image, 0) AS id_image',
@@ -66,9 +78,18 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
                 $this->eligibilityService->buildOutOfStockOrderableExpression('COALESCE(sa.out_of_stock, 2)') . ' AS allow_orders'
             );
 
+        // Only the listing needs grouping: in TAG mode the tag join can yield several
+        // rows per product. The count query uses COUNT(DISTINCT ...) instead, so it must
+        // NOT group — one row per product each holding 1 would make PrestaShop, which
+        // reads the total via fetch(PDO::FETCH_COLUMN), report a single record.
+        $qb->groupBy('p.id_product');
+
         $this->applyFilters($qb, $searchCriteria->getFilters());
 
-        $orderBy = self::ORDER_MAP[$searchCriteria->getOrderBy()] ?? 'pl.name';
+        $requestedOrder = (string) $searchCriteria->getOrderBy();
+        $orderBy = 'price' === $requestedOrder
+            ? $this->priceSqlBuilder->getEffectiveExpression()
+            : (self::ORDER_MAP[$requestedOrder] ?? 'pl.name');
         $orderWay = in_array(strtolower((string) $searchCriteria->getOrderWay()), ['asc', 'desc'])
             ? strtoupper((string) $searchCriteria->getOrderWay())
             : 'ASC';
@@ -151,11 +172,14 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
             ->setParameter('ctx_lang', (int) \Context::getContext()->language->id)
             ->setParameter('ctx_shop', (int) \Context::getContext()->shop->id);
 
+        // Specific-price and tax-rule joins backing the price expressions. Both resolve
+        // to at most one row per product, so they cannot inflate the COUNT query.
+        $this->priceSqlBuilder->applyJoins($qb);
+
         // Keep grid output consistent with feed output eligibility.
         $qb->andWhere('COALESCE(ps.active, p.active, 0) = 1')
            ->andWhere($this->eligibilityService->buildStockEligibilityExpression('COALESCE(sa.quantity, 0)', 'COALESCE(sa.out_of_stock, 2)'))
-              ->andWhere('COALESCE(ps.price, p.price, 0) > 0')
-              ->groupBy('p.id_product');
+              ->andWhere('COALESCE(ps.price, p.price, 0) > 0');
 
         return $qb;
     }
@@ -211,12 +235,15 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
 
                     $min = isset($value['min_field']) && $value['min_field'] !== '' ? (float) $value['min_field'] : null;
                     $max = isset($value['max_field']) && $value['max_field'] !== '' ? (float) $value['max_field'] : null;
+                    // Filter on the displayed figure — tax included, discount applied —
+                    // so the bounds the merchant types match the prices they can see.
+                    $priceExpression = $this->priceSqlBuilder->getEffectiveExpression();
                     if (null !== $min) {
-                        $qb->andWhere('COALESCE(ps.price, p.price, 0) >= :filter_price_min')
+                        $qb->andWhere($priceExpression . ' >= :filter_price_min')
                            ->setParameter('filter_price_min', $min);
                     }
                     if (null !== $max) {
-                        $qb->andWhere('COALESCE(ps.price, p.price, 0) <= :filter_price_max')
+                        $qb->andWhere($priceExpression . ' <= :filter_price_max')
                            ->setParameter('filter_price_max', $max);
                     }
                     break;

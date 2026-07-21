@@ -83,7 +83,7 @@ final class ProductCatalogDataDecorator implements GridDataFactoryInterface
             if ($combinationCount > 0) {
                 $linkedName .= ' <span class="badge badge-secondary">'
                     . $combinationCount
-                    . ' ' . htmlspecialchars($this->trans('combinations'), ENT_QUOTES, 'UTF-8') . '</span>';
+                    . ' ' . htmlspecialchars($this->transCombinations($combinationCount), ENT_QUOTES, 'UTF-8') . '</span>';
             }
 
             $record['linked_name'] = $linkedName;
@@ -147,6 +147,16 @@ final class ProductCatalogDataDecorator implements GridDataFactoryInterface
             ->getContext()
             ->getTranslator()
             ->trans($message, [], 'Modules.Mdfcforps.Admin');
+    }
+
+    /**
+     * Singular/plural form of "combinations" for the count badge.
+     * See ProductFeedDataDecorator::transCombinations() for why this is not delegated
+     * to the translator's own pluralisation.
+     */
+    private function transCombinations(int $count): string
+    {
+        return $count > 1 ? $this->trans('combinations') : $this->trans('combination');
     }
 
     private function formatPrice(float $amount): string

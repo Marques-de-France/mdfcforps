@@ -15,6 +15,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Mdfcforps\Service\PriceResolver;
 use PrestaShop\PrestaShop\Core\Grid\Data\Factory\GridDataFactoryInterface;
 use PrestaShop\PrestaShop\Core\Grid\Data\GridData;
 use PrestaShop\PrestaShop\Core\Grid\Record\RecordCollection;
@@ -34,9 +35,13 @@ final class ProductFeedDataDecorator implements GridDataFactoryInterface
     /** @var array<int, int> */
     private $combinationCountCache = [];
 
-    public function __construct(GridDataFactoryInterface $inner)
+    /** @var PriceResolver */
+    private $priceResolver;
+
+    public function __construct(GridDataFactoryInterface $inner, ?PriceResolver $priceResolver = null)
     {
         $this->inner = $inner;
+        $this->priceResolver = $priceResolver ?: new PriceResolver();
         $this->link = \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()
             ->get('prestashop.adapter.legacy.context')
             ->getContext()
@@ -83,13 +88,15 @@ final class ProductFeedDataDecorator implements GridDataFactoryInterface
             if ($combinationCount > 0) {
                 $linkedName .= ' <span class="badge badge-secondary">'
                     . $combinationCount
-                    . ' ' . htmlspecialchars($this->trans('combinations'), ENT_QUOTES, 'UTF-8') . '</span>';
+                    . ' ' . htmlspecialchars($this->transCombinations($combinationCount), ENT_QUOTES, 'UTF-8') . '</span>';
             }
 
             $record['linked_name'] = $linkedName;
 
-            // Formatted price
-            $record['price'] = $this->formatPrice((float) ($record['price_raw'] ?? 0));
+            // Price cell — mirrors what the feed publishes: tax included, discounts
+            // applied. Falls back to the raw catalog price if the product can no
+            // longer be priced (deleted mid-request, missing combination, ...).
+            $record['price'] = $this->buildPriceHtml($pid, (float) ($record['price_raw'] ?? 0));
 
             // Availability badge HTML
             $qty = (int) ($record['quantity'] ?? 0);
@@ -111,6 +118,40 @@ final class ProductFeedDataDecorator implements GridDataFactoryInterface
         }
 
         return new GridData(new RecordCollection($records), $data->getRecordsTotal(), $data->getQuery());
+    }
+
+    /**
+     * Render the price cell: a single price normally, or the regular price struck
+     * through followed by the discounted price when a specific price / catalog price
+     * rule applies.
+     */
+    private function buildPriceHtml(int $productId, float $rawPrice): string
+    {
+        if ($productId <= 0) {
+            return htmlspecialchars($this->formatPrice($rawPrice), ENT_QUOTES, 'UTF-8');
+        }
+
+        $prices = $this->priceResolver->resolve($productId);
+
+        // getPriceStatic() returns null for a product it cannot price; resolve() casts
+        // that to 0.0, so fall back to the catalog price rather than showing "0,00 €".
+        if ($prices['effective'] <= 0) {
+            return htmlspecialchars($this->formatPrice($rawPrice), ENT_QUOTES, 'UTF-8');
+        }
+
+        $effective = htmlspecialchars($this->formatPrice($prices['effective']), ENT_QUOTES, 'UTF-8');
+
+        if (!$prices['on_sale']) {
+            return $effective;
+        }
+
+        $regular = htmlspecialchars($this->formatPrice($prices['regular']), ENT_QUOTES, 'UTF-8');
+
+        return sprintf(
+            '<span class="mdf-price-regular">%s</span> <span class="mdf-price-sale">%s</span>',
+            $regular,
+            $effective
+        );
     }
 
     private function getCombinationCount(int $productId): int
@@ -141,6 +182,22 @@ final class ProductFeedDataDecorator implements GridDataFactoryInterface
             ->getContext()
             ->getTranslator()
             ->trans($message, [], 'Modules.Mdfcforps.Admin');
+    }
+
+    /**
+     * Singular/plural form of "combinations" for the count badge.
+     *
+     * Two separate catalogue entries rather than the translator's own pluralisation:
+     * the module supports PrestaShop 1.7.7.5 (Symfony 3.4) through 9 (Symfony 6.4), and
+     * neither mechanism spans that range — transChoice() was removed in Symfony 5, while
+     * trans() with %count% and the "singular|plural" syntax does not pluralise in 3.4.
+     *
+     * Callers only render the badge for counts >= 1, so "> 1" gives the right form in
+     * both English and French.
+     */
+    private function transCombinations(int $count): string
+    {
+        return $count > 1 ? $this->trans('combinations') : $this->trans('combination');
     }
 
     private function formatPrice(float $amount): string

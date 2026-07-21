@@ -33,9 +33,12 @@ class FeedService
     private string $shopName;
     private string $currency;
     private FeedEligibilityService $eligibilityService;
+    private PriceResolver $priceResolver;
 
-    public function __construct(?FeedEligibilityService $eligibilityService = null)
-    {
+    public function __construct(
+        ?FeedEligibilityService $eligibilityService = null,
+        ?PriceResolver $priceResolver = null
+    ) {
         // Use the legacy context directly. This service is only instantiated by the
         // front feed controller, where Context::getContext() is fully initialised on
         // PS 1.7 / 8 / 9 — avoiding any dependency on the Symfony container being
@@ -48,6 +51,7 @@ class FeedService
             ? (string) $defaultCurrency->iso_code
             : 'EUR';
         $this->eligibilityService = $eligibilityService ?: new FeedEligibilityService();
+        $this->priceResolver = $priceResolver ?: new PriceResolver();
     }
 
     // -----------------------------------------------------------------------
@@ -146,6 +150,7 @@ class FeedService
         $gtin = (string) ($product->ean13 ?: $product->isbn ?: $product->upc ?: '');
 
         $availStr = $this->getAvailabilityString($product);
+        $prices = $this->resolvePrices((int) $product->id);
 
         return [
             'id' => (string) $product->id,
@@ -159,9 +164,9 @@ class FeedService
             'parent_image' => $imageUrl,
             'variant_image' => '',
             'additional_images' => $addImages,
-            'price' => $this->getProductPrice($product),
-            'regular_price' => $this->getProductPrice($product, false),
-            'sale_price' => $this->getProductSalePrice($product),
+            'price' => $prices['effective'] > 0 ? (string) $prices['effective'] : '',
+            'regular_price' => $prices['regular'] > 0 ? (string) $prices['regular'] : '',
+            'sale_price' => $prices['on_sale'] ? (string) $prices['effective'] : '',
             'currency' => $this->currency,
             'sku' => $mpn,
             'availability' => $availStr,
@@ -226,8 +231,8 @@ class FeedService
         $gtin = $combo['ean13'] ?: $combo['isbn'] ?: $combo['upc'] ?: '';
 
         $comboPrice = (float) $combo['price_computed'];
-        $comboRegular = $comboPrice; // PS: use computed price as regular (discount handled separately)
-        $comboSale = ''; // PS discount resolution is complex — leave blank in feed
+        $comboRegular = (float) ($combo['price_regular'] ?? $comboPrice);
+        $comboSale = !empty($combo['on_sale']) ? (string) $comboPrice : '';
 
         return [
             'id' => $product->id . '_' . $combo['id_product_attribute'],
@@ -309,7 +314,8 @@ class FeedService
         $xml .= '    <total_variants>' . $totalVariants . '</total_variants>' . "\n\n";
 
         foreach ($valid as $p) {
-            $regularPrice = $p['regular_price'] !== '' ? number_format((float) $p['regular_price'], 2, '.', '') . ' ' . $p['currency'] : '';
+            $price = $p['price'] !== '' ? number_format((float) $p['price'], 2, '.', '') . ' ' . $p['currency'] : '';
+            $regularPrice = $p['regular_price'] !== '' ? number_format((float) $p['regular_price'], 2, '.', '') . ' ' . $p['currency'] : $price;
             $salePrice = $p['sale_price'] !== '' ? number_format((float) $p['sale_price'], 2, '.', '') . ' ' . $p['currency'] : '';
 
             $x = static fn (string $v): string => htmlspecialchars($v, ENT_XML1, 'UTF-8');
@@ -502,6 +508,8 @@ class FeedService
                     'upc' => $row['upc'] ?? '',
                     'quantity' => (int) $row['quantity'],
                     'price_computed' => 0.0,
+                    'price_regular' => 0.0,
+                    'on_sale' => false,
                     'in_stock' => (int) $row['quantity'] > 0,
                     'attributes' => [],
                 ];
@@ -514,8 +522,10 @@ class FeedService
 
         // Compute price for each combination
         foreach ($grouped as $idPA => &$combo) {
-            $price = \Product::getPriceStatic((int) $product->id, true, $idPA);
-            $combo['price_computed'] = (float) $price;
+            $prices = $this->resolvePrices((int) $product->id, (int) $idPA);
+            $combo['price_computed'] = $prices['effective'];
+            $combo['price_regular'] = $prices['regular'];
+            $combo['on_sale'] = $prices['on_sale'];
         }
         unset($combo);
 
@@ -656,18 +666,12 @@ class FeedService
         return $result;
     }
 
-    private function getProductPrice(\Product $product, bool $withTax = true): string
+    /**
+     * @return array{regular: float, effective: float, on_sale: bool}
+     */
+    private function resolvePrices(int $idProduct, int $idProductAttribute = 0): array
     {
-        $price = \Product::getPriceStatic((int) $product->id, $withTax);
-
-        return $price > 0 ? (string) $price : '';
-    }
-
-    private function getProductSalePrice(\Product $product): string
-    {
-        // PS doesn't natively separate regular vs sale the way WC does
-        // Return empty — the regular price IS the displayed price
-        return '';
+        return $this->priceResolver->resolve($idProduct, $idProductAttribute);
     }
 
     private function getAvailabilityString(\Product $product): string
