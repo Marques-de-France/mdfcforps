@@ -38,6 +38,11 @@
         <target>Amount</target>
       </trans-unit>
 
+      <trans-unit id="Modules.Mdfcforps.Admin.commission">
+        <source>Commission</source>
+        <target>Commission</target>
+      </trans-unit>
+
       <trans-unit id="Modules.Mdfcforps.Admin.currency">
         <source>Currency</source>
         <target>Currency</target>

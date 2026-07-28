@@ -132,6 +132,7 @@ class HubClient
                 'orderId' => $sale['order_id'],
                 'orderReference' => $sale['order_reference'],
                 'amount' => (float) $sale['amount'],
+                'netAmount' => (float) ($sale['net_amount'] ?? 0),
                 'currency' => $sale['currency'],
                 'attributionSource' => $sale['attribution_source'],
                 'utmSource' => $sale['utm_source'],

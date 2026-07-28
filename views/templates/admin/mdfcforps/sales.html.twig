@@ -32,6 +32,13 @@
           value: '<span id="mdf-sales-kpi-sales">-</span>',
           subLabel: 'On selected period'|trans({}, 'Modules.Mdfcforps.Admin')
         }, with_context = false) }}
+        {% if affiliationActive|default(false) %}
+        {{ include('@Modules/mdfcforps/views/templates/admin/mdfcforps/_kpi_card.html.twig', {
+          label: 'Commission'|trans({}, 'Modules.Mdfcforps.Admin'),
+          value: '<span id="mdf-sales-kpi-commission">-</span>',
+          subLabel: 'On selected period'|trans({}, 'Modules.Mdfcforps.Admin')
+        }, with_context = false) }}
+        {% endif %}
       </div>
     <div class="card mb-4">
       <div class="card-header">
@@ -62,12 +69,13 @@
       granularitySelectId: 'mdf-sales-granularity',
       revenueKpiId: 'mdf-sales-kpi-revenue',
       salesKpiId: 'mdf-sales-kpi-sales',
+      commissionKpiId: {{ (affiliationActive|default(false)) ? "'mdf-sales-kpi-commission'" : 'null' }},
       defaultRange: '28d',
       defaultGranularity: 'day'
     });
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="{{ asset('../modules/mdfcforps/views/js/admin/revenue-chart.js') }}&mdf=20260721-1"></script>
+  <script src="{{ asset('../modules/mdfcforps/views/js/admin/revenue-chart.js') }}&mdf=20260728-1"></script>
   <script>
     (function () {
       function initSalesGrid() {

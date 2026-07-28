@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS `PREFIX_mdfcforps_sales` (
     `order_id`            INT UNSIGNED NOT NULL,
     `order_reference`     VARCHAR(64)  NOT NULL DEFAULT '',
     `amount`              DECIMAL(20,6) NOT NULL DEFAULT 0,
+    `net_amount`          DECIMAL(20,6) NOT NULL DEFAULT 0,
     `currency`            VARCHAR(8)   NOT NULL DEFAULT '',
     `attribution_source`  VARCHAR(64)  NOT NULL DEFAULT 'unknown',
     `utm_source`          VARCHAR(255) NOT NULL DEFAULT '',

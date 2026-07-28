@@ -50,6 +50,16 @@ final class SalesDataDecorator implements GridDataFactoryInterface
                 number_format((float) ($record['amount'] ?? 0), 2, '.', ' '),
                 $currency
             );
+
+            $record['order_reference_display'] = $this->renderOrderReferenceDisplay($record);
+
+            // Commission is Hub-owned and only present for affiliation stores; a
+            // null value (non-affiliated or unattributed) renders as a dash.
+            $commission = $record['commission_amount'] ?? null;
+            $record['commission_display'] = ($commission === null)
+                ? '—'
+                : sprintf('%s %s', number_format((float) $commission, 2, '.', ' '), $currency);
+
             $record['source_badge'] = sprintf(
                 '<span class="badge badge-secondary">%s</span>',
                 htmlspecialchars($source, ENT_QUOTES, 'UTF-8')
@@ -82,6 +92,28 @@ final class SalesDataDecorator implements GridDataFactoryInterface
         }
 
         return new GridData(new RecordCollection($records), $data->getRecordsTotal(), $data->getQuery());
+    }
+
+    private function renderOrderReferenceDisplay(array $record): string
+    {
+        $label = (string) ($record['order_reference'] ?? '');
+        $orderId = (int) ($record['order_id'] ?? 0);
+
+        if ($label === '' || $orderId <= 0) {
+            return htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
+        }
+
+        $context = \Context::getContext();
+        $orderUrl = $context->link->getAdminLink('AdminOrders', true, [], [
+            'id_order' => $orderId,
+            'vieworder' => 1,
+        ]);
+
+        return sprintf(
+            '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
+            htmlspecialchars($orderUrl, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($label, ENT_QUOTES, 'UTF-8')
+        );
     }
 
     /**

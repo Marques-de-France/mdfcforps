@@ -67,6 +67,7 @@
           date: String(item.date || ''),
           revenue: Number(item.revenue || 0),
           conversions: Number(item.conversions || 0),
+          commission: Number(item.commission || 0),
         };
       });
     }
@@ -184,11 +185,12 @@
 
       var key = granularity === 'month' ? toIsoMonth(row.dateObj) : toIsoDate(row.dateObj);
       if (!acc[key]) {
-        acc[key] = { key: key, revenue: 0, conversions: 0, dateObj: toDateFromKey(key) };
+        acc[key] = { key: key, revenue: 0, conversions: 0, commission: 0, dateObj: toDateFromKey(key) };
       }
 
       acc[key].revenue += Number(row.revenue || 0);
       acc[key].conversions += Number(row.conversions || 0);
+      acc[key].commission += Number(row.commission || 0);
       return acc;
     }, {});
   }
@@ -213,6 +215,7 @@
           key: monthKey,
           revenue: 0,
           conversions: 0,
+          commission: 0,
           dateObj: toDateFromKey(monthKey),
         });
         cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
@@ -230,6 +233,7 @@
         key: dayKey,
         revenue: 0,
         conversions: 0,
+        commission: 0,
         dateObj: toDateFromKey(dayKey),
       });
       cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + 1);
@@ -439,6 +443,7 @@
     var emptyEl = document.getElementById(config.emptyId || '');
     var revenueEl = config.revenueKpiId ? document.getElementById(config.revenueKpiId) : null;
     var salesEl = config.salesKpiId ? document.getElementById(config.salesKpiId) : null;
+    var commissionEl = config.commissionKpiId ? document.getElementById(config.commissionKpiId) : null;
     var rangeSelect = config.rangeSelectId ? document.getElementById(config.rangeSelectId) : null;
     var granularitySelect = config.granularitySelectId ? document.getElementById(config.granularitySelectId) : null;
 
@@ -467,6 +472,7 @@
           dateObj: dateObj,
           revenue: Number(row.revenue || 0),
           conversions: Number(row.conversions || 0),
+          commission: Number(row.commission || 0),
         };
       })
       .filter(Boolean)
@@ -485,6 +491,7 @@
       var rows = buildDenseSeries(filtered, state.granularity, bounds);
       var totalRevenue = rows.reduce(function (sum, item) { return sum + item.revenue; }, 0);
       var totalSales = rows.reduce(function (sum, item) { return sum + item.conversions; }, 0);
+      var totalCommission = rows.reduce(function (sum, item) { return sum + (item.commission || 0); }, 0);
 
       if (revenueEl) {
         revenueEl.textContent = formatCurrency(totalRevenue, String(config.currency || 'EUR'), 2, 2);
@@ -492,6 +499,10 @@
 
       if (salesEl) {
         salesEl.textContent = String(totalSales);
+      }
+
+      if (commissionEl) {
+        commissionEl.textContent = formatCurrency(totalCommission, String(config.currency || 'EUR'), 2, 2);
       }
 
       if (!rows.length) {

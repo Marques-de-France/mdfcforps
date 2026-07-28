@@ -81,6 +81,18 @@ points to the newest version.
 
 ## Changelog
 
+### 1.2.0
+
+**Sales.**
+- The sales grid now renders the order reference as a direct link to the corresponding PrestaShop order view.
+- The module now preserves attribution context more reliably when front-office AJAX requests are processed, avoiding the 500 response seen during attribution.
+
+**Back office.**
+- Sales records now expose the commission-related values needed for affiliation reporting and reconciliation.
+
+**Compatibility.**
+- The module release is aligned with the existing 1.2.0 metadata and upgrade flow.
+
 ### 1.1.0
 
 **Feed — breaking change to published values.** `<g:price>` now carries the

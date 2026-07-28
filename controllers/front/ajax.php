@@ -76,8 +76,21 @@ class MdfcforpsAjaxModuleFrontController extends ModuleFrontController
             exit;
         }
 
-        $attributionService = new Mdfcforps\Service\AttributionService();
-        $attributionService->stampCookie($data);
+        try {
+            $attributionService = new Mdfcforps\Service\AttributionService();
+            $attributionService->stampCookie($data);
+        } catch (\Throwable $e) {
+            \PrestaShopLogger::addLog(
+                '[MDF] Attribution AJAX error: ' . $e->getMessage(),
+                2,
+                null,
+                'Mdfcforps'
+            );
+
+            http_response_code(200);
+            echo json_encode(['success' => false, 'error' => 'Attribution failed']);
+            exit;
+        }
 
         echo json_encode(['success' => true]);
         exit;

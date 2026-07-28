@@ -42,12 +42,12 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
 
     protected function getColumns(): ColumnCollection
     {
-        return (new ColumnCollection())
+        $columns = (new ColumnCollection())
             ->add(
-                (new DataColumn('order_reference'))
+                (new HtmlColumn('order_reference'))
                 ->setName($this->trans('Reference', [], 'Modules.Mdfcforps.Admin'))
                 ->setOptions([
-                    'field' => 'order_reference',
+                    'field' => 'order_reference_display',
                     'sortable' => true,
                 ])
             )
@@ -58,7 +58,22 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
                     'field' => 'amount_display',
                     'sortable' => true,
                 ])
-            )
+            );
+
+        // Commission is only relevant for stores enrolled in the MDF affiliation
+        // program; the flag is cached from the Hub on the last sales fetch.
+        if (\Configuration::get('MDFCFORPS_AFFILIATION_ACTIVE') === '1') {
+            $columns->add(
+                (new DataColumn('commission'))
+                ->setName($this->trans('Commission', [], 'Modules.Mdfcforps.Admin'))
+                ->setOptions([
+                    'field' => 'commission_display',
+                    'sortable' => true,
+                ])
+            );
+        }
+
+        return $columns
             ->add(
                 (new HtmlColumn('source'))
                 ->setName($this->trans('Source', [], 'Modules.Mdfcforps.Admin'))

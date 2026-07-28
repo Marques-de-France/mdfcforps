@@ -116,10 +116,12 @@ class AttributionService
      */
     public function stampCookie(array $data): void
     {
-        $cookie = \PrestaShop\PrestaShop\Adapter\SymfonyContainer::getInstance()
-            ->get('prestashop.adapter.legacy.context')
-            ->getContext()
-            ->cookie;
+        $context = \Context::getContext();
+        if (!$context || !isset($context->cookie) || !$context->cookie instanceof \Cookie) {
+            throw new \RuntimeException('Unable to access PrestaShop cookie context');
+        }
+
+        $cookie = $context->cookie;
 
         $fields = [
             'mdf_click_id',

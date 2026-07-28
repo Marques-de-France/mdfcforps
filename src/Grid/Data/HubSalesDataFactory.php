@@ -43,6 +43,7 @@ final class HubSalesDataFactory implements GridDataFactoryInterface
         $sortFieldMap = [
             'order_reference' => 'orderId',
             'amount' => 'amount',
+            'commission' => 'commissionAmount',
             'status' => 'status',
             'created_at' => 'createdAt',
         ];
@@ -64,6 +65,12 @@ final class HubSalesDataFactory implements GridDataFactoryInterface
         $response = $this->hubClient->getHubSalesList($page, $limit, $hubFilters);
         $sales = is_array($response['sales'] ?? null) ? $response['sales'] : [];
 
+        // Cache the store's affiliation flag so the grid definition and KPIs can
+        // decide whether to surface the Commission column without an extra request.
+        if (array_key_exists('affiliationActive', $response)) {
+            \Configuration::updateValue('MDFCFORPS_AFFILIATION_ACTIVE', $response['affiliationActive'] === true ? '1' : '0');
+        }
+
         $records = [];
         foreach ($sales as $sale) {
             if (!is_array($sale)) {
@@ -72,7 +79,9 @@ final class HubSalesDataFactory implements GridDataFactoryInterface
 
             $records[] = [
                 'order_reference' => (string) (($sale['orderName'] ?? '') !== '' ? $sale['orderName'] : ('#' . (string) ($sale['orderId'] ?? ''))),
+                'order_id' => (int) ($sale['orderId'] ?? 0),
                 'amount' => (float) ($sale['amount'] ?? 0),
+                'commission_amount' => isset($sale['commissionAmount']) && $sale['commissionAmount'] !== null ? (float) $sale['commissionAmount'] : null,
                 'currency' => (string) ($sale['currency'] ?? 'EUR'),
                 'attribution_source' => (string) ($sale['attributionSource'] ?? 'unknown'),
                 'status' => (string) ($sale['status'] ?? 'pending'),

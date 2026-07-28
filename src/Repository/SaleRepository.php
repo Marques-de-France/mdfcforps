@@ -35,10 +35,21 @@ class SaleRepository
     {
         $currency = \Currency::getIsoCodeById((int) $order->id_currency);
 
+        // Net (tax-excluded) product revenue: order total HT minus shipping and
+        // gift-wrapping, both tax-excluded. Clamped at 0 against odd totals. The
+        // Hub derives the affiliation commission from this figure.
+        $netAmount = max(
+            0.0,
+            (float) $order->total_paid_tax_excl
+                - (float) $order->total_shipping_tax_excl
+                - (float) $order->total_wrapping_tax_excl
+        );
+
         $data = [
             'order_id' => (int) $order->id,
             'order_reference' => pSQL($order->reference),
             'amount' => (float) $order->total_paid_tax_incl,
+            'net_amount' => $netAmount,
             'currency' => pSQL($currency ?: 'EUR'),
             'attribution_source' => pSQL($attribution['source'] ?? 'unknown'),
             'utm_source' => pSQL($attribution['utm_source'] ?? ''),

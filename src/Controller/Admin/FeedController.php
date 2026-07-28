@@ -180,6 +180,7 @@ class FeedController extends AbstractController
                 'salesGrid' => $salesGrid,
                 'analytics' => $analytics,
                 'analyticsError' => $analyticsError,
+                'affiliationActive' => \Configuration::get('MDFCFORPS_AFFILIATION_ACTIVE') === '1',
                 'currentTab' => 'sales',
                 'enableSidebar' => true,
                 'layoutTitle' => 'Marques de France',
