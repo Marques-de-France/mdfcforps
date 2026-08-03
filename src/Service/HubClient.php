@@ -248,6 +248,28 @@ class HubClient
     }
 
     /**
+     * Report how a module self-update went.
+     *
+     * Fire-and-forget by design: partners do not report failed updates, they just
+     * stay on the old version silently, so this is the only way to learn that an
+     * update broke on a hosting configuration we never tested. It must never fail
+     * or delay the update itself, hence swallowing every error.
+     *
+     * @param array<string, mixed> $payload fromVersion, toVersion, outcome, step, error
+     */
+    public function reportUpdate(array $payload): void
+    {
+        try {
+            $this->post('/api/ps/update-report', array_merge($payload, [
+                'phpVersion' => PHP_VERSION,
+                'psVersion' => _PS_VERSION_,
+            ]));
+        } catch (\Throwable $e) {
+            // The update's outcome does not depend on the report arriving.
+        }
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function getAnalytics(string $dateFrom = '', string $dateTo = '', string $granularity = 'day'): array

@@ -46,3 +46,39 @@ mdfcforps_feed_mode:
     defaults:
         _controller: 'Mdfcforps\Controller\Admin\FeedController::updateModeAction'
         _legacy_controller: AdminMdfcforps
+
+# ---------------------------------------------------------------------------
+# Self-update
+# ---------------------------------------------------------------------------
+
+mdfcforps_update_check:
+    path: /mdfcforps/update/check
+    methods: [POST]
+    defaults:
+        _controller: 'Mdfcforps\Controller\Admin\FeedController::updateCheckAction'
+        _legacy_controller: AdminMdfcforps
+
+mdfcforps_update_run:
+    path: /mdfcforps/update/run
+    methods: [POST]
+    defaults:
+        _controller: 'Mdfcforps\Controller\Admin\FeedController::updateRunAction'
+        _legacy_controller: AdminMdfcforps
+
+# FROZEN CONTRACT — do not rename this route or change its path.
+# Phase 1 of a self-update generates this URL from the container compiled for the
+# version being REPLACED, then redirects to it once the new files are on disk.
+# Renaming it breaks every future self-update on every already-deployed shop.
+mdfcforps_update_finalize:
+    path: /mdfcforps/update/finalize
+    methods: [GET]
+    defaults:
+        _controller: 'Mdfcforps\Controller\Admin\FeedController::updateFinalizeAction'
+        _legacy_controller: AdminMdfcforps
+
+mdfcforps_update_rollback:
+    path: /mdfcforps/update/rollback
+    methods: [POST]
+    defaults:
+        _controller: 'Mdfcforps\Controller\Admin\FeedController::updateRollbackAction'
+        _legacy_controller: AdminMdfcforps

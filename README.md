@@ -41,9 +41,67 @@ product feed for your French-made products.
 
 ## Updating
 
+From version 1.4.0 the module updates itself. When a newer version is published, the
+**Marques de France → Dashboard** page shows a banner with an **Update now** button. One
+click downloads the new version, verifies it, replaces the module files and runs the
+database upgrade. There is nothing to download or upload.
+
+The check runs when you open the dashboard, and once a day in the background so the
+banner is already there when you next log in.
+
+> Version 1.4.0 itself must be installed manually — earlier versions have no updater.
+> Follow the manual procedure below once, and subsequent updates are one click.
+
+**Manual update** (still supported, and the fallback if your hosting blocks the automatic
+one):
+
 1. Download the latest `mdfcforps.zip` from the link above.
 2. Upload it again via **Modules → Module Manager → Upload a module**.
 3. PrestaShop detects the newer version and shows an **Upgrade** action — click it to apply.
+
+### Requirements for the automatic update
+
+If any of these is missing the dashboard says so explicitly and offers the manual route
+instead — it never fails silently. Send this list to your hosting provider if the button
+is disabled:
+
+- `modules/` and the module's own directory writable by PHP
+- `var/cache/` writable by PHP
+- the PHP **zip** extension (`ZipArchive`)
+- `allow_url_fopen` enabled, and `rename` / `unlink` / `rmdir` not in `disable_functions`
+- about 20 MB of free disk space
+- outbound HTTPS to `flux.marques-de-france.fr` and `github.com` /
+  `objects.githubusercontent.com`
+- **OPcache** either with `opcache.validate_timestamps=1` (the default), or with PHP
+  restarted after each update. With timestamp validation off *and* `opcache_reset()`
+  blocked, PHP would keep running the old code from cache while the database records the
+  new version — so the module refuses to update at all in that configuration rather than
+  leave the shop in a state that looks fine but is not.
+
+### What the update does to your files
+
+The module directory is **replaced wholesale** by the contents of the release archive, so
+any customisation made inside `modules/mdfcforps/` is lost. The previous version is kept
+as `modules/mdfcforps_bak_<random>/` for 7 days, then deleted automatically.
+
+### Recovery
+
+- **"An update is half-finished"** — the files were replaced but the database step did not
+  run (a PHP timeout, or the browser tab was closed). Click **Finish the update**.
+- **"the database upgrade could not be completed automatically"** — the shop is already
+  running the new code; only the database record lags. Open **Modules → Module Manager**,
+  find Marques de France and click **Upgrade**. Or use **Restore previous version** on the
+  dashboard to go back.
+- **The module directory is missing** (the rare case where both the swap and the automatic
+  restore failed) — the dashboard prints the exact command to run. It is:
+
+  ```
+  mv modules/mdfcforps_bak_<random> modules/mdfcforps
+  ```
+
+Every step is written to **Advanced Parameters → Logs** with the `[MDF][update]` prefix.
+Failures are also reported to the Marques de France Hub with the failing step and your
+PHP/PrestaShop versions, so support can diagnose without asking you for anything.
 
 ## Configuration
 
@@ -65,21 +123,119 @@ Run from the module root:
 
 ## Releasing (maintainers)
 
-Releases are packaged automatically by GitHub Actions:
+**The order matters.** Merchants download the moment the Hub announces a version, so the
+release asset must exist *before* the Hub is told about it — otherwise every partner gets
+a 404.
 
-1. Bump the version in `config.xml`, `config_fr.xml` and `mdfcforps.php` (`VERSION` **and**
-   `$this->version`) — all four must match or PrestaShop will not offer the upgrade.
-   Add an `upgrade/upgrade-X.Y.Z.php` script if the release changes the database, the
-   service definitions in `config/services.yml`, or the translation catalogue.
-2. Commit and push to `main`.
-3. Tag the version and push the tag: `git tag X.Y.Z && git push origin X.Y.Z`.
+1. **Bump the version.** The version lives in four places across three files and they must
+   all agree, or PrestaShop will not offer the upgrade:
+
+   ```
+   composer run bump 1.4.1        # or: --patch | --minor | --major, plus --dry-run
+   ```
+
+   This rewrites `config.xml`, `config_fr.xml` and both strings in `mdfcforps.php`,
+   verifies all four match afterwards, and scaffolds `upgrade/upgrade-X.Y.Z.php`.
+
+2. **Fill in the upgrade script.** It is **mandatory** whenever the release touched
+   `config/routes.yml`, `config/services.yml`, the database schema or the translations —
+   without the Symfony cache clear it performs, the compiled container stays stale and new
+   routes 404.
+
+3. **Verify, commit, tag.** Tagging *is* releasing: the workflow fires on any pushed tag.
+
+   ```
+   composer run check:version
+   git add -A && git commit -m "release: prepare 1.4.1"
+   git tag 1.4.1 && git push && git push origin 1.4.1
+   ```
+
+4. **Test the exact release ZIP** on PrestaShop 1.7.8, 8.x and 9.x before step 5. Once the
+   Hub announces it, every partner shop can install it unattended.
+
+5. **Announce it to partner shops** by setting these on the Hub (`mdf-connectors-hub`):
+
+   ```
+   PS_MODULE_LATEST_VERSION=1.4.1
+   PS_MODULE_SHA256=<from the mdfcforps.zip.sha256 release asset>
+   PS_MODULE_SIZE=<byte size of mdfcforps.zip>
+   PS_MODULE_UPDATE_ENABLED=true
+   ```
+
+   Leaving `PS_MODULE_SHA256` empty ships without integrity verification — the module
+   installs whatever the URL returns. Set it.
+
+**To stop a bad release reaching anyone**, set `PS_MODULE_UPDATE_ENABLED=false` on the Hub.
+The banner disappears on the next dashboard load; no module release is needed.
 
 The [`.github/workflows/release.yml`](.github/workflows/release.yml) workflow builds a clean
-`mdfcforps.zip` (top-level `mdfcforps/` folder, dev files excluded via `.gitattributes`) and
-attaches it to a new GitHub Release. The `releases/latest/download/mdfcforps.zip` link always
-points to the newest version.
+`mdfcforps.zip` (top-level `mdfcforps/` folder, dev files excluded via `.gitattributes`),
+publishes its SHA-256 as `mdfcforps.zip.sha256`, and attaches both to a new GitHub Release.
+The `releases/latest/download/mdfcforps.zip` link always points to the newest version.
+
+### Testing the self-update locally
+
+Use [`tools/update-test-env.sh`](tools/update-test-env.sh), which creates a throwaway shop,
+serves test packages and exposes the fault-injection switches:
+
+```
+tools/update-test-env.sh up [1.7.7.5|8]   # throwaway shop + module installed
+tools/update-test-env.sh package 1.4.1    # build + serve a test ZIP, print the Hub env
+tools/update-test-env.sh fault fail_rename2
+tools/update-test-env.sh state            # versions, phase, leftover backups
+tools/update-test-env.sh logs             # the [MDF][update] log lines
+tools/update-test-env.sh reset | down
+```
+
+It packages from the **working tree**, not `HEAD`, so uncommitted changes are testable —
+`git archive HEAD` would silently omit exactly the new code under test.
+
+The download host allowlist blocks anything outside `github.com` and the Hub — deliberately,
+since a compromised Hub would otherwise be able to drop arbitrary code onto every partner
+shop. Two escape hatches exist for testing, both honoured **only when `_PS_MODE_DEV_` is
+true**, so they are inert in production:
+
+- `MDFCFORPS_UPDATE_ALLOWED_HOSTS` — comma-separated extra download hosts, e.g.
+  `host.docker.internal`.
+- `MDFCFORPS_UPDATE_FAULT` — comma-separated fault injection points, to exercise the
+  failure paths that are otherwise unreachable: `fail_download`, `fail_checksum`,
+  `fail_extract`, `fail_promote`, `fail_rename1`, `fail_rename2`, `fail_restore`,
+  `fail_upgrade`. `fail_rename2` alone tests the automatic rollback;
+  `fail_rename2,fail_restore` tests the "module directory missing" recovery path.
+
+Build test packages with the real command so packaging is identical to a release:
+
+```
+git archive --prefix=mdfcforps/ --format=zip -o /tmp/zips/mdfcforps.zip HEAD
+```
+
+When running PrestaShop in Docker, **do not bind-mount `modules/mdfcforps`** — a bind mount
+makes it a mount point, `rename()` on it fails with `EBUSY`/`EXDEV`, and you would be
+testing a filesystem topology no real shop has. Use `docker cp` instead.
 
 ## Changelog
+
+### 1.4.0
+
+**One-click updates.** The module now tells you when a new version is available and
+installs it for you. Open **Marques de France → Dashboard**, click **Update now**, and the
+module downloads, verifies and installs the new version itself — no ZIP to download, no
+upload, no Module Manager. It also checks once a day in the background, so the notice is
+waiting for you rather than depending on you thinking to look.
+
+Before replacing anything, the module checks that your hosting can actually complete the
+update — write permissions, the zip extension, disk space, and the OPcache configuration —
+and if something is missing it says exactly what, and points you at the manual procedure
+instead of failing halfway.
+
+Your previous version is kept for 7 days, so an update can be undone. If anything goes
+wrong the module restores the previous version by itself; in the rare case where it cannot,
+the dashboard prints the one command your host needs to run.
+
+**This version must be installed manually** (earlier versions have no updater). Every
+version after it is one click.
+
+**Compatibility.** No database change.
 
 ### 1.3.0
 

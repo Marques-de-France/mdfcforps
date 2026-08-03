@@ -2,7 +2,7 @@
 <module>
     <name>mdfcforps</name>
     <displayName><![CDATA[Marques de France]]></displayName>
-    <version><![CDATA[1.3.0]]></version>
+    <version><![CDATA[1.4.0]]></version>
     <description><![CDATA[Connectez votre boutique PrestaShop &agrave; la plateforme Marques de France.]]></description>
     <author><![CDATA[Marques de France]]></author>
     <tab><![CDATA[market_place]]></tab>

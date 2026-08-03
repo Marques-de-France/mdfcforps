@@ -180,3 +180,34 @@
 	text-decoration: line-through;
 	white-space: nowrap;
 }
+
+/* Self-update banner (dashboard) */
+.mdf-update-banner .mdf-update-form,
+.mdf-update-banner .mdf-update-notes {
+	margin-top: 10px;
+}
+
+.mdf-update-blockers {
+	margin: 6px 0 0 18px;
+	padding: 0;
+}
+
+.mdf-update-check-form {
+	margin: -8px 0 16px;
+}
+
+.mdf-update-check-btn {
+	font-size: 12px;
+}
+
+/* Manual recovery command for a failed swap — must stay copy-pastable, so it
+   scrolls rather than wrapping mid-path. */
+.mdf-update-command {
+	margin-top: 8px;
+	padding: 8px 10px;
+	background: rgba(5, 20, 64, 0.06);
+	border-radius: 4px;
+	font-size: 12px;
+	overflow-x: auto;
+	white-space: pre;
+}

@@ -43,6 +43,7 @@ use PrestaShop\PrestaShop\Core\Grid\GridFactory;
 use PrestaShop\PrestaShop\Core\Search\Filters;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Csrf\CsrfToken;
@@ -77,9 +78,10 @@ class FeedController extends AbstractController
         $this->csrfTokenManager = $csrfTokenManager;
     }
 
-    public function dashboardAction(): Response
+    public function dashboardAction(Request $request): Response
     {
         $hubClient = new \Mdfcforps\Service\HubClient();
+        $updateChecker = new \Mdfcforps\Service\UpdateChecker();
 
         $dashboardStats = [
             'totalSales' => 0,
@@ -93,6 +95,11 @@ class FeedController extends AbstractController
 
         try {
             $status = $hubClient->getStatus();
+
+            // The Hub folds its "latest module version" announcement into /status, so
+            // keeping the banner current costs no extra HTTP request here.
+            $updateChecker->ingestStatus($status);
+
             $now = new \DateTimeImmutable('now');
             $analyticsDateTo = $now->format('Y-m-d');
             $analyticsDateFrom = $now->modify('-11 months')->modify('first day of this month')->format('Y-m-d');
@@ -123,9 +130,14 @@ class FeedController extends AbstractController
             $error = $this->mdfTrans('Unable to reach the Marques de France platform.');
         }
 
+        // Built outside the try/catch above on purpose: it reads the cached
+        // announcement, so a Hub outage must not suppress the update banner. That is
+        // precisely when a merchant most needs to be told to update.
+        $updateVars = $this->buildUpdateViewVars($request, $updateChecker);
+
         return $this->mdfRender(
             '@Modules/mdfcforps/views/templates/admin/mdfcforps/dashboard.html.twig',
-            [
+            array_merge($updateVars, [
                 'dashboardStats' => $dashboardStats,
                 'dashboardAnalytics' => $dashboardAnalytics,
                 'status' => $status,
@@ -133,8 +145,272 @@ class FeedController extends AbstractController
                 'currentTab' => 'dashboard',
                 'enableSidebar' => true,
                 'layoutTitle' => 'Marques de France',
-            ]
+            ])
         );
+    }
+
+    /**
+     * Everything the dashboard update banner needs.
+     *
+     * @return array<string, mixed>
+     */
+    private function buildUpdateViewVars(Request $request, \Mdfcforps\Service\UpdateChecker $checker): array
+    {
+        $updater = new \Mdfcforps\Service\ModuleUpdater($checker);
+
+        $vars = [
+            'updateAvailable' => false,
+            'updateInfo' => [
+                'currentVersion' => '',
+                'latestVersion' => '',
+                'releaseNotesUrl' => '',
+                'mandatory' => false,
+            ],
+            'updateBlockers' => [],
+            'updatePhase' => \Mdfcforps\Service\ModuleUpdater::PHASE_NONE,
+            'updateRecoveryCommand' => '',
+            'updateLastError' => '',
+            'updateResult' => '',
+            'feedCsrfToken' => $this->getCsrfTokenManager()->getToken('mdfcforps_feed_actions')->getValue(),
+        ];
+
+        try {
+            $announcement = $checker->getAnnouncement();
+            $state = $updater->getState();
+            $phase = (string) ($state['phase'] ?? \Mdfcforps\Service\ModuleUpdater::PHASE_NONE);
+
+            // A swap whose finalize never ran (php-fpm timeout, closed tab) is only
+            // surfaced once it is clearly stalled, so a redirect still in flight does
+            // not flash a scary banner at the merchant.
+            if ($phase === \Mdfcforps\Service\ModuleUpdater::PHASE_SWAPPED && !$updater->hasStalledUpdate()) {
+                $phase = \Mdfcforps\Service\ModuleUpdater::PHASE_NONE;
+            }
+
+            $vars['updatePhase'] = $phase;
+            $vars['updateRecoveryCommand'] = (string) ($state['command'] ?? '');
+            $vars['updateLastError'] = $updater->getLastError();
+
+            $result = (string) $request->query->get('update', '');
+            $vars['updateResult'] = in_array($result, ['success', 'failed', 'manual', 'checked'], true) ? $result : '';
+
+            $vars['updateInfo'] = [
+                'currentVersion' => $checker->getInstalledVersion(),
+                'latestVersion' => (string) ($announcement['latestVersion'] ?? ''),
+                'releaseNotesUrl' => $this->safeExternalUrl((string) ($announcement['releaseNotesUrl'] ?? '')),
+                'mandatory' => !empty($announcement['mandatory']),
+            ];
+
+            $vars['updateAvailable'] = $checker->isUpdateAvailable();
+
+            if ($vars['updateAvailable']) {
+                foreach ($updater->preflight($announcement) as $blocker) {
+                    $vars['updateBlockers'][] = $this->mdfTrans(
+                        (string) $blocker['message'],
+                        'Modules.Mdfcforps.Admin',
+                        $blocker['params']
+                    );
+                }
+            }
+        } catch (\Throwable $e) {
+            \PrestaShopLogger::addLog(
+                '[MDF][update] dashboard banner error: ' . $e->getMessage(),
+                2,
+                null,
+                'Mdfcforps'
+            );
+        }
+
+        return $vars;
+    }
+
+    /**
+     * Release-notes links come from the Hub, so they are rendered only when they are
+     * plainly an https URL — a javascript: or data: URL would otherwise become a
+     * clickable link in the back office.
+     */
+    private function safeExternalUrl(string $url): string
+    {
+        return stripos($url, 'https://') === 0 ? $url : '';
+    }
+
+    /**
+     * Re-check the Hub for a newer version on demand.
+     */
+    public function updateCheckAction(Request $request): Response
+    {
+        if (!$this->isValidFeedCsrfToken((string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token');
+        }
+
+        (new \Mdfcforps\Service\UpdateChecker())->refresh();
+
+        return $this->redirectToRoute('mdfcforps_dashboard_index', ['update' => 'checked']);
+    }
+
+    /**
+     * Phase 1 of a self-update: download, validate, and swap the files.
+     *
+     * Read ModuleUpdater's class docblock before touching this method. After
+     * downloadValidateAndSwap() returns, the module directory on disk is the NEW
+     * version while this request is still executing the OLD one, so the only calls
+     * permitted below are pre-resolved core ones — and the response must be a
+     * redirect, never a rendered template, because Twig would autoload new code into
+     * an old request.
+     */
+    public function updateRunAction(Request $request): Response
+    {
+        if (!$this->isValidFeedCsrfToken((string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token');
+        }
+
+        $checker = new \Mdfcforps\Service\UpdateChecker();
+        $updater = new \Mdfcforps\Service\ModuleUpdater($checker);
+
+        $announcement = $checker->getAnnouncement();
+        $installed = $checker->getInstalledVersion();
+        $target = (string) ($announcement['latestVersion'] ?? '');
+
+        if (!$checker->isUpdateAvailable()) {
+            return $this->redirectToRoute('mdfcforps_dashboard_index');
+        }
+
+        $blockers = $updater->preflight($announcement);
+        if (!empty($blockers)) {
+            $messages = [];
+            foreach ($blockers as $blocker) {
+                $messages[] = $this->mdfTrans((string) $blocker['message'], 'Modules.Mdfcforps.Admin', $blocker['params']);
+            }
+
+            $updater->recordError(implode(' ', $messages));
+
+            return $this->redirectToRoute('mdfcforps_dashboard_index', ['update' => 'failed']);
+        }
+
+        // Resolved BEFORE the swap, while the router is unambiguously healthy and the
+        // container on disk still matches the code in memory.
+        $finalizeUrl = $this->generateUrl('mdfcforps_update_finalize');
+        $failedUrl = $this->generateUrl('mdfcforps_dashboard_index', ['update' => 'failed']);
+
+        // Force-load the redirect class now: a `use` statement does not autoload, and
+        // after the swap the autoloader would resolve it out of the new tree.
+        class_exists(RedirectResponse::class, true);
+
+        \PrestaShopLogger::addLog(
+            sprintf('[MDF][update] requested from=%s to=%s', $installed, $target),
+            1,
+            null,
+            'Mdfcforps'
+        );
+
+        try {
+            $updater->downloadValidateAndSwap($announcement);
+        } catch (\Mdfcforps\Service\UpdateException $e) {
+            $updater->recordError($e->getMessage());
+
+            \PrestaShopLogger::addLog(
+                sprintf('[MDF][update] failed at %s: %s', $e->getStep(), $e->getMessage()),
+                3,
+                null,
+                'Mdfcforps'
+            );
+
+            $this->reportUpdateOutcome($installed, $target, 'failed', $e->getStep(), $e->getMessage());
+
+            return new RedirectResponse($failedUrl);
+        }
+
+        // ---- Nothing below here may autoload. Core calls and a redirect only. ----
+
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
+
+        return new RedirectResponse($finalizeUrl);
+    }
+
+    /**
+     * Phase 2: bring the database in line with the files swapped in by phase 1.
+     *
+     * Runs in a fresh request, so this code is the NEW version.
+     */
+    public function updateFinalizeAction(): Response
+    {
+        $checker = new \Mdfcforps\Service\UpdateChecker();
+        $updater = new \Mdfcforps\Service\ModuleUpdater($checker);
+
+        $state = $updater->getState();
+        $phase = (string) ($state['phase'] ?? \Mdfcforps\Service\ModuleUpdater::PHASE_NONE);
+        $from = (string) ($state['from'] ?? '');
+        $to = (string) ($state['to'] ?? '');
+
+        if ($phase !== \Mdfcforps\Service\ModuleUpdater::PHASE_SWAPPED) {
+            return $this->redirectToRoute('mdfcforps_dashboard_index');
+        }
+
+        // Resolved before the upgrade chain, which clears the compiled Symfony
+        // container out from under this request.
+        $successUrl = $this->generateUrl('mdfcforps_dashboard_index', ['update' => 'success']);
+        $manualUrl = $this->generateUrl('mdfcforps_dashboard_index', ['update' => 'manual']);
+        class_exists(RedirectResponse::class, true);
+
+        $outcome = $updater->finalize();
+
+        if ($outcome === \Mdfcforps\Service\ModuleUpdater::PHASE_NONE) {
+            $this->reportUpdateOutcome($from, $to, 'success', 'finalize', '');
+
+            return new RedirectResponse($successUrl);
+        }
+
+        $updater->recordError('The database upgrade did not complete automatically.');
+        $this->reportUpdateOutcome($from, $to, 'manual_upgrade_required', 'finalize', '');
+
+        return new RedirectResponse($manualUrl);
+    }
+
+    /**
+     * Restore the version that was in place before the last update.
+     */
+    public function updateRollbackAction(Request $request): Response
+    {
+        if (!$this->isValidFeedCsrfToken((string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token');
+        }
+
+        $updater = new \Mdfcforps\Service\ModuleUpdater();
+
+        $dashboardUrl = $this->generateUrl('mdfcforps_dashboard_index', ['update' => 'failed']);
+        class_exists(RedirectResponse::class, true);
+
+        if (!$updater->rollback()) {
+            $updater->recordError('The previous version could not be restored automatically.');
+        }
+
+        // Same rule as phase 1: the module directory just changed underneath this
+        // request, so redirect rather than render.
+        return new RedirectResponse($dashboardUrl);
+    }
+
+    /**
+     * Tell the Hub how an update went. Fire-and-forget; never blocks the redirect.
+     */
+    private function reportUpdateOutcome(
+        string $from,
+        string $to,
+        string $outcome,
+        string $step,
+        string $error
+    ): void {
+        try {
+            (new \Mdfcforps\Service\HubClient())->reportUpdate([
+                'fromVersion' => $from,
+                'toVersion' => $to,
+                'outcome' => $outcome,
+                'step' => $step,
+                'error' => $error,
+            ]);
+        } catch (\Throwable $e) {
+            // Reporting is best-effort by definition.
+        }
     }
 
     public function salesAction(Request $request): Response
@@ -420,12 +696,15 @@ class FeedController extends AbstractController
     /**
      * Version-agnostic trans() — works on PS8 (Symfony 4) and PS9 (Symfony 6).
      */
-    private function mdfTrans(string $id, string $domain = 'Modules.Mdfcforps.Admin'): string
+    /**
+     * @param array<string, string> $params placeholder values, e.g. ['%version%' => '1.4.1']
+     */
+    private function mdfTrans(string $id, string $domain = 'Modules.Mdfcforps.Admin', array $params = []): string
     {
         /** @var \Symfony\Component\Translation\TranslatorInterface $translator */
         $translator = SymfonyContainer::getInstance()->get('translator');
 
-        return $translator->trans($id, [], $domain);
+        return $translator->trans($id, $params, $domain);
     }
 
     /**

@@ -22,7 +22,9 @@
         "lint:php": "find . -type f -name '*.php' ! -path './vendor/*' ! -path './tests/*' -exec php -l -n {} \\;",
         "lint:cs": "php vendor/bin/php-cs-fixer fix --dry-run --diff",
         "lint:phpstan": "php vendor/bin/phpstan analyse --configuration=tests/phpstan/phpstan.neon",
-        "test": "php vendor/bin/phpunit --configuration=phpunit.xml.dist"
+        "test": "php vendor/bin/phpunit --configuration=phpunit.xml.dist",
+        "bump": "php tools/bump-version.php",
+        "check:version": "php tools/check-version.php"
     },
     "config": {
         "prepend-autoloader": false

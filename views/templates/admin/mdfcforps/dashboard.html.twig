@@ -3,7 +3,7 @@
 
 {% block stylesheets %}
   {{ parent() }}
-  <link rel="stylesheet" href="{{ asset('../modules/mdfcforps/views/css/admin.css') }}&mdf=20260721">
+  <link rel="stylesheet" href="{{ asset('../modules/mdfcforps/views/css/admin.css') }}&mdf=20260803">
 {% endblock %}
 
 {% block content %}
@@ -11,6 +11,10 @@
   {{ include('@Modules/mdfcforps/views/templates/admin/mdfcforps/_navigation_tabs.html.twig', { currentTab: currentTab|default('dashboard') }) }}
 
   <div class="tab-content">
+    {# Above the connection status on purpose: it renders from the cached
+       announcement, so it survives a Hub outage that would blank everything below. #}
+    {{ include('@Modules/mdfcforps/views/templates/admin/mdfcforps/_update_banner.html.twig') }}
+
     {% if error %}
       <div class="alert alert-danger" role="alert">
         {{ error }}
@@ -58,6 +62,33 @@
 
 {% block javascripts %}
   {{ parent() }}
+  <script>
+    // Confirmation + double-submit guard for the update button. The server also
+    // holds an exclusive flock for the whole swap, so this is convenience rather
+    // than the actual protection — the form works fine with JavaScript disabled.
+    (function () {
+      var form = document.querySelector('.js-mdf-update-form');
+      if (!form) { return; }
+
+      form.addEventListener('submit', function (event) {
+        var button = form.querySelector('.js-mdf-update-btn');
+        if (!button) { return; }
+
+        if (button.disabled) {
+          event.preventDefault();
+          return;
+        }
+
+        if (!window.confirm(button.getAttribute('data-confirm-label'))) {
+          event.preventDefault();
+          return;
+        }
+
+        button.disabled = true;
+        button.textContent = button.getAttribute('data-updating-label');
+      });
+    })();
+  </script>
   <script>
     window.mdfcforpsRevenueCharts = window.mdfcforpsRevenueCharts || [];
     window.mdfcforpsRevenueCharts.push({

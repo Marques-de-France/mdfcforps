@@ -27,9 +27,20 @@ jobs:
       - name: Build distributable ZIP
         run: git archive --prefix=mdfcforps/ --format=zip -o mdfcforps.zip HEAD
 
+      # The installed module verifies this checksum before replacing its own files
+      # during a self-update. Publishing it here means the value can be copied
+      # straight into the Hub's PS_MODULE_SHA256 instead of being computed by hand —
+      # an unset checksum silently drops the package-integrity check.
+      - name: Publish checksum and size
+        run: |
+          sha256sum mdfcforps.zip | tee mdfcforps.zip.sha256
+          echo "Byte size: $(stat -c%s mdfcforps.zip)"
+
       - name: Create release and attach ZIP
         uses: softprops/action-gh-release@v2
         with:
-          files: mdfcforps.zip
+          files: |
+            mdfcforps.zip
+            mdfcforps.zip.sha256
           fail_on_unmatched_files: true
           generate_release_notes: true

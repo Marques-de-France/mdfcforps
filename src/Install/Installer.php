@@ -45,6 +45,13 @@ class Installer
         ModuleConfig::update('MDFCFORPS_BACKFILL_DONE', 0);
         ModuleConfig::update('MDFCFORPS_LAST_FLUSH', 0);
 
+        // Self-update bookkeeping. MDFCFORPS_UPDATE_STATE is written globally rather
+        // than per shop — see ModuleUpdater::KEY_STATE for why.
+        ModuleConfig::update(\Mdfcforps\Service\UpdateChecker::KEY_INFO, '');
+        ModuleConfig::update(\Mdfcforps\Service\UpdateChecker::KEY_CHECKED_AT, 0);
+        ModuleConfig::update(\Mdfcforps\Service\ModuleUpdater::KEY_LAST_ERROR, '');
+        \Configuration::updateValue(\Mdfcforps\Service\ModuleUpdater::KEY_STATE, '');
+
         return true;
     }
 
@@ -63,6 +70,13 @@ class Installer
             'MDFCFORPS_BACKFILL_DONE',
             'MDFCFORPS_FEED_FILTER_MODE',
             'MDFCFORPS_LAST_FLUSH',
+            'MDFCFORPS_AFFILIATION_ACTIVE',
+            \Mdfcforps\Service\UpdateChecker::KEY_INFO,
+            \Mdfcforps\Service\UpdateChecker::KEY_CHECKED_AT,
+            \Mdfcforps\Service\ModuleUpdater::KEY_STATE,
+            \Mdfcforps\Service\ModuleUpdater::KEY_LAST_ERROR,
+            \Mdfcforps\Service\ModuleUpdater::KEY_FAULT,
+            \Mdfcforps\Service\ModuleUpdater::KEY_ALLOWED_HOSTS,
         ];
 
         foreach ($keys as $key) {

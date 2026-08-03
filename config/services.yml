@@ -49,6 +49,19 @@ services:
     file: '%kernel.project_dir%/modules/mdfcforps/src/Service/FeedProductsService.php'
     public: true
 
+  # Self-update
+  mdfcforps.update_checker:
+    class: Mdfcforps\Service\UpdateChecker
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Service/UpdateChecker.php'
+    public: true
+
+  mdfcforps.module_updater:
+    class: Mdfcforps\Service\ModuleUpdater
+    file: '%kernel.project_dir%/modules/mdfcforps/src/Service/ModuleUpdater.php'
+    arguments:
+      - '@mdfcforps.update_checker'
+    public: true
+
   # Repository
   mdfcforps.sale_repository:
     class: Mdfcforps\Repository\SaleRepository

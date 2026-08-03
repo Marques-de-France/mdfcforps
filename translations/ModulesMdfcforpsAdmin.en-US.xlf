@@ -548,6 +548,153 @@
         <target>combinations</target>
       </trans-unit>
 
+      <!-- Self-update -->
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_available">
+        <source>You are running version %current%. Version %latest% is available.</source>
+        <target>You are running version %current%. Version %latest% is available.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_now">
+        <source>Update now</source>
+        <target>Update now</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.updating">
+        <source>Updating…</source>
+        <target>Updating…</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_confirm">
+        <source>The module files will be replaced by version %latest%. Continue?</source>
+        <target>The module files will be replaced by version %latest%. Continue?</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_mandatory">
+        <source>This update is required to keep your store connected.</source>
+        <target>This update is required to keep your store connected.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_release_notes">
+        <source>Release notes</source>
+        <target>Release notes</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_check">
+        <source>Check for updates</source>
+        <target>Check for updates</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_up_to_date">
+        <source>The module is up to date.</source>
+        <target>The module is up to date.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_success">
+        <source>Update installed successfully — version %version%.</source>
+        <target>Update installed successfully — version %version%.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_failed">
+        <source>The update could not be installed.</source>
+        <target>The update could not be installed.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_half_finished">
+        <source>An update is half-finished. Click to complete it.</source>
+        <target>An update is half-finished. Click to complete it.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_finish">
+        <source>Finish the update</source>
+        <target>Finish the update</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_restore">
+        <source>Restore previous version</source>
+        <target>Restore previous version</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_manual_required">
+        <source>The module files were updated but the database upgrade could not be completed automatically. Open Modules → Module Manager, find Marques de France and click Upgrade.</source>
+        <target>The module files were updated but the database upgrade could not be completed automatically. Open Modules → Module Manager, find Marques de France and click Upgrade.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_broken">
+        <source>The update failed and the previous version could not be restored automatically. Contact support@marques-de-france.fr.</source>
+        <target>The update failed and the previous version could not be restored automatically. Contact support@marques-de-france.fr.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_recovery_command">
+        <source>Your hosting provider can restore the module with this command:</source>
+        <target>Your hosting provider can restore the module with this command:</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_blocked_intro">
+        <source>This module cannot be updated automatically on this hosting:</source>
+        <target>This module cannot be updated automatically on this hosting:</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_manual_fallback">
+        <source>You can still update manually: download the ZIP and upload it in Modules → Module Manager → Upload a module.</source>
+        <target>You can still update manually: download the ZIP and upload it in Modules → Module Manager → Upload a module.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_blocker_modules_dir">
+        <source>The modules directory is not writable by PHP.</source>
+        <target>The modules directory is not writable by PHP.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_blocker_module_dir">
+        <source>The module directory is not writable by PHP.</source>
+        <target>The module directory is not writable by PHP.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_blocker_cache_dir">
+        <source>The cache directory (var/cache) is not writable by PHP.</source>
+        <target>The cache directory (var/cache) is not writable by PHP.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_blocker_zip">
+        <source>The PHP ZIP extension (ZipArchive) is not available on this server.</source>
+        <target>The PHP ZIP extension (ZipArchive) is not available on this server.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_blocker_fopen">
+        <source>Outgoing HTTP requests are disabled on this server (allow_url_fopen).</source>
+        <target>Outgoing HTTP requests are disabled on this server (allow_url_fopen).</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_blocker_disabled_function">
+        <source>The PHP function %function% is disabled on this server.</source>
+        <target>The PHP function %function% is disabled on this server.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_blocker_php">
+        <source>PHP %required% or newer is required for this update (this server runs %current%).</source>
+        <target>PHP %required% or newer is required for this update (this server runs %current%).</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_blocker_ps">
+        <source>PrestaShop %required% or newer is required for this update (this store runs %current%).</source>
+        <target>PrestaShop %required% or newer is required for this update (this store runs %current%).</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_blocker_disk">
+        <source>Not enough free disk space to install the update (%needed% MB required).</source>
+        <target>Not enough free disk space to install the update (%needed% MB required).</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_blocker_opcache">
+        <source>PHP OPcache is configured without timestamp validation and cannot be reset from PHP. Ask your host to enable opcache.validate_timestamps, or to restart PHP after each update.</source>
+        <target>PHP OPcache is configured without timestamp validation and cannot be reset from PHP. Ask your host to enable opcache.validate_timestamps, or to restart PHP after each update.</target>
+      </trans-unit>
+
+      <trans-unit id="Modules.Mdfcforps.Admin.update_blocker_in_progress">
+        <source>An update is already in progress.</source>
+        <target>An update is already in progress.</target>
+      </trans-unit>
+
     </body>
   </file>
 </xliff>

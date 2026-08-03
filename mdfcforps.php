@@ -44,11 +44,14 @@ require_once __DIR__ . '/src/Service/LandingCapture.php';
 require_once __DIR__ . '/src/Service/FeedService.php';
 require_once __DIR__ . '/src/Service/FeedProductsService.php';
 require_once __DIR__ . '/src/Service/ModuleConfig.php';
+require_once __DIR__ . '/src/Service/UpdateException.php';
+require_once __DIR__ . '/src/Service/UpdateChecker.php';
+require_once __DIR__ . '/src/Service/ModuleUpdater.php';
 require_once __DIR__ . '/src/Controller/Admin/FeedController.php';
 
 class Mdfcforps extends Module
 {
-    public const VERSION = '1.3.0';
+    public const VERSION = '1.4.0';
     public const DB_VERSION = '1.1.0';
 
     private const LAZY_INTERVAL_SEC = 3600;
@@ -61,7 +64,7 @@ class Mdfcforps extends Module
     {
         $this->name = 'mdfcforps';
         $this->tab = 'market_place';
-        $this->version = '1.3.0';
+        $this->version = '1.4.0';
         $this->author = 'Marques de France';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -442,6 +445,35 @@ class Mdfcforps extends Module
         // Backfill: push historic orders on first run only
         if (Mdfcforps\Service\ModuleConfig::getInt('MDFCFORPS_BACKFILL_DONE', 0) !== 1) {
             $this->runBackfill($saleRepo, $hubClient);
+        }
+
+        $this->runUpdateMaintenance();
+    }
+
+    /**
+     * Keep the update banner warm and clean up old backups.
+     *
+     * The dashboard ingests the announcement for free from the /status call it
+     * already makes, so this exists for the case where nobody has opened the
+     * dashboard: it is what makes a release actually reach a merchant who only ever
+     * looks at their orders. One cheap GET per day per shop, on top of the hourly
+     * throttle the caller already applies.
+     *
+     * Swallows everything — this runs on storefront requests, where an update check
+     * has no business surfacing an error.
+     */
+    private function runUpdateMaintenance(): void
+    {
+        try {
+            $checker = new Mdfcforps\Service\UpdateChecker();
+
+            if ($checker->isStale(Mdfcforps\Service\UpdateChecker::CRON_TTL_SECONDS)) {
+                $checker->refresh();
+            }
+
+            (new Mdfcforps\Service\ModuleUpdater($checker))->garbageCollectBackups();
+        } catch (Throwable $e) {
+            // Never let update housekeeping affect a page render.
         }
     }
 

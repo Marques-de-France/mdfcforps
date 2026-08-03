@@ -1,0 +1,106 @@
+{#
+  Self-update banner.
+
+  Rendered from the CACHED announcement, not from a live Hub call, so it still
+  appears when the Hub is unreachable — which is exactly when a merchant most needs
+  to be told to update.
+
+  Outcomes are surfaced through the ?update= query parameter plus the stored last
+  error rather than Symfony flash messages: addFlash() reaches the session
+  differently on Symfony 3.4 (PS 1.7) and 6.4 (PS 9), and this whole controller
+  exists to avoid version-dependent base-class helpers.
+#}
+{% trans_default_domain 'Modules.Mdfcforps.Admin' %}
+
+{% if updateResult == 'success' %}
+  <div class="alert alert-success" role="alert">
+    <p class="alert-text">{{ 'Update installed successfully — version %version%.'|trans({'%version%': updateInfo.currentVersion}) }}</p>
+  </div>
+{% elseif updateResult == 'checked' and not updateAvailable %}
+  <div class="alert alert-info" role="alert">
+    <p class="alert-text">{{ 'The module is up to date.'|trans }}</p>
+  </div>
+{% elseif updateResult == 'failed' %}
+  <div class="alert alert-danger" role="alert">
+    <p class="alert-text">{{ 'The update could not be installed.'|trans }}</p>
+    {% if updateLastError %}
+      <p class="alert-text"><small>{{ updateLastError }}</small></p>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if updatePhase == 'broken' %}
+  {# The one state where the shop is degraded: no live module directory. #}
+  <div class="alert alert-danger" role="alert">
+    <p class="alert-text">
+      {{ 'The update failed and the previous version could not be restored automatically. Contact support@marques-de-france.fr.'|trans }}
+    </p>
+    {% if updateRecoveryCommand %}
+      <p class="alert-text">{{ 'Your hosting provider can restore the module with this command:'|trans }}</p>
+      <pre class="mdf-update-command">{{ updateRecoveryCommand }}</pre>
+    {% endif %}
+  </div>
+
+{% elseif updatePhase == 'manual_upgrade_required' %}
+  <div class="alert alert-warning" role="alert">
+    <p class="alert-text">
+      {{ 'The module files were updated but the database upgrade could not be completed automatically. Open Modules → Module Manager, find Marques de France and click Upgrade.'|trans }}
+    </p>
+    <form method="post" action="{{ path('mdfcforps_update_rollback') }}" class="mdf-update-form">
+      <input type="hidden" name="_token" value="{{ feedCsrfToken|default('') }}">
+      <button type="submit" class="btn btn-outline-secondary">{{ 'Restore previous version'|trans }}</button>
+    </form>
+  </div>
+
+{% elseif updatePhase == 'swapped' %}
+  {# Phase 1 completed but phase 2 never ran — a timeout or a closed tab. #}
+  <div class="alert alert-warning" role="alert">
+    <p class="alert-text">{{ 'An update is half-finished. Click to complete it.'|trans }}</p>
+    <a class="btn btn-primary" href="{{ path('mdfcforps_update_finalize') }}">{{ 'Finish the update'|trans }}</a>
+  </div>
+
+{% elseif updateAvailable %}
+  <div class="alert {{ updateInfo.mandatory ? 'alert-warning' : 'alert-info' }} mdf-update-banner" role="alert">
+    <p class="alert-text">
+      {{ 'You are running version %current%. Version %latest% is available.'|trans({'%current%': updateInfo.currentVersion, '%latest%': updateInfo.latestVersion}) }}
+      {% if updateInfo.mandatory %}
+        <strong>{{ 'This update is required to keep your store connected.'|trans }}</strong>
+      {% endif %}
+    </p>
+
+    {% if updateBlockers is not empty %}
+      <p class="alert-text">{{ 'This module cannot be updated automatically on this hosting:'|trans }}</p>
+      <ul class="mdf-update-blockers">
+        {% for blocker in updateBlockers %}
+          <li>{{ blocker }}</li>
+        {% endfor %}
+      </ul>
+      <p class="alert-text">
+        <small>{{ 'You can still update manually: download the ZIP and upload it in Modules → Module Manager → Upload a module.'|trans }}</small>
+      </p>
+    {% else %}
+      <form method="post" action="{{ path('mdfcforps_update_run') }}" class="mdf-update-form js-mdf-update-form">
+        <input type="hidden" name="_token" value="{{ feedCsrfToken|default('') }}">
+        <button type="submit"
+                class="btn btn-primary js-mdf-update-btn"
+                data-updating-label="{{ 'Updating…'|trans }}"
+                data-confirm-label="{{ 'The module files will be replaced by version %latest%. Continue?'|trans({'%latest%': updateInfo.latestVersion}) }}">
+          {{ 'Update now'|trans }}
+        </button>
+      </form>
+    {% endif %}
+
+    {% if updateInfo.releaseNotesUrl %}
+      <p class="alert-text mdf-update-notes">
+        <a href="{{ updateInfo.releaseNotesUrl }}" target="_blank" rel="noopener noreferrer">{{ 'Release notes'|trans }}</a>
+      </p>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if not updateAvailable and updatePhase == '' %}
+  <form method="post" action="{{ path('mdfcforps_update_check') }}" class="mdf-update-check-form">
+    <input type="hidden" name="_token" value="{{ feedCsrfToken|default('') }}">
+    <button type="submit" class="btn btn-link p-0 mdf-update-check-btn">{{ 'Check for updates'|trans }}</button>
+  </form>
+{% endif %}

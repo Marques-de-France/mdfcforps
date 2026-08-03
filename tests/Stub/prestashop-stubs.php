@@ -108,3 +108,24 @@ if (!class_exists('Tools')) {
         }
     }
 }
+
+if (!class_exists('PrestaShopLogger')) {
+    class PrestaShopLogger
+    {
+        /** @var array<int, array{message: string, severity: int}> */
+        public static $entries = [];
+
+        /**
+         * @param string      $message
+         * @param int         $severity
+         * @param int|null    $errorCode
+         * @param string|null $objectType
+         */
+        public static function addLog($message, $severity = 1, $errorCode = null, $objectType = null): bool
+        {
+            self::$entries[] = ['message' => (string) $message, 'severity' => (int) $severity];
+
+            return true;
+        }
+    }
+}
