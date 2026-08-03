@@ -153,17 +153,17 @@ a 404.
 4. **Test the exact release ZIP** on PrestaShop 1.7.8, 8.x and 9.x before step 5. Once the
    Hub announces it, every partner shop can install it unattended.
 
-5. **Announce it to partner shops** by setting these on the Hub (`mdf-connectors-hub`):
+5. **Announce it to partner shops** — one line on the Hub (`mdf-connectors-hub`), then
+   restart:
 
    ```
    PS_MODULE_LATEST_VERSION=1.4.1
-   PS_MODULE_SHA256=<from the mdfcforps.zip.sha256 release asset>
-   PS_MODULE_SIZE=<byte size of mdfcforps.zip>
-   PS_MODULE_UPDATE_ENABLED=true
    ```
 
-   Leaving `PS_MODULE_SHA256` empty ships without integrity verification — the module
-   installs whatever the URL returns. Set it.
+   The download URL and the SHA-256 are derived from that version, the checksum coming
+   from the `mdfcforps.zip.sha256` asset this workflow publishes. If the release assets
+   are not up yet, nothing is announced at all rather than something unverifiable — so
+   bumping early is harmless, it just does nothing until the workflow finishes.
 
 **To stop a bad release reaching anyone**, set `PS_MODULE_UPDATE_ENABLED=false` on the Hub.
 The banner disappears on the next dashboard load; no module release is needed.
