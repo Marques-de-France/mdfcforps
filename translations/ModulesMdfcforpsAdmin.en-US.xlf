@@ -343,11 +343,6 @@
         <target>cancelled</target>
       </trans-unit>
 
-      <trans-unit id="Modules.Mdfcforps.Admin.source_cart_attribute">
-        <source>cart_attribute</source>
-        <target>cart_attribute</target>
-      </trans-unit>
-
       <trans-unit id="Modules.Mdfcforps.Admin.chart_granularity">
         <source>Chart granularity</source>
         <target>Chart granularity</target>
@@ -371,16 +366,6 @@
       <trans-unit id="Modules.Mdfcforps.Admin.catalog_path_gt">
         <source>From your PrestaShop admin, go to Catalog &gt; Products.</source>
         <target>From your PrestaShop admin, go to Catalog &gt; Products.</target>
-      </trans-unit>
-
-      <trans-unit id="Modules.Mdfcforps.Admin.source_landing_site">
-        <source>landing_site</source>
-        <target>landing_site</target>
-      </trans-unit>
-
-      <trans-unit id="Modules.Mdfcforps.Admin.source_landing_site_ref">
-        <source>landing_site_ref</source>
-        <target>landing_site_ref</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.last_12_months">
@@ -458,11 +443,6 @@
         <target>Products in Feed</target>
       </trans-unit>
 
-      <trans-unit id="Modules.Mdfcforps.Admin.source_referring_site">
-        <source>referring_site</source>
-        <target>referring_site</target>
-      </trans-unit>
-
       <trans-unit id="Modules.Mdfcforps.Admin.status_refunded">
         <source>refunded</source>
         <target>refunded</target>
@@ -521,16 +501,6 @@
       <trans-unit id="Modules.Mdfcforps.Admin.unable_load_analytics_data">
         <source>Unable to load analytics chart data.</source>
         <target>Unable to load analytics chart data.</target>
-      </trans-unit>
-
-      <trans-unit id="Modules.Mdfcforps.Admin.source_unknown">
-        <source>unknown</source>
-        <target>unknown</target>
-      </trans-unit>
-
-      <trans-unit id="Modules.Mdfcforps.Admin.source_utm">
-        <source>utm</source>
-        <target>utm</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.selection_tag_recommended_lower">

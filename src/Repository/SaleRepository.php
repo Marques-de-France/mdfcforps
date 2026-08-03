@@ -22,6 +22,12 @@ class SaleRepository
      */
     private const ALLOWED_STATUSES = ['pending', 'confirmed', 'cancelled', 'refunded', 'failed', 'completed'];
 
+    /**
+     * Attempts after which a row stops being offered to the Hub. Also used by
+     * markUnsyncable() to retire a row the Hub deterministically refuses.
+     */
+    public const MAX_SYNC_ATTEMPTS = 5;
+
     // -----------------------------------------------------------------------
     // Writes
     // -----------------------------------------------------------------------
@@ -99,6 +105,22 @@ class SaleRepository
         return (bool) \Db::getInstance()->update(
             'mdfcforps_sales',
             ['hub_synced' => 0],
+            'id = ' . (int) $id
+        );
+    }
+
+    /**
+     * Retire a row the Hub will never accept (an unattributed sale recorded before
+     * the attribution gate existed).
+     *
+     * Keeps hub_synced = 0 so runReconciliation() never requeues it, and exhausts the
+     * attempt budget so getPendingSync() stops returning it.
+     */
+    public function markUnsyncable(int $id): bool
+    {
+        return (bool) \Db::getInstance()->update(
+            'mdfcforps_sales',
+            ['hub_synced' => 0, 'hub_sync_attempts' => self::MAX_SYNC_ATTEMPTS],
             'id = ' . (int) $id
         );
     }
@@ -218,7 +240,7 @@ class SaleRepository
         $query->select('*')
               ->from('mdfcforps_sales')
               ->where('hub_synced = 0')
-              ->where('hub_sync_attempts < 5')
+              ->where('hub_sync_attempts < ' . self::MAX_SYNC_ATTEMPTS)
               ->orderBy('created_at ASC')
               ->limit($limit);
 

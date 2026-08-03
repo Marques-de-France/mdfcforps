@@ -24,6 +24,15 @@ if (!defined('_PS_VERSION_')) {
  */
 class HubClient
 {
+    /** Sale accepted by the Hub (newly recorded, or already present). */
+    public const SYNC_SYNCED = 'synced';
+
+    /** Sale deterministically refused — retrying can never succeed. */
+    public const SYNC_IGNORED = 'ignored';
+
+    /** Transient failure — worth retrying on a later cron run. */
+    public const SYNC_FAILED = 'failed';
+
     private string $hubUrl;
     private string $shopUrl;
     private string $secureToken;
@@ -127,6 +136,21 @@ class HubClient
      */
     public function syncSale(array $sale): bool
     {
+        return $this->syncSaleWithOutcome($sale) === self::SYNC_SYNCED;
+    }
+
+    /**
+     * Push a sale and report how it landed.
+     *
+     * Distinguishes a transient failure (retry later) from a deterministic refusal
+     * (the Hub does not record unattributed sales, so retrying can never succeed).
+     *
+     * @param array<string, mixed> $sale
+     *
+     * @return string one of SYNC_SYNCED, SYNC_IGNORED, SYNC_FAILED
+     */
+    public function syncSaleWithOutcome(array $sale): string
+    {
         try {
             $response = $this->post('/api/ps/sales', [
                 'orderId' => $sale['order_id'],
@@ -150,26 +174,39 @@ class HubClient
 
             // Success means either newly recorded or already present (idempotent).
             if (($response['recorded'] ?? null) === true) {
-                return true;
+                return self::SYNC_SYNCED;
             }
 
-            if (($response['reason'] ?? '') === 'already_exists') {
-                return true;
+            $reason = (string) ($response['reason'] ?? '');
+
+            if ($reason === 'already_exists') {
+                return self::SYNC_SYNCED;
             }
 
-            return false;
+            // Deterministic refusal: the Hub does not record unattributed sales, so
+            // retrying can never succeed. Terminal — but the caller must not mark the
+            // row synced, because a synced row absent from the Hub is precisely what
+            // runReconciliation() requeues, which would loop every cron run.
+            if ($reason === 'not_attributed') {
+                return self::SYNC_IGNORED;
+            }
+
+            return self::SYNC_FAILED;
         } catch (\Throwable $e) {
-            return false;
+            return self::SYNC_FAILED;
         }
     }
 
     /**
      * Update sale status on Hub (cancelled / refunded).
+     *
+     * @param int $orderId the PrestaShop order id (id_order), which is how the Hub
+     *                     keys sales — not the local mdfcforps_sales row id
      */
-    public function updateSaleStatus(int $saleId, string $status): bool
+    public function updateSaleStatus(int $orderId, string $status): bool
     {
         try {
-            $response = $this->post("/api/ps/sales/{$saleId}/status", [
+            $response = $this->post("/api/ps/sales/{$orderId}/status", [
                 'status' => $status,
             ]);
 

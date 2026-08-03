@@ -40,6 +40,7 @@ require_once __DIR__ . '/src/Install/Installer.php';
 require_once __DIR__ . '/src/Service/HubClient.php';
 require_once __DIR__ . '/src/Repository/SaleRepository.php';
 require_once __DIR__ . '/src/Service/AttributionService.php';
+require_once __DIR__ . '/src/Service/LandingCapture.php';
 require_once __DIR__ . '/src/Service/FeedService.php';
 require_once __DIR__ . '/src/Service/FeedProductsService.php';
 require_once __DIR__ . '/src/Service/ModuleConfig.php';
@@ -47,7 +48,7 @@ require_once __DIR__ . '/src/Controller/Admin/FeedController.php';
 
 class Mdfcforps extends Module
 {
-    public const VERSION = '1.2.0';
+    public const VERSION = '1.3.0';
     public const DB_VERSION = '1.1.0';
 
     private const LAZY_INTERVAL_SEC = 3600;
@@ -60,7 +61,7 @@ class Mdfcforps extends Module
     {
         $this->name = 'mdfcforps';
         $this->tab = 'market_place';
-        $this->version = '1.2.0';
+        $this->version = '1.3.0';
         $this->author = 'Marques de France';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -200,7 +201,24 @@ class Mdfcforps extends Module
         }
 
         $attributionService = new Mdfcforps\Service\AttributionService();
-        $attributionData = $attributionService->collectFromCookies();
+        $attributionData = $attributionService->collectSignals();
+
+        // Hard gate — parity with the WooCommerce plugin (record_local_sale) and the
+        // Shopify webhook (track.routes.js). Recording every order of the shop,
+        // attributed or not, made the dashboard report that 100% of sales came from
+        // Marques de France and had commission computed on orders we never brought.
+        // An unattributed order is never stored locally and never sent to the Hub.
+        if (!$attributionService->isMdfAttributed($attributionData)) {
+            PrestaShopLogger::addLog(
+                '[MDF] Order not recorded — no Marques de France attribution: '
+                . $this->maskEntityId('order', (int) $order->id),
+                1,
+                null,
+                'Mdfcforps'
+            );
+
+            return;
+        }
 
         $saleRepo = new Mdfcforps\Repository\SaleRepository();
         $inserted = $saleRepo->recordSale($order, $attributionData);
@@ -299,8 +317,13 @@ class Mdfcforps extends Module
 
         $saleRepo->updateStatus((int) $sale['id'], $newStatus);
 
+        // The Hub keys sales on the PrestaShop order id, not on the local row id.
+        // Sending $sale['id'] meant cancellations and refunds never propagated, so
+        // cancelled orders kept counting as confirmed revenue in the dashboard — and
+        // the Hub-authoritative status parity in runReconciliation() then reverted the
+        // local row back to "confirmed".
         $hubClient = new Mdfcforps\Service\HubClient();
-        $hubClient->updateSaleStatus((int) $sale['id'], $newStatus);
+        $hubClient->updateSaleStatus((int) $sale['order_id'], $newStatus);
     }
 
     // -----------------------------------------------------------------------
@@ -319,6 +342,19 @@ class Mdfcforps extends Module
         $isBoEmployee = $this->context->employee instanceof Employee
             && $this->context->employee->isLoggedBack();
         $isFront = !$this->context->controller instanceof AdminController;
+
+        if ($isFront) {
+            // Server-side attribution capture: reads the Marques de France signals
+            // straight out of $_GET, so attribution survives the front tracker JS
+            // being blocked (adblocker, CSP, another module's JS error) — which
+            // would otherwise take the cookies, localStorage and the AJAX stamp
+            // down together, since one file writes all three.
+            //
+            // displayHeader rather than an earlier hook: Context::getContext()->cookie
+            // is created during FrontController::init(), so at actionDispatcher time
+            // there would be no session to write to.
+            (new Mdfcforps\Service\LandingCapture())->capture();
+        }
 
         if ($isBoEmployee || $isFront) {
             $this->runLazyCron();
@@ -372,18 +408,35 @@ class Mdfcforps extends Module
         $this->runReconciliation($saleRepo, $hubClient);
 
         $pending = $saleRepo->getPendingSync(50);
+        $ignored = 0;
 
         foreach ($pending as $sale) {
             try {
-                $result = $hubClient->syncSale($sale);
-                if ($result) {
+                $outcome = $hubClient->syncSaleWithOutcome($sale);
+
+                if ($outcome === Mdfcforps\Service\HubClient::SYNC_SYNCED) {
                     $saleRepo->markSynced((int) $sale['id']);
+                } elseif ($outcome === Mdfcforps\Service\HubClient::SYNC_IGNORED) {
+                    // Unattributed row recorded before the attribution gate: the Hub
+                    // will never accept it, so retire it instead of burning the whole
+                    // attempt budget one cron run at a time.
+                    $saleRepo->markUnsyncable((int) $sale['id']);
+                    ++$ignored;
                 } else {
                     $saleRepo->incrementSyncAttempts((int) $sale['id']);
                 }
             } catch (Throwable $e) {
                 $saleRepo->incrementSyncAttempts((int) $sale['id']);
             }
+        }
+
+        if ($ignored > 0) {
+            PrestaShopLogger::addLog(
+                '[MDF] Flush: ' . $ignored . ' unattributed legacy sale(s) retired (the Hub does not record them)',
+                1,
+                null,
+                'Mdfcforps'
+            );
         }
 
         // Backfill: push historic orders on first run only
@@ -404,6 +457,13 @@ class Mdfcforps extends Module
             foreach ($localSales as $sale) {
                 $orderId = (string) ($sale['order_id'] ?? '');
                 if ($orderId === '') {
+                    continue;
+                }
+
+                // Never push historic unattributed rows: they are exactly what made
+                // the dashboard report 100% Marques de France sales. The rows stay
+                // where they are — they are simply no longer offered to the Hub.
+                if (!Mdfcforps\Service\AttributionService::isMdfSource((string) ($sale['attribution_source'] ?? ''))) {
                     continue;
                 }
 
@@ -450,6 +510,13 @@ class Mdfcforps extends Module
             // Hub is source of truth: restore missing local rows found remotely.
             foreach ($hubSalesByOrderId as $orderId => $hubSale) {
                 if (isset($localOrderIdSet[$orderId])) {
+                    continue;
+                }
+
+                // Historic Hub rows recorded before the attribution gate are left
+                // untouched remotely, but are never re-imported locally — this is
+                // the one other path that could insert an unattributed row.
+                if (!Mdfcforps\Service\AttributionService::isMdfSource((string) ($hubSale['attributionSource'] ?? ''))) {
                     continue;
                 }
 

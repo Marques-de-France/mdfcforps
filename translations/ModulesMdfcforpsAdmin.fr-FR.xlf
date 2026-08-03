@@ -344,11 +344,6 @@
         <target>annulée</target>
       </trans-unit>
 
-      <trans-unit id="Modules.Mdfcforps.Admin.source_cart_attribute">
-        <source>cart_attribute</source>
-        <target>attribut_panier</target>
-      </trans-unit>
-
       <trans-unit id="Modules.Mdfcforps.Admin.chart_granularity">
         <source>Chart granularity</source>
         <target>Granularité du graphique</target>
@@ -372,16 +367,6 @@
       <trans-unit id="Modules.Mdfcforps.Admin.catalog_path_gt">
         <source>From your PrestaShop admin, go to Catalog &gt; Products.</source>
         <target>Depuis votre administration PrestaShop, allez dans Catalogue &gt; Produits.</target>
-      </trans-unit>
-
-      <trans-unit id="Modules.Mdfcforps.Admin.source_landing_site">
-        <source>landing_site</source>
-        <target>site_destination</target>
-      </trans-unit>
-
-      <trans-unit id="Modules.Mdfcforps.Admin.source_landing_site_ref">
-        <source>landing_site_ref</source>
-        <target>ref_site_destination</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.last_12_months">
@@ -459,11 +444,6 @@
         <target>Produits dans le flux</target>
       </trans-unit>
 
-      <trans-unit id="Modules.Mdfcforps.Admin.source_referring_site">
-        <source>referring_site</source>
-        <target>site_référent</target>
-      </trans-unit>
-
       <trans-unit id="Modules.Mdfcforps.Admin.status_refunded">
         <source>refunded</source>
         <target>remboursée</target>
@@ -522,16 +502,6 @@
       <trans-unit id="Modules.Mdfcforps.Admin.unable_load_analytics_data">
         <source>Unable to load analytics chart data.</source>
         <target>Impossible de charger les données analytiques du graphique.</target>
-      </trans-unit>
-
-      <trans-unit id="Modules.Mdfcforps.Admin.source_unknown">
-        <source>unknown</source>
-        <target>inconnu</target>
-      </trans-unit>
-
-      <trans-unit id="Modules.Mdfcforps.Admin.source_utm">
-        <source>utm</source>
-        <target>utm</target>
       </trans-unit>
 
       <trans-unit id="Modules.Mdfcforps.Admin.selection_tag_recommended_lower">

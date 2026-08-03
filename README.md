@@ -81,6 +81,33 @@ points to the newest version.
 
 ## Changelog
 
+### 1.3.0
+
+**Sales — your figures now cover Marques de France orders only.** The dashboard, the
+Sales tab and the sale notifications report exclusively the orders that Marques de France
+brought to your shop. Orders reaching you through your own channels are not counted in
+these figures.
+
+Expect lower totals after updating: they now measure your Marques de France volume
+specifically rather than your overall activity. Records created before this version are
+left unchanged, so all-time totals still include them.
+
+**Attribution — considerably more reliable.**
+- Campaign links are recognised whether the Marques de France marker sits on the
+  campaign source, medium or campaign name.
+- Attribution is now also detected on arrival without JavaScript, so it survives ad
+  blockers, content-blocking extensions and script errors from other modules — and it is
+  remembered for 60 days rather than for the browsing session alone.
+- Newsletter and hand-built links carrying `?ref=marques-de-france` benefit from the same
+  detection. The value must contain the full `marques-de-france` token.
+- A returning visitor whose browser had cleared the tracking cookies is recognised again
+  on their next visit.
+
+**Cancellations and refunds** are now reflected on the Marques de France side, so they no
+longer count towards confirmed revenue.
+
+**Compatibility.** No database change.
+
 ### 1.2.0
 
 **Sales.**

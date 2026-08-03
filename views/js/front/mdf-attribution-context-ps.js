@@ -245,22 +245,28 @@
     }
 
     // -----------------------------------------------------------------------
-    // First-touch: don't overwrite existing attribution.
-    // isAttributionValid() checks localStorage (TS-gated) then cookie fallback.
+    // Branch on the fresh signal first, mirroring the Shopify tracker
+    // (mdf-tracker.js). Branching on the *combination* of the two flags used to
+    // leave "attributed link + already-attributed visitor" doing nothing at all:
+    // no cookie rehydration and no session stamp, so a returning visitor whose
+    // cookies the browser had pruned produced no server-readable signal on that
+    // page view. The per-key first-touch guards keep this idempotent.
     // -----------------------------------------------------------------------
     var alreadyAttributed = isAttributionValid();
 
-    if ( isAttributed && !alreadyAttributed ) {
+    if ( isAttributed ) {
       // Landing page = full current URL (before any redirect).
       var landingUrl = window.location.href;
 
-      // Write attribution flag to both LS (with timestamp) and cookie.
+      // Attribution flag to both LS (with timestamp) and cookie. Re-clicking an
+      // MDF link refreshes the TTL window; the signal values below keep their
+      // first-touch value.
       setLocalValue( 'mdf_attributed',    '1' );
       setLocalValue( 'mdf_attributed_at', String( Date.now() ) );
       setCookie( 'mdf_attributed', '1', COOKIE_TTL_DAYS );
 
       // Write click_id with its own TS key for independent TTL tracking.
-      if ( clickId ) {
+      if ( clickId && ! getStoredValue( 'mdf_click_id', 'mdf_click_id' ) ) {
         setLocalValue( 'mdf_click_id',    clickId );
         setLocalValue( 'mdf_click_id_at', String( Date.now() ) );
         setCookie( 'mdf_click_id', clickId, COOKIE_TTL_DAYS );
@@ -276,37 +282,40 @@
       persistFirstTouch( 'mdf_referring_site', 'mdf_referring_site', referrerUrl );
       persistFirstTouch( 'mdf_landing_ref',    'mdf_landing_ref',    refParam );
 
-      stampSession( runtime, {
-        mdf_attributed:    '1',
-        mdf_utm_source:    utmSource,
-        mdf_utm_medium:    utmMedium,
-        mdf_utm_campaign:  utmCampaign,
-        mdf_utm_content:   utmContent,
-        mdf_utm_term:      utmTerm,
-        mdf_landing_site:  landingUrl,
-        mdf_referring_site:referrerUrl,
-        mdf_landing_ref:   refParam,
-        mdf_click_id:      clickId,
-      } );
+      // Restore any cookie the browser pruned while localStorage survived — the
+      // server reads cookies, so this is what makes an ITP-pruned visitor
+      // attributable again.
+      rehydrateContextCookies();
 
-    } else if ( !isAttributed && alreadyAttributed ) {
+      stampSession( runtime, buildStampPayload() );
+
+    } else if ( alreadyAttributed ) {
       // Visitor returning without UTMs but attribution is still live.
       // Restore any cookies that were pruned (Safari ITP), then re-stamp the session.
       rehydrateContextCookies();
 
-      stampSession( runtime, {
-        mdf_attributed:    '1',
-        mdf_utm_source:    getStoredValue( 'mdf_utm_source',     'mdf_utm_source' ),
-        mdf_utm_medium:    getStoredValue( 'mdf_utm_medium',     'mdf_utm_medium' ),
-        mdf_utm_campaign:  getStoredValue( 'mdf_utm_campaign',   'mdf_utm_campaign' ),
-        mdf_utm_content:   getStoredValue( 'mdf_utm_content',    'mdf_utm_content' ),
-        mdf_utm_term:      getStoredValue( 'mdf_utm_term',       'mdf_utm_term' ),
-        mdf_landing_site:  getStoredValue( 'mdf_landing_site',   'mdf_landing_site' ),
-        mdf_referring_site:getStoredValue( 'mdf_referring_site', 'mdf_referring_site' ),
-        mdf_landing_ref:   getStoredValue( 'mdf_landing_ref',    'mdf_landing_ref' ),
-        mdf_click_id:      getStoredClickId(),
-      } );
+      stampSession( runtime, buildStampPayload() );
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // Session-stamp payload, always built from the stored (first-touch) values so
+  // both branches transmit the same attribution the checkout will read back.
+  // -------------------------------------------------------------------------
+
+  function buildStampPayload() {
+    return {
+      mdf_attributed:    '1',
+      mdf_utm_source:    getStoredValue( 'mdf_utm_source',     'mdf_utm_source' ),
+      mdf_utm_medium:    getStoredValue( 'mdf_utm_medium',     'mdf_utm_medium' ),
+      mdf_utm_campaign:  getStoredValue( 'mdf_utm_campaign',   'mdf_utm_campaign' ),
+      mdf_utm_content:   getStoredValue( 'mdf_utm_content',    'mdf_utm_content' ),
+      mdf_utm_term:      getStoredValue( 'mdf_utm_term',       'mdf_utm_term' ),
+      mdf_landing_site:  getStoredValue( 'mdf_landing_site',   'mdf_landing_site' ),
+      mdf_referring_site:getStoredValue( 'mdf_referring_site', 'mdf_referring_site' ),
+      mdf_landing_ref:   getStoredValue( 'mdf_landing_ref',    'mdf_landing_ref' ),
+      mdf_click_id:      getStoredClickId(),
+    };
   }
 
   // -------------------------------------------------------------------------

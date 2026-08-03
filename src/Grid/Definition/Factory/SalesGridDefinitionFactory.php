@@ -125,13 +125,21 @@ final class SalesGridDefinitionFactory extends AbstractGridDefinitionFactory
                 ->setTypeOptions([
                     'required' => false,
                     'placeholder' => $this->trans('All', [], 'Admin.Global'),
+                    // Exactly the values AttributionService::resolveSource() writes
+                    // (see AttributionService::MDF_SOURCES), in its resolution order.
+                    // The previous list was the Shopify connector's vocabulary —
+                    // cart_attribute, landing_site_ref, referring_site… — which this
+                    // module never produces, so every one of those filters returned an
+                    // empty grid while matching sales sat right there.
+                    //
+                    // Labels are the raw values on purpose: they are the same tokens
+                    // shown in the Source column, so the filter and the grid read alike.
+                    'choice_translation_domain' => false,
                     'choices' => [
-                        $this->trans('utm', [], 'Modules.Mdfcforps.Admin') => 'utm',
-                        $this->trans('cart_attribute', [], 'Modules.Mdfcforps.Admin') => 'cart_attribute',
-                        $this->trans('landing_site_ref', [], 'Modules.Mdfcforps.Admin') => 'landing_site_ref',
-                        $this->trans('landing_site', [], 'Modules.Mdfcforps.Admin') => 'landing_site',
-                        $this->trans('referring_site', [], 'Modules.Mdfcforps.Admin') => 'referring_site',
-                        $this->trans('unknown', [], 'Modules.Mdfcforps.Admin') => 'unknown',
+                        'mdf_click' => 'mdf_click',
+                        'mdf_landing_ref' => 'mdf_landing_ref',
+                        'mdf_utm' => 'mdf_utm',
+                        'mdf_referrer' => 'mdf_referrer',
                     ],
                 ])
                 ->setAssociatedColumn('source')
