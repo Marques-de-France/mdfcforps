@@ -215,6 +215,40 @@ testing a filesystem topology no real shop has. Use `docker cp` instead.
 
 ## Changelog
 
+### 1.5.0
+
+**Sales are no longer lost when your payment provider redirects the customer.** Modules
+such as PayPlug, Stripe Checkout, PayPal or Alma take the customer off your shop to pay,
+then confirm the order either through a server-to-server notification or through a return
+that the browser treats as coming from another site. In both cases the visitor's browser
+sends no attribution cookies at all, and the module — which only read them at that exact
+moment — concluded that the order came from nowhere and discarded it. Nothing was recorded
+locally, nothing reached Marques de France, and nothing could be retried later. A shop
+using such a provider could lose every single one of its Marques de France orders without
+any visible sign.
+
+The attribution is now written against the cart as soon as it is known, while the customer
+is still on your shop, and read back from there when the order is validated. Ordinary
+checkouts are unaffected: they resolve exactly as before, and only an order that would
+otherwise have been thrown away costs an extra lookup.
+
+**A second safety net on the order confirmation page.** That page always opens in the
+customer's own browser, so the attribution is readable there even when it was not during
+payment. If an attributed order somehow reached that page unrecorded, it is recorded then.
+Reloading the page never creates a duplicate.
+
+**Your customers' sessions are better protected.** PrestaShop packs its whole session into
+a single cookie with a limited size, and a long landing address could fill it on its own —
+at which point the browser drops the cookie and the customer loses their basket. The module
+no longer stores full-length addresses there; they are kept elsewhere and still reported in
+full.
+
+**Order placement can no longer be interrupted by this module.** Any unexpected fault while
+recording a sale is now caught and logged instead of reaching the checkout.
+
+**Compatibility.** Adds one database table and three hooks. Both are applied automatically
+by the update.
+
 ### 1.4.0
 
 **One-click updates.** The module now tells you when a new version is available and

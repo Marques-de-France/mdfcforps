@@ -54,7 +54,7 @@ require_once __DIR__ . '/src/Controller/Admin/FeedController.php';
 
 class Mdfcforps extends Module
 {
-    public const VERSION = '1.4.2';
+    public const VERSION = '1.5.0';
     public const DB_VERSION = '1.2.0';
 
     private const LAZY_INTERVAL_SEC = 3600;
@@ -78,7 +78,7 @@ class Mdfcforps extends Module
     {
         $this->name = 'mdfcforps';
         $this->tab = 'market_place';
-        $this->version = '1.4.2';
+        $this->version = '1.5.0';
         $this->author = 'Marques de France';
         $this->need_instance = 0;
         $this->bootstrap = true;
