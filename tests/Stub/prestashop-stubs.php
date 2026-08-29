@@ -8,7 +8,9 @@
  * file is inert if a real PrestaShop is ever loaded alongside it.
  *
  * Configuration is deliberately NOT stubbed: its absence is what proves the
- * class_exists guard in AttributionService::shopHosts() does its job.
+ * class_exists guard in AttributionService::shopHosts() does its job. Db is not
+ * stubbed either — repository behaviour is covered by passing the services under
+ * test an anonymous subclass of the repository, so no double has to imitate MySQL.
  *
  * tests/ is export-ignored, so none of this reaches the release archive.
  *
@@ -87,6 +89,27 @@ if (!class_exists('Context')) {
         public static function resetForTests(): void
         {
             self::$instance = null;
+        }
+    }
+}
+
+if (!class_exists('Order')) {
+    /**
+     * Only the two properties OrderAttributionResolver reads. Deliberately not an
+     * ObjectModel: nothing under test loads, saves or validates an order.
+     */
+    class Order
+    {
+        /** @var int */
+        public $id = 0;
+
+        /** @var int */
+        public $id_cart = 0;
+
+        public function __construct(int $id = 0, int $idCart = 0)
+        {
+            $this->id = $id;
+            $this->id_cart = $idCart;
         }
     }
 }

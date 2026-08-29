@@ -94,6 +94,12 @@ class LandingCapture
 
             $this->writeSessionCookie($signals);
             $this->writeDurableCookies($signals);
+
+            // A cart may already exist from an earlier, unattributed visit. If this
+            // visitor now goes straight to checkout there will be no further cart
+            // mutation to trigger the freeze, so do it here while the signals this
+            // request just established are fresh.
+            (new CartAttributionFreezer($this->attributionService))->freeze();
         } catch (\Throwable $e) {
             // Swallowed on purpose — see the method docblock.
         }

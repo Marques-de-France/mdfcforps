@@ -304,6 +304,91 @@ final class AttributionServiceTest extends TestCase
     }
 
     // -----------------------------------------------------------------------
+    // preferAttributed() — live cookies vs the attribution frozen on the cart
+    // -----------------------------------------------------------------------
+
+    public function testPreferAttributedKeepsLiveWhenLiveIsAttributed(): void
+    {
+        $live = ['source' => 'mdf_click', 'click_id' => 'LIVE_CLICK'];
+        $frozen = ['source' => 'mdf_utm', 'utm_source' => 'marques-de-france'];
+
+        // The no-regression guarantee: a shop whose checkout already works keeps
+        // taking exactly the path it takes today.
+        self::assertSame($live, AttributionService::preferAttributed($live, $frozen));
+    }
+
+    public function testPreferAttributedFallsBackToFrozenWhenLiveIsUnknown(): void
+    {
+        $live = ['source' => 'unknown', 'click_id' => ''];
+        $frozen = [
+            'source' => 'mdf_landing_ref',
+            'landing_ref' => 'https://example.test/?ref=marques-de-france',
+            'utm_source' => 'marques-de-france',
+        ];
+
+        // The bug being fixed: an order validated by a payment provider's IPN, or
+        // returned via a cross-site POST, carries no readable cookies.
+        self::assertSame($frozen, AttributionService::preferAttributed($live, $frozen));
+    }
+
+    public function testPreferAttributedReturnsLiveWhenNothingIsFrozen(): void
+    {
+        $live = ['source' => 'unknown'];
+
+        $resolved = AttributionService::preferAttributed($live, null);
+
+        self::assertSame($live, $resolved);
+        self::assertFalse((new AttributionService())->isMdfAttributed($resolved));
+    }
+
+    public function testPreferAttributedIgnoresAnUnattributedFrozenRow(): void
+    {
+        $live = ['source' => 'unknown'];
+        $frozen = ['source' => 'unknown', 'utm_source' => 'newsletter-interne'];
+
+        // A stale non-Marques-de-France row must never manufacture an attribution.
+        $resolved = AttributionService::preferAttributed($live, $frozen);
+
+        self::assertSame($live, $resolved);
+        self::assertFalse((new AttributionService())->isMdfAttributed($resolved));
+    }
+
+    // -----------------------------------------------------------------------
+    // Session cookie size budget
+    // -----------------------------------------------------------------------
+
+    public function testStampCookieTruncatesUrlSignalsButNotTheOthers(): void
+    {
+        $this->givenShopSession();
+
+        $longUrl = 'https://boutique.test/?utm_source=marques-de-france&filler=' . str_repeat('a', 3000);
+
+        (new AttributionService())->stampCookie([
+            'mdf_landing_site' => $longUrl,
+            'mdf_referring_site' => $longUrl,
+            'mdf_utm_source' => 'marques-de-france',
+        ]);
+
+        $cookie = \Context::getContext()->cookie;
+
+        // PrestaShop packs every key into one encrypted cookie with a practical
+        // budget near 1000 characters; two untruncated URLs would drop the whole
+        // cookie, and the visitor's session with it.
+        self::assertSame(255, strlen((string) $cookie->__get('mdf_landing_site')));
+        self::assertSame(255, strlen((string) $cookie->__get('mdf_referring_site')));
+        self::assertSame('marques-de-france', $cookie->__get('mdf_utm_source'));
+    }
+
+    public function testStampCookieStoresTheCartFrozenMemo(): void
+    {
+        $this->givenShopSession();
+
+        (new AttributionService())->stampCookie([AttributionService::CART_FROZEN_KEY => '4242']);
+
+        self::assertSame('4242', \Context::getContext()->cookie->__get(AttributionService::CART_FROZEN_KEY));
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
 

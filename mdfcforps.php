@@ -39,8 +39,11 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 require_once __DIR__ . '/src/Install/Installer.php';
 require_once __DIR__ . '/src/Service/HubClient.php';
 require_once __DIR__ . '/src/Repository/SaleRepository.php';
+require_once __DIR__ . '/src/Repository/CartAttributionRepository.php';
 require_once __DIR__ . '/src/Service/AttributionService.php';
 require_once __DIR__ . '/src/Service/LandingCapture.php';
+require_once __DIR__ . '/src/Service/CartAttributionFreezer.php';
+require_once __DIR__ . '/src/Service/OrderAttributionResolver.php';
 require_once __DIR__ . '/src/Service/FeedService.php';
 require_once __DIR__ . '/src/Service/FeedProductsService.php';
 require_once __DIR__ . '/src/Service/ModuleConfig.php';
@@ -52,9 +55,20 @@ require_once __DIR__ . '/src/Controller/Admin/FeedController.php';
 class Mdfcforps extends Module
 {
     public const VERSION = '1.4.2';
-    public const DB_VERSION = '1.1.0';
+    public const DB_VERSION = '1.2.0';
 
     private const LAZY_INTERVAL_SEC = 3600;
+    private const CART_PURGE_INTERVAL_SEC = 86400;
+
+    /**
+     * How long a frozen cart attribution stays readable.
+     *
+     * Longer than the 60-day cookie TTL on purpose: the row is written when the cart
+     * is first attributed and read when the order is validated, and the only thing
+     * that stretches that gap is a visitor resuming a long-abandoned cart — exactly
+     * the case where the cookie is already gone and the row is the last record left.
+     */
+    private const CART_ATTRIBUTION_TTL_DAYS = 90;
     private const RECONCILE_WINDOW_DAYS = 7;
     private const RECONCILE_LOCAL_LIMIT = 300;
     private const HUB_PAGE_LIMIT = 100;
@@ -99,8 +113,13 @@ class Mdfcforps extends Module
         $hooks = [
             'actionValidateOrder',
             'actionOrderStatusUpdate',
+            // Recovers a sale the payment flow cost us — see hookDisplayOrderConfirmation().
+            'displayOrderConfirmation',
             'displayHeader',
             'displayBeforeBodyClosingTag',
+            // Freeze attribution onto the cart before payment — see CartAttributionFreezer.
+            'actionObjectCartAddAfter',
+            'actionObjectCartUpdateAfter',
         ];
 
         foreach ($hooks as $hook) {
@@ -203,28 +222,166 @@ class Mdfcforps extends Module
             return;
         }
 
-        $attributionService = new Mdfcforps\Service\AttributionService();
-        $attributionData = $attributionService->collectSignals();
+        // Everything below runs inside PaymentModule::validateOrder(). PrestaShop does
+        // not reliably shield a merchant from a module fault there — Error and
+        // TypeError are never caught, and PS 1.7.7 wraps hook calls in nothing at all —
+        // so an uncaught throw here costs the customer their order. Nothing this
+        // module does is worth that.
+        try {
+            $attributionService = new Mdfcforps\Service\AttributionService();
 
-        // Hard gate — parity with the WooCommerce plugin (record_local_sale) and the
-        // Shopify webhook (track.routes.js). Recording every order of the shop,
-        // attributed or not, made the dashboard report that 100% of sales came from
-        // Marques de France and had commission computed on orders we never brought.
-        // An unattributed order is never stored locally and never sent to the Hub.
-        if (!$attributionService->isMdfAttributed($attributionData)) {
+            // Live cookies first, then the attribution frozen against the cart before
+            // payment. That fallback is the whole point: a redirect payment provider
+            // validates the order either from a server-to-server IPN carrying no
+            // cookies, or from a cross-site POST return on which SameSite=Lax
+            // withholds them — and the live read then reports "unknown" for a sale
+            // Marques de France genuinely brought.
+            $attributionData = (new Mdfcforps\Service\OrderAttributionResolver($attributionService))
+                ->resolveForOrder($order);
+
+            // Hard gate — parity with the WooCommerce plugin (record_local_sale) and the
+            // Shopify webhook (track.routes.js). Recording every order of the shop,
+            // attributed or not, made the dashboard report that 100% of sales came from
+            // Marques de France and had commission computed on orders we never brought.
+            // An unattributed order is never stored locally and never sent to the Hub.
+            if (!$attributionService->isMdfAttributed($attributionData)) {
+                PrestaShopLogger::addLog(
+                    '[MDF] Order not recorded — no Marques de France attribution: '
+                    . $this->maskEntityId('order', (int) $order->id),
+                    1,
+                    null,
+                    'Mdfcforps'
+                );
+
+                return;
+            }
+
+            $this->recordAndSyncSale($order, $attributionData);
+        } catch (Throwable $e) {
             PrestaShopLogger::addLog(
-                '[MDF] Order not recorded — no Marques de France attribution: '
+                '[MDF] Order recording failed for ' . $this->maskEntityId('order', (int) $order->id)
+                . ': ' . $this->sanitizeLogMessage($e->getMessage()),
+                3,
+                null,
+                'Mdfcforps'
+            );
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Hook: order confirmation page → recover a sale the payment flow lost
+    // -----------------------------------------------------------------------
+
+    /**
+     * Last line of defence for an attributed order that actionValidateOrder could not
+     * see.
+     *
+     * This page is the one moment after payment that is guaranteed to run in the
+     * customer's own browser: PrestaShop reaches it by a top-level GET redirect, which
+     * SameSite=Lax explicitly permits, so the mdf_* cookies are present here even when
+     * they were withheld from the payment provider's cross-site POST return.
+     *
+     * OrderConfirmationController::init() has already matched the order's secure_key
+     * and id_customer against this visitor before the hook fires, so a loaded-object
+     * check is all the validation needed.
+     */
+    public function hookDisplayOrderConfirmation(array $params): string
+    {
+        try {
+            /** @var Order $order */
+            $order = $params['order'] ?? null;
+            if (!$order instanceof Order || !Validate::isLoadedObject($order)) {
+                return '';
+            }
+
+            $saleRepo = new Mdfcforps\Repository\SaleRepository();
+
+            // Idempotency: normally actionValidateOrder already recorded this sale, and
+            // this is also what makes reloading the confirmation page harmless.
+            if ($saleRepo->findByOrderId((int) $order->id) !== null) {
+                return '';
+            }
+
+            $attributionService = new Mdfcforps\Service\AttributionService();
+            $attributionData = (new Mdfcforps\Service\OrderAttributionResolver($attributionService))
+                ->resolveForOrder($order);
+
+            if (!$attributionService->isMdfAttributed($attributionData)) {
+                return '';
+            }
+
+            $this->recordAndSyncSale($order, $attributionData);
+
+            PrestaShopLogger::addLog(
+                '[MDF] Sale recovered on the order confirmation page: '
                 . $this->maskEntityId('order', (int) $order->id),
                 1,
                 null,
                 'Mdfcforps'
             );
+        } catch (Throwable $e) {
+            PrestaShopLogger::addLog(
+                '[MDF] Order confirmation recovery failed: ' . $this->sanitizeLogMessage($e->getMessage()),
+                2,
+                null,
+                'Mdfcforps'
+            );
+        }
 
+        return '';
+    }
+
+    // -----------------------------------------------------------------------
+    // Hooks: cart mutations → freeze attribution before payment
+    // -----------------------------------------------------------------------
+
+    public function hookActionObjectCartAddAfter(array $params): void
+    {
+        $this->freezeCartAttribution($params);
+    }
+
+    public function hookActionObjectCartUpdateAfter(array $params): void
+    {
+        $this->freezeCartAttribution($params);
+    }
+
+    /**
+     * ObjectModel emits both hooks with ['object' => $this] on every supported
+     * PrestaShop version, which is why they are used in preference to actionCartSave:
+     * that one carries no parameters at all on 1.7.7.x, and the obvious
+     * Context::getContext()->cart fallback is unreliable there because
+     * FrontController::init() updates the cart before assigning it to the context.
+     *
+     * @param array<string, mixed> $params
+     */
+    private function freezeCartAttribution(array $params): void
+    {
+        $cart = $params['object'] ?? null;
+        if (!$cart instanceof Cart || (int) $cart->id <= 0) {
             return;
         }
 
+        // Costs nothing for a visitor carrying no Marques de France attribution: the
+        // freezer decides from cookies alone and never reaches the database.
+        (new Mdfcforps\Service\CartAttributionFreezer())->freeze((int) $cart->id);
+    }
+
+    // -----------------------------------------------------------------------
+    // Recording a sale
+    // -----------------------------------------------------------------------
+
+    /**
+     * Record a sale locally, then push it to the Hub straight away.
+     *
+     * Shared by hookActionValidateOrder and hookDisplayOrderConfirmation so the
+     * insert / resolve-inserted-row / sync / retry-accounting sequence exists once.
+     *
+     * @param array<string, string> $attribution
+     */
+    private function recordAndSyncSale(Order $order, array $attribution): void
+    {
         $saleRepo = new Mdfcforps\Repository\SaleRepository();
-        $inserted = $saleRepo->recordSale($order, $attributionData);
+        $inserted = $saleRepo->recordSale($order, $attribution);
 
         // Immediate sync for freshly created rows.
         // If Hub is unavailable, keep local row pending for lazy-cron retries.
@@ -448,6 +605,34 @@ class Mdfcforps extends Module
         }
 
         $this->runUpdateMaintenance();
+        $this->runCartAttributionPurge();
+    }
+
+    /**
+     * Drop cart-attribution rows old enough that no order can still reference them.
+     *
+     * Own daily throttle on top of the caller's hourly one, and a bounded DELETE so a
+     * first purge on a long-running shop can never hold locks; the remainder drains
+     * over the following days.
+     *
+     * Swallows everything — this runs on storefront requests, where housekeeping has
+     * no business surfacing an error.
+     */
+    private function runCartAttributionPurge(): void
+    {
+        try {
+            $lastPurge = Mdfcforps\Service\ModuleConfig::getInt('MDFCFORPS_LAST_CART_PURGE', 0);
+            if ((time() - $lastPurge) < self::CART_PURGE_INTERVAL_SEC) {
+                return;
+            }
+
+            Mdfcforps\Service\ModuleConfig::update('MDFCFORPS_LAST_CART_PURGE', time());
+
+            (new Mdfcforps\Repository\CartAttributionRepository())
+                ->purgeOlderThan(self::CART_ATTRIBUTION_TTL_DAYS);
+        } catch (Throwable $e) {
+            // Never let housekeeping affect a page render.
+        }
     }
 
     /**

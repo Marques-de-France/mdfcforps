@@ -61,6 +61,33 @@ class AttributionService
 
     private const MAX_URL_LENGTH = 2048;
 
+    /**
+     * Cookie key memoising the cart whose attribution has already been frozen, so a
+     * visitor browsing an attributed session does not re-issue an INSERT on every
+     * page view. Declared here because this class owns the cookie schema; it is
+     * CartAttributionFreezer that gives it meaning.
+     */
+    public const CART_FROZEN_KEY = 'mdf_cart_frozen';
+
+    /**
+     * Maximum length of a URL signal *inside the PrestaShop session cookie*.
+     *
+     * PrestaShop serialises every key into a single encrypted cookie, and the
+     * official PS 9 documentation puts the practical payload at roughly 1000
+     * characters before encryption, against the browser's 4096-byte per-cookie
+     * floor. Two URL signals capped at MAX_URL_LENGTH would exhaust that budget on
+     * their own, and when the cookie overflows the browser drops all of it —
+     * id_customer, id_cart and passwd included. Losing the visitor's session is a
+     * far worse failure than losing the tail of a landing URL.
+     *
+     * The untruncated values are not lost: they live in the durable first-party
+     * cookies and in mdfcforps_cart_attribution, neither of which shares this
+     * budget. And truncation cannot affect attribution itself — resolveSource()
+     * keys off click_id, landing_ref and the utm_* values, never off these two,
+     * which travel to the Hub as reporting metadata only.
+     */
+    private const SESSION_URL_MAX_LENGTH = 255;
+
     // -----------------------------------------------------------------------
     // Attribution test
     // -----------------------------------------------------------------------
@@ -82,6 +109,41 @@ class AttributionService
     public function isMdfAttributed(array $attribution): bool
     {
         return self::isMdfSource((string) ($attribution['source'] ?? ''));
+    }
+
+    /**
+     * Choose between the attribution read live from the current request and the one
+     * frozen against the cart before payment.
+     *
+     * Live wins whenever it is attributed. It is the same-request truth, and on an
+     * ordinary on-site checkout it is byte-identical to the frozen copy anyway —
+     * both derive from the same first-touch cookies. Keeping live first means a
+     * working shop takes exactly the code path it takes today, so this fallback
+     * cannot regress it.
+     *
+     * The frozen copy only speaks when the live read produced nothing usable, which
+     * is precisely the redirect-payment case: an IPN request carrying no cookies at
+     * all, or a cross-site POST return on which SameSite=Lax withholds them.
+     *
+     * A frozen row that is itself unattributed is ignored rather than returned: it
+     * must never be able to manufacture an attribution the live read did not find.
+     *
+     * @param array<string, string>      $live
+     * @param array<string, string>|null $frozen
+     *
+     * @return array<string, string>
+     */
+    public static function preferAttributed(array $live, ?array $frozen): array
+    {
+        if (self::isMdfSource((string) ($live['source'] ?? ''))) {
+            return $live;
+        }
+
+        if ($frozen !== null && self::isMdfSource((string) ($frozen['source'] ?? ''))) {
+            return $frozen;
+        }
+
+        return $live;
     }
 
     // -----------------------------------------------------------------------
@@ -285,11 +347,12 @@ class AttributionService
             'mdf_landing_site',
             'mdf_referring_site',
             'mdf_landing_ref',
+            self::CART_FROZEN_KEY,
         ];
 
         foreach ($fields as $field) {
             if (isset($data[$field])) {
-                $cookie->__set($field, $this->sanitizeSignal($field, (string) $data[$field]));
+                $cookie->__set($field, $this->sanitizeForSessionCookie($field, (string) $data[$field]));
             }
         }
 
@@ -383,6 +446,22 @@ class AttributionService
         return in_array($key, self::URL_SIGNALS, true)
             ? self::sanitizeUrl($value)
             : $this->sanitize($value);
+    }
+
+    /**
+     * Sanitise a signal for storage in the PrestaShop session cookie, which unlike
+     * the first-party cookies has a hard shared size budget — see
+     * SESSION_URL_MAX_LENGTH for why the URL signals are capped here and nowhere else.
+     */
+    private function sanitizeForSessionCookie(string $key, string $value): string
+    {
+        $value = $this->sanitizeSignal($key, $value);
+
+        if (!in_array($key, self::URL_SIGNALS, true)) {
+            return $value;
+        }
+
+        return substr($value, 0, self::SESSION_URL_MAX_LENGTH);
     }
 
     private function sanitize(string $value): string

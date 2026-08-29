@@ -44,6 +44,7 @@ class Installer
         ModuleConfig::update('MDFCFORPS_FEED_FILTER_MODE', 'TAG');
         ModuleConfig::update('MDFCFORPS_BACKFILL_DONE', 0);
         ModuleConfig::update('MDFCFORPS_LAST_FLUSH', 0);
+        ModuleConfig::update('MDFCFORPS_LAST_CART_PURGE', 0);
 
         // Self-update bookkeeping. MDFCFORPS_UPDATE_STATE is written globally rather
         // than per shop — see ModuleUpdater::KEY_STATE for why.
@@ -70,6 +71,7 @@ class Installer
             'MDFCFORPS_BACKFILL_DONE',
             'MDFCFORPS_FEED_FILTER_MODE',
             'MDFCFORPS_LAST_FLUSH',
+            'MDFCFORPS_LAST_CART_PURGE',
             'MDFCFORPS_AFFILIATION_ACTIVE',
             \Mdfcforps\Service\UpdateChecker::KEY_INFO,
             \Mdfcforps\Service\UpdateChecker::KEY_CHECKED_AT,

@@ -79,6 +79,13 @@ class MdfcforpsAjaxModuleFrontController extends ModuleFrontController
         try {
             $attributionService = new Mdfcforps\Service\AttributionService();
             $attributionService->stampCookie($data);
+
+            // The stamp above is the moment this attribution becomes readable
+            // server-side. Freeze it onto the cart now, so it survives a payment
+            // provider that validates the order without the customer's cookies.
+            // The freezer memoises the cart in the session, so the tracker calling
+            // this endpoint on every page view still costs a single INSERT.
+            (new Mdfcforps\Service\CartAttributionFreezer($attributionService))->freeze();
         } catch (\Throwable $e) {
             \PrestaShopLogger::addLog(
                 '[MDF] Attribution AJAX error: ' . $e->getMessage(),
