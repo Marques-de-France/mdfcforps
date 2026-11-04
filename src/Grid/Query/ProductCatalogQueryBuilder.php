@@ -72,7 +72,11 @@ final class ProductCatalogQueryBuilder extends AbstractDoctrineQueryBuilder
             ? strtoupper((string) $searchCriteria->getOrderWay())
             : 'ASC';
 
-        $qb->orderBy($orderBy, $orderWay);
+        // The product id breaks ties (same brand or stock): without it MySQL may order
+        // tied rows differently at each offset, showing a product on two pages and
+        // another on none.
+        $qb->orderBy($orderBy, $orderWay)
+           ->addOrderBy('p.id_product', 'ASC');
 
         if (null !== $searchCriteria->getLimit()) {
             $qb->setMaxResults($searchCriteria->getLimit());

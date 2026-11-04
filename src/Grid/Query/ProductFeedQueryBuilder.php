@@ -59,22 +59,24 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
 
     public function getSearchQueryBuilder(SearchCriteriaInterface $searchCriteria): QueryBuilder
     {
-        $qb = $this->getBaseQuery()
+        $requestedOrder = (string) $searchCriteria->getOrderBy();
+
+        // The price cell is rendered from PriceResolver for the displayed rows only, so it
+        // can never disagree with the feed. The SQL price expressions exist solely so that
+        // sorting and filtering by price key off the same figures; their joins run once
+        // per product in the feed, so they are only added when one of those is asked for.
+        $qb = $this->getBaseQuery(
+            'price' === $requestedOrder || $this->hasPriceFilter($searchCriteria->getFilters())
+        )
             ->select(
                 'p.id_product AS id',
                 'COALESCE(pl.name, \'\') AS name',
                 'COALESCE(m.name, \'\') AS brand',
                 'COALESCE(p.reference, \'\') AS reference',
                 'COALESCE(ps.price, p.price, 0) AS price_raw',
-                // Tax-included, discount-aware prices. The cell itself is rendered from
-                // PriceResolver so it can never disagree with the feed; these exist so
-                // sorting, filtering and pagination key off the same figures.
-                $this->priceSqlBuilder->getRegularExpression() . ' AS price_regular_ttc',
-                $this->priceSqlBuilder->getEffectiveExpression() . ' AS price_effective_ttc',
                 'COALESCE(ps.active, p.active, 0) AS active',
                 'COALESCE(sa.quantity, 0) AS quantity',
                 'COALESCE(ci.id_image, 0) AS id_image',
-                'COALESCE(pa_stats.combination_count, 0) AS combination_count',
                 $this->eligibilityService->buildOutOfStockOrderableExpression('COALESCE(sa.out_of_stock, 2)') . ' AS allow_orders'
             );
 
@@ -86,7 +88,6 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $this->applyFilters($qb, $searchCriteria->getFilters());
 
-        $requestedOrder = (string) $searchCriteria->getOrderBy();
         $orderBy = 'price' === $requestedOrder
             ? $this->priceSqlBuilder->getEffectiveExpression()
             : (self::ORDER_MAP[$requestedOrder] ?? 'pl.name');
@@ -94,7 +95,11 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
             ? strtoupper((string) $searchCriteria->getOrderWay())
             : 'ASC';
 
-        $qb->orderBy($orderBy, $orderWay);
+        // The product id breaks ties (same brand, stock or price): without it MySQL may
+        // order tied rows differently at each offset, showing a product on two pages and
+        // another on none.
+        $qb->orderBy($orderBy, $orderWay)
+           ->addOrderBy('p.id_product', 'ASC');
 
         if (null !== $searchCriteria->getLimit()) {
             $qb->setMaxResults($searchCriteria->getLimit());
@@ -108,13 +113,14 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
 
     public function getCountQueryBuilder(SearchCriteriaInterface $searchCriteria): QueryBuilder
     {
-        $qb = $this->getBaseQuery()->select('COUNT(DISTINCT p.id_product)');
-        $this->applyFilters($qb, $searchCriteria->getFilters());
+        $filters = $searchCriteria->getFilters();
+        $qb = $this->getBaseQuery($this->hasPriceFilter($filters))->select('COUNT(DISTINCT p.id_product)');
+        $this->applyFilters($qb, $filters);
 
         return $qb;
     }
 
-    private function getBaseQuery(): QueryBuilder
+    private function getBaseQuery(bool $withPrices): QueryBuilder
     {
         $feedMode = ModuleConfig::get('MDFCFORPS_FEED_FILTER_MODE', 'TAG');
         $isServerListMode = $feedMode === 'SERVERLIST';
@@ -163,18 +169,14 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
                 'ci',
                 'ci.id_product = p.id_product AND ci.cover = 1'
             )
-            ->leftJoin(
-                'p',
-                '(SELECT id_product, COUNT(*) AS combination_count FROM ' . $this->dbPrefix . 'product_attribute GROUP BY id_product)',
-                'pa_stats',
-                'pa_stats.id_product = p.id_product'
-            )
             ->setParameter('ctx_lang', (int) \Context::getContext()->language->id)
             ->setParameter('ctx_shop', (int) \Context::getContext()->shop->id);
 
         // Specific-price and tax-rule joins backing the price expressions. Both resolve
         // to at most one row per product, so they cannot inflate the COUNT query.
-        $this->priceSqlBuilder->applyJoins($qb);
+        if ($withPrices) {
+            $this->priceSqlBuilder->applyJoins($qb);
+        }
 
         // Keep grid output consistent with feed output eligibility.
         $qb->andWhere('COALESCE(ps.active, p.active, 0) = 1')
@@ -182,6 +184,22 @@ final class ProductFeedQueryBuilder extends AbstractDoctrineQueryBuilder
               ->andWhere('COALESCE(ps.price, p.price, 0) > 0');
 
         return $qb;
+    }
+
+    /**
+     * Whether applyFilters() will add a price bound, which needs the price joins.
+     *
+     * @param array<string, mixed> $filters
+     */
+    private function hasPriceFilter(array $filters): bool
+    {
+        $price = $filters['price'] ?? null;
+        if (!is_array($price)) {
+            return false;
+        }
+
+        return (isset($price['min_field']) && $price['min_field'] !== '')
+            || (isset($price['max_field']) && $price['max_field'] !== '');
     }
 
     /** @param array<string, mixed> $filters */
