@@ -215,7 +215,20 @@ testing a filesystem topology no real shop has. Use `docker cp` instead.
 
 ## Changelog
 
-### 1.5.0
+### 1.5.1
+
+**The « Product feed » tab opens much faster on large catalogues.** To pick the 25 products
+of a page, the grid priced every product of the feed in the database — specific prices,
+catalogue price rules and taxes — and did it a second time to count them, although the
+prices shown are computed for the displayed rows only. That work is now done only when the
+grid is sorted or filtered by price. On a test shop of 1,400 products in the feed, 12,000
+combinations and 2,100 specific prices, the grid's queries went from 3.7 seconds to 0.01
+second per page.
+
+**Every product now shows up exactly once when you page through the grids.** Products tied
+on the sorted column (same brand, same stock, same price) could come back in a different
+order on each page, so one product appeared on two pages and another on none. The product
+feed and catalogue grids now break ties by product id.
 
 **Sales are no longer lost when your payment provider redirects the customer.** Modules
 such as PayPlug, Stripe Checkout, PayPal or Alma take the customer off your shop to pay,
