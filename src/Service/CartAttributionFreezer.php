@@ -89,6 +89,31 @@ class CartAttributionFreezer
         }
     }
 
+    /**
+     * Freeze the cart's attribution again, replacing the frozen copy: a campaign's
+     * click code arrived after the cart was frozen with an older one.
+     *
+     * Never throws, like freeze().
+     */
+    public function refreeze(?int $idCart = null): void
+    {
+        try {
+            $idCart = $idCart ?? $this->contextCartId();
+            if ($idCart <= 0) {
+                return;
+            }
+
+            $this->repository->forget($idCart);
+            unset(self::$handledThisRequest[$idCart]);
+            $this->attributionService->stampCookie([AttributionService::CART_FROZEN_KEY => '']);
+        } catch (\Throwable $e) {
+            // Swallowed on purpose — see freeze().
+            return;
+        }
+
+        $this->freeze($idCart);
+    }
+
     // -----------------------------------------------------------------------
     // Decision
     // -----------------------------------------------------------------------

@@ -70,6 +70,18 @@ class AttributionService
     public const CART_FROZEN_KEY = 'mdf_cart_frozen';
 
     /**
+     * A campaign's click code (a Marques de France dedicated newsletter's link):
+     * mdf-campagne-{campaign}-{hex}. It replaces an older click code — the visitor came
+     * back through the campaign — while any other code stays first-touch.
+     */
+    public const CAMPAIGN_CLICK_ID_PATTERN = '/^mdf-campagne-[1-9][0-9]{0,9}-[0-9a-f]{8,64}$/';
+
+    public static function isCampaignClickId(string $clickId): bool
+    {
+        return preg_match(self::CAMPAIGN_CLICK_ID_PATTERN, $clickId) === 1;
+    }
+
+    /**
      * Maximum length of a URL signal *inside the PrestaShop session cookie*.
      *
      * PrestaShop serialises every key into a single encrypted cookie, and the

@@ -36,7 +36,8 @@ if (!defined('_PS_VERSION_')) {
  *    document.cookie at 7 days, and that cap does not apply to Set-Cookie.
  *
  * Attribution is first-touch, exactly like the tracker JS: nothing is written
- * once an attribution is already stored, and nothing is written at all for a
+ * once an attribution is already stored — except a campaign's click code, which
+ * replaces an older code (AttributionService::isCampaignClickId()) — and nothing is written at all for a
  * request that carries no Marques de France signal — capturing a non-MDF
  * utm_source would otherwise claim the first-touch slot and lock out a genuine
  * Marques de France visit arriving later.
@@ -76,8 +77,10 @@ class LandingCapture
             }
 
             // First-touch: an attribution already stored (by this class or by the
-            // tracker JS) is never overwritten.
+            // tracker JS) is never overwritten, except its click code by a campaign's.
             if ($this->attributionService->readSignal('mdf_attributed', 'mdf_attributed') !== '') {
+                $this->replaceWithCampaignClickId($signals['mdf_click_id'] ?? '');
+
                 return;
             }
 
@@ -103,6 +106,24 @@ class LandingCapture
         } catch (\Throwable $e) {
             // Swallowed on purpose — see the method docblock.
         }
+    }
+
+    /**
+     * An attributed visitor back through a campaign's link: its click code replaces
+     * the stored one, in the session and the durable cookie, and the cart's frozen
+     * attribution is taken again. The rest of the first-touch context is kept.
+     */
+    private function replaceWithCampaignClickId(string $clickId): void
+    {
+        if (!AttributionService::isCampaignClickId($clickId)
+            || $this->attributionService->readSignal('mdf_click_id', 'mdf_click_id') === $clickId) {
+            return;
+        }
+
+        $signals = ['mdf_click_id' => $clickId, 'mdf_attributed' => '1'];
+        $this->writeSessionCookie($signals);
+        $this->writeDurableCookies($signals);
+        (new CartAttributionFreezer($this->attributionService))->refreeze();
     }
 
     // -----------------------------------------------------------------------

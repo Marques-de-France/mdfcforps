@@ -78,6 +78,11 @@ class MdfcforpsAjaxModuleFrontController extends ModuleFrontController
 
         try {
             $attributionService = new Mdfcforps\Service\AttributionService();
+            // A campaign's click code replacing an older one: the cart's frozen copy is taken again
+            $previousClickId = $attributionService->readSignal('mdf_click_id', 'mdf_click_id');
+            $newClickId = is_string($data['mdf_click_id'] ?? null) ? $data['mdf_click_id'] : '';
+            $campaignClick = Mdfcforps\Service\AttributionService::isCampaignClickId($newClickId)
+                && $newClickId !== $previousClickId;
             $attributionService->stampCookie($data);
 
             // The stamp above is the moment this attribution becomes readable
@@ -85,7 +90,8 @@ class MdfcforpsAjaxModuleFrontController extends ModuleFrontController
             // provider that validates the order without the customer's cookies.
             // The freezer memoises the cart in the session, so the tracker calling
             // this endpoint on every page view still costs a single INSERT.
-            (new Mdfcforps\Service\CartAttributionFreezer($attributionService))->freeze();
+            $freezer = new Mdfcforps\Service\CartAttributionFreezer($attributionService);
+            $campaignClick ? $freezer->refreeze() : $freezer->freeze();
         } catch (\Throwable $e) {
             \PrestaShopLogger::addLog(
                 '[MDF] Attribution AJAX error: ' . $e->getMessage(),

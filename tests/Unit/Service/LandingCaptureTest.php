@@ -184,6 +184,46 @@ final class LandingCaptureTest extends TestCase
     }
 
     // -----------------------------------------------------------------------
+    // A campaign's click code (dedicated newsletter)
+    // -----------------------------------------------------------------------
+
+    public function testCampaignClickIdReplacesAnOlderOneAndKeepsTheContext(): void
+    {
+        $_GET = ['utm_source' => 'marques-de-france', 'utm_campaign' => 'fiche-marque', 'mdf_click_id' => self::VALID_CLICK_ID];
+        (new LandingCapture())->capture();
+
+        $campaign = 'mdf-campagne-440209-6d68b6a778309028790577c9';
+        $_GET = ['utm_source' => 'marques-de-france', 'utm_campaign' => 'petite-lettre-dediee', 'mdf_click_id' => $campaign];
+        (new LandingCapture())->capture();
+
+        $result = (new AttributionService())->collectSignals();
+
+        self::assertSame($campaign, $result['click_id']);
+        self::assertSame('mdf_click', $result['source']);
+        self::assertSame('fiche-marque', $result['utm_campaign']);
+    }
+
+    public function testAnOrdinaryClickIdNeverReplacesACampaignOne(): void
+    {
+        $campaign = 'mdf-campagne-440209-6d68b6a778309028790577c9';
+        $_GET = ['utm_source' => 'marques-de-france', 'mdf_click_id' => $campaign];
+        (new LandingCapture())->capture();
+
+        $_GET = ['utm_source' => 'marques-de-france', 'mdf_click_id' => self::VALID_CLICK_ID];
+        (new LandingCapture())->capture();
+
+        self::assertSame($campaign, (new AttributionService())->collectSignals()['click_id']);
+    }
+
+    public function testCampaignClickIdPattern(): void
+    {
+        self::assertTrue(AttributionService::isCampaignClickId('mdf-campagne-440209-6d68b6a778309028790577c9'));
+        self::assertFalse(AttributionService::isCampaignClickId(self::VALID_CLICK_ID));
+        self::assertFalse(AttributionService::isCampaignClickId('mdf-campagne-0-6d68b6a778309028'));
+        self::assertFalse(AttributionService::isCampaignClickId(''));
+    }
+
+    // -----------------------------------------------------------------------
     // Hardening
     // -----------------------------------------------------------------------
 
