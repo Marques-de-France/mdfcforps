@@ -215,6 +215,16 @@ testing a filesystem topology no real shop has. Use `docker cp` instead.
 
 ## Changelog
 
+### 1.6.0
+
+**A visitor who comes back through a Marques de France campaign is credited to it.** A
+dedicated newsletter's links carry a campaign click code (`mdf-campagne-{campaign}-{hex}`).
+For a visitor already attributed by an earlier visit, that code now replaces the older one in
+the session, the 60-day cookie, the tracker's storage and the cart's frozen attribution, so
+the order is filed under the campaign by Marques de France while still counting in the
+brand's sales. Any other click code, and the UTM and landing context, still follow the first
+visit.
+
 ### 1.5.1
 
 **The « Product feed » tab opens much faster on large catalogues.** To pick the 25 products
