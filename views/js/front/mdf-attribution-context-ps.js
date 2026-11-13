@@ -123,6 +123,13 @@
     return /^[A-Za-z0-9_-]{8,128}$/.test( trimmed ) ? trimmed : '';
   }
 
+  // A campaign's click code (a Marques de France dedicated newsletter's link): it
+  // replaces an older code, the visitor came back through the campaign. Any other
+  // code stays first-touch.
+  function isCampaignClickId( value ) {
+    return /^mdf-campagne-[1-9][0-9]{0,9}-[0-9a-f]{8,64}$/.test( value || '' );
+  }
+
   /**
    * Returns the stored click_id if it is still within TTL, otherwise purges
    * the expired LS entries and falls back to the cookie.
@@ -265,8 +272,10 @@
       setLocalValue( 'mdf_attributed_at', String( Date.now() ) );
       setCookie( 'mdf_attributed', '1', COOKIE_TTL_DAYS );
 
-      // Write click_id with its own TS key for independent TTL tracking.
-      if ( clickId && ! getStoredValue( 'mdf_click_id', 'mdf_click_id' ) ) {
+      // Write click_id with its own TS key for independent TTL tracking; a campaign's
+      // code replaces an older one.
+      var storedClickId = getStoredValue( 'mdf_click_id', 'mdf_click_id' );
+      if ( clickId && ( ! storedClickId || ( isCampaignClickId( clickId ) && storedClickId !== clickId ) ) ) {
         setLocalValue( 'mdf_click_id',    clickId );
         setLocalValue( 'mdf_click_id_at', String( Date.now() ) );
         setCookie( 'mdf_click_id', clickId, COOKIE_TTL_DAYS );

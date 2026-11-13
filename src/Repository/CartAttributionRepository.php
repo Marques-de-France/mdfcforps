@@ -100,6 +100,19 @@ class CartAttributionRepository
     }
 
     /**
+     * Drop a cart's frozen attribution, so that freeze() writes it again (a campaign's
+     * click code replacing an older one, CartAttributionFreezer::refreeze()).
+     */
+    public function forget(int $idCart): bool
+    {
+        if ($idCart <= 0) {
+            return false;
+        }
+
+        return (bool) \Db::getInstance()->delete(self::TABLE, 'id_cart = ' . (int) $idCart);
+    }
+
+    /**
      * Drop rows old enough that no order can still reference them.
      *
      * LIMIT so a first purge on a long-running shop can never hold locks for long;
