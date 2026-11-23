@@ -215,6 +215,14 @@ testing a filesystem topology no real shop has. Use `docker cp` instead.
 
 ## Changelog
 
+### 1.6.1
+
+**A visitor who clicks a combination on Marques de France lands on it.** In the product feed,
+each combination's `<g:link>` is now that combination's own page, built by PrestaShop with
+the combination id (`/42-317-slug.html#/12-size-m` with the default product route), which
+the product page reads to preselect it. `<parent_link>` is still the product page. A shop
+whose product route has no `{id_product_attribute}` keyword gets the product page, as before.
+
 ### 1.6.0
 
 **A visitor who comes back through a Marques de France campaign is credited to it.** A

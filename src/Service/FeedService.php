@@ -217,7 +217,23 @@ class FeedService
 
         $category = $this->getCategoryPath($product, $idLang);
         $tags = $this->getProductTags($product, $idLang);
-        $link = $this->context->link->getProductLink($product);
+        $parentLink = $this->context->link->getProductLink($product);
+        // The combination's own page (Google expects it for a variant's <g:link>). With the
+        // default product route the id is in the path (/42-317-slug.html#/12-size-m), which the
+        // product page reads to preselect the combination. Same positional arguments from 1.7.7
+        // to 9: 7th = combination id, 10th = attribute ids in the anchor.
+        $link = $this->context->link->getProductLink(
+            $product,
+            null,
+            null,
+            null,
+            $idLang,
+            null,
+            (int) $combo['id_product_attribute'],
+            false,
+            false,
+            true
+        );
 
         // Build title: "Product Name – Attr1, Attr2"
         $attrValues = array_filter(array_column($combo['attributes'] ?? [], 'value'));
@@ -238,7 +254,7 @@ class FeedService
             'id' => $product->id . '_' . $combo['id_product_attribute'],
             'title' => $title,
             'parent_title' => $parentTitle,
-            'parent_link' => $link,
+            'parent_link' => $parentLink,
             'description' => $this->sanitizeRichHtml($product->description ?: $product->description_short),
             'short_description' => $this->sanitizeRichHtml($product->description_short),
             'link' => $link,
